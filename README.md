@@ -9,6 +9,11 @@ eigenständiges Programm und optional direkt in SolidCraft. Die Oberfläche soll
 **Status: Konzept und interaktiver Oberflächenprototyp. Noch kein nutzbares CAM.**
 Fertigungsstudio ist ein Arbeitsname und kein offizielles SolidCraft-Projekt.
 
+![Fertigungsstudio CAM: deutsche Symbolkacheln, Bearbeitungsbaum und schematische Werkstückvorschau](docs/images/fertigungsstudio-preview.jpg)
+
+*Bedienentwurf vom 24. November 2026. Gezeigt werden illustrative Bahnen,
+keine berechneten oder geprüften Maschinenbewegungen.*
+
 ## Vorschau starten
 
 `prototype/fertigungsstudio-kacheln.html` im Browser öffnen. Keine Installation,

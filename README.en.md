@@ -9,6 +9,11 @@ an official SolidCraft project.
 
 **Current status: concept and interactive interface prototype, not working CAM.**
 
+![Fertigungsstudio CAM: German ribbon tiles, operation tree and schematic part preview](docs/images/fertigungsstudio-preview.jpg)
+
+*Interface concept, 24 November 2026. Paths are illustrative, not calculated
+or verified machine movements.*
+
 Open `prototype/fertigungsstudio-kacheln.html` in a browser. No installation or
 server is required. The current prototype is in German. It demonstrates ribbon
 tiles, an operation tree, a rotatable example part, schematic tool movement,
