@@ -1,7 +1,7 @@
 # Erste Entwicklungspakete / Initial development tasks
 
-These are proposed tasks, not claims or implementation promises. Agree on the
-license before publishing them for contributors. Create one issue per task.
+These are proposed tasks, not claims or implementation promises. The project
+license is Apache 2.0. Create one issue per task before starting development.
 
 | Task | Work | Reviewable result | Dependency |
 | --- | --- | --- | --- |

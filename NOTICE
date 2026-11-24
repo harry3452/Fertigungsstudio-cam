@@ -1,0 +1,16 @@
+Fertigungsstudio CAM
+Copyright 2026 Fertigungsstudio CAM contributors.
+
+Licensed under the Apache License, Version 2.0. See LICENSE.
+The license does not grant trademark rights in the project name or logo.
+
+This initial package contains an original HTML/JavaScript interface prototype,
+its builder, and project documentation developed by harry3452 with AI assistance.
+The schematic part and tool movements are illustrative, not machining evidence.
+It does not include SolidCraft or CamCraft source code, their interface assets,
+vendor CAD assets, customer models, or the earlier CAM Rust patches.
+
+The project is independent. SolidCraft, CamCraft and other product references
+describe intended interoperability or context, not endorsement or affiliation.
+
+Future third-party components must retain their own licenses and notices.

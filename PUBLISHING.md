@@ -6,12 +6,14 @@
 - Interaktiver HTML-Prototyp und dessen reproduzierbarer Builder.
 - Kleine erste Entwicklungspakete und Regeln für Zusammenarbeit.
 - Anforderungen an Mehrsprachigkeit und Trennung von Oberfläche und CAM-Kern.
+- Apache 2.0 als Projektlizenz, Lizenztext und Herkunftshinweis.
+- Privates Repository: https://github.com/harry3452/fertigungsstudio-cam
 
 ## Vor einem öffentlichen Start noch erledigen
 
-1. Projektname und GitHub-Repository unter dem gewünschten Konto festlegen.
-2. Lizenz auswählen und Herkunft der enthaltenen Dateien abschließend prüfen.
-   Noch keine Lizenzdatei hinzugefügt und keine Rechte an fremden Patches zugesagt.
+1. Aktualisierte Dateien einschließlich LICENSE und NOTICE hochladen.
+2. Herkunft vor dem öffentlichen Start abschließend prüfen. Keine Rechte an
+   fremden Patches werden zugesagt. Apache 2.0 ist für den eigenen Inhalt gewählt.
 3. Den Bedienentwurf ansehen und passende Screenshots für README erstellen.
 4. Erste Aufgaben abstimmen und als Issues anlegen; keine ungefragten Claims.
 5. Repository veröffentlichen, Links in Beschreibungen ergänzen und den ersten

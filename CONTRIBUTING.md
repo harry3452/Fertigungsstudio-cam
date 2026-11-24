@@ -1,7 +1,9 @@
 # Gemeinsam entwickeln / Contributing
 
-This document describes the intended workflow. Public code contributions start
-only after the project license has been selected and recorded.
+Contributions submitted for inclusion are provided under Apache License 2.0,
+unless explicitly stated otherwise and agreed before inclusion. Contributors
+retain their copyright. Do not submit material you have no right to license.
+No copyright assignment or separate relicensing permission is requested.
 
 1. Discuss a concrete problem in an issue before implementing a large change.
 2. Agree on scope and claim the task in that issue to avoid duplicate work.

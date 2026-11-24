@@ -1,4 +1,4 @@
-# Fertigungsstudio
+# Fertigungsstudio CAM
 
 **Deutsch** · [English](README.en.md)
 
@@ -58,10 +58,14 @@ Die Übersetzungsanbindung ist im Prototyp noch nicht implementiert.
 
 ## Lizenz und Veröffentlichung
 
-Dieses Paket ist eine lokale Veröffentlichungsvorbereitung. Die Projektlizenz
-ist noch nicht festgelegt. Vor einer öffentlichen Einladung zu Codebeiträgen
-müssen Lizenz und Herkunft der enthaltenen Dateien geklärt sein.
+Der eigene Code, die Dokumentation und die eigenen Symbole dieses Pakets stehen
+unter der [Apache License 2.0](LICENSE). Hinweise zur Herkunft stehen in
+[NOTICE](NOTICE). Die Lizenz erteilt keine Markenrechte am Projektnamen oder Logo.
+Bereits unter Apache 2.0 veröffentlichte Bestandteile bleiben unter diesen
+Bedingungen nutzbar; eine spätere andere Lizenz gilt nicht rückwirkend.
 SolidCraft- oder CamCraft-Code und die bisherigen Rust-Patches sind hier nicht
 enthalten. Deren Wiederverwendung muss separat geprüft werden.
 
-Siehe [PUBLISHING.md](PUBLISHING.md). Es wurde noch kein Repository veröffentlicht.
+Das [GitHub-Repository](https://github.com/harry3452/fertigungsstudio-cam) wurde
+privat eingerichtet. Der öffentliche Start wird in [PUBLISHING.md](PUBLISHING.md)
+vorbereitet.

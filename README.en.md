@@ -1,4 +1,4 @@
-# Fertigungsstudio
+# Fertigungsstudio CAM
 
 [Deutsch](README.md) · **English**
 
@@ -45,7 +45,11 @@ data and command identifiers must remain independent of the display language.
 
 ## Before publication
 
-This is a local preparation package. The project license has not been chosen.
-License selection and file provenance review must be completed before inviting
-public code contributions. No SolidCraft/CamCraft code or earlier Rust patches
-are bundled. See [PUBLISHING.md](PUBLISHING.md).
+The project's own code, documentation and symbols in this package are licensed
+under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for provenance.
+The license does not grant trademark rights in the project name or logo.
+Material released under Apache 2.0 remains available under those terms; a later
+license change cannot revoke those permissions.
+No SolidCraft/CamCraft code or earlier Rust patches are bundled.
+The [repository](https://github.com/harry3452/fertigungsstudio-cam) has been created
+privately. See [PUBLISHING.md](PUBLISHING.md) for the public launch preparation.
