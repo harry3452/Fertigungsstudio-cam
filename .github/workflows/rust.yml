@@ -41,6 +41,8 @@ jobs:
       - name: Check preview data and builder
         run: |
           node prototype/core-path-tests.cjs
+          node prototype/tool-storage-tests.cjs
+          node --check prototype/tool-library-ui.js
           node prototype/build-ribbon.cjs
           node --check prototype/live-preview.js
           node --check prototype/live-server-tests.cjs
