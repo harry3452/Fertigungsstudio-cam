@@ -76,6 +76,7 @@ pub enum Error {
     InvalidFeed,
     TooManyMoves,
     CoordinateLimit,
+    Cancelled,
 }
 
 impl fmt::Display for Error {
@@ -103,6 +104,20 @@ fn positive(v: f64) -> bool {
 /// retracts between rows. Assumes unlimited free space outside the stock.
 /// Coverage uses a flat cylindrical tool; cutter forces/holders are not modeled.
 pub fn face(setup: Setup, tool: FlatTool, op: Facing) -> Result<Toolpath, Error> {
+    face_with_cancel(setup, tool, op, || false)
+}
+
+/// Cooperative cancellation, checked before allocation, before every row and
+/// before publishing the result. Return true to discard the whole calculation.
+/// A background worker can read an AtomicBool here; no GUI or threading runtime
+/// is required. The callback must be fast, non-blocking and must not panic.
+/// This never returns a partial toolpath on cancellation.
+pub fn face_with_cancel(
+    setup: Setup,
+    tool: FlatTool,
+    op: Facing,
+    mut cancelled: impl FnMut() -> bool,
+) -> Result<Toolpath, Error> {
     let stock = setup.stock;
     if !point_valid(stock.min)
         || !point_valid(stock.max)
@@ -151,6 +166,9 @@ pub fn face(setup: Setup, tool: FlatTool, op: Facing) -> Result<Toolpath, Error>
         y: stock.min.y,
         z: setup.clearance_z,
     };
+    if cancelled() {
+        return Err(Error::Cancelled);
+    }
     let mut moves = Vec::with_capacity(count as usize);
     for pass in 1..=passes {
         let z = if pass == passes {
@@ -159,6 +177,9 @@ pub fn face(setup: Setup, tool: FlatTool, op: Facing) -> Result<Toolpath, Error>
             (stock.max.z - pass as f64 * op.stepdown).max(op.bottom_z)
         };
         for row in 0..=intervals {
+            if cancelled() {
+                return Err(Error::Cancelled);
+            }
             let y = stock.min.y + (stock.max.y - stock.min.y) * row as f64 / intervals as f64;
             let at = Point3 {
                 x: left,
@@ -190,6 +211,9 @@ pub fn face(setup: Setup, tool: FlatTool, op: Facing) -> Result<Toolpath, Error>
                 motion: Motion::Rapid,
             });
         }
+    }
+    if cancelled() {
+        return Err(Error::Cancelled);
     }
     Ok(Toolpath {
         start,
