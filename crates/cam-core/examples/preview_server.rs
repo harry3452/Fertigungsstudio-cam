@@ -1,8 +1,6 @@
 //! Local-only prototype bridge. Run with cargo run --example preview_server.
 //! No filesystem writes, remote binding, arbitrary file serving or machine output.
-use fertigungsstudio_cam_core::{
-    Error, Facing, FlatTool, Motion, Point3, Setup, StockBox, face_with_cancel,
-};
+use fertigungsstudio_cam_core::{Error, Facing, FlatTool, Motion, Point3, Setup, StockBox};
 use std::{
     io::{Read, Write},
     net::{TcpListener, TcpStream},
@@ -114,14 +112,33 @@ fn respond(stream: &mut TcpStream, status: &str, kind: &str, body: &str) -> std:
 }
 
 fn calculate(body: &str, cancelled: impl FnMut() -> bool) -> Result<String, String> {
-    let values = body
+    let mut values = body
         .split_whitespace()
         .map(str::parse::<f64>)
         .collect::<Result<Vec<_>, _>>()
         .map_err(|_| "InvalidNumbers")?;
-    let [width, length, height, depth, diameter, stepdown, stepover] = values.as_slice() else {
-        return Err("ExpectedSevenNumbers".into());
+    if values.len() == 7 {
+        values.extend([1.0, 20.0, 800.0, 200.0]);
+    }
+    let [
+        width,
+        length,
+        height,
+        depth,
+        diameter,
+        stepdown,
+        stepover,
+        number,
+        cutting_length,
+        cutting_feed,
+        plunge_feed,
+    ] = values.as_slice()
+    else {
+        return Err("ExpectedElevenNumbers".into());
     };
+    if !number.is_finite() || *number < 1.0 || *number > 9999.0 || number.fract() != 0.0 {
+        return Err("InvalidToolNumber".into());
+    }
     if !depth.is_finite() || *depth <= 0.0 {
         return Err("InvalidDepth".into());
     }
@@ -144,24 +161,29 @@ fn calculate(body: &str, cancelled: impl FnMut() -> bool) -> Result<String, Stri
         bottom_z: height - depth,
         stepdown: *stepdown,
         stepover: *stepover,
-        cutting_feed: 800.0,
-        plunge_feed: 200.0,
+        cutting_feed: *cutting_feed,
+        plunge_feed: *plunge_feed,
     };
-    let p = face_with_cancel(
-        setup,
+    let selected = fertigungsstudio_cam_core::tools::MillingTool::new(
+        *number as u16,
+        format!("T{}", *number as u16),
         FlatTool {
             diameter: *diameter,
-            cutting_length: 20.0,
+            cutting_length: *cutting_length,
         },
-        op,
-        cancelled,
+        *cutting_feed,
+        *plunge_feed,
     )
-    .map_err(|e| e.to_string())?;
+    .map_err(|e| format!("{e:?}"))?;
+    let p = selected
+        .face(setup, op, cancelled)
+        .map_err(|e| e.to_string())?;
     let mut out = format!(
         "{{\"format\":\"fertigungsstudio-facing-v1\",\"units\":\"mm\",\"stock\":{{\"min\":[0,0,0],\"max\":[{width},{length},{height}]}},\"tool_diameter\":{diameter},\"bottom_z\":{},\"clearance_z\":{},\"start\":[{},{},{}],\"moves\":[",
         op.bottom_z, setup.clearance_z, p.start.x, p.start.y, p.start.z
     );
     use std::fmt::Write as _;
+    // Tool metadata travels with the result; no inference from current UI values.
     for (i, m) in p.moves.iter().enumerate() {
         if i > 0 {
             out.push(',');
@@ -178,7 +200,7 @@ fn calculate(body: &str, cancelled: impl FnMut() -> bool) -> Result<String, Stri
         )
         .map_err(|_| "FormatError")?;
     }
-    out.push_str("]}");
+    write!(out,"],\"tool_number\":{number},\"cutting_length\":{cutting_length},\"cutting_feed\":{cutting_feed},\"plunge_feed\":{plunge_feed}}}").map_err(|_|"FormatError")?;
     Ok(out)
 }
 
