@@ -2,8 +2,8 @@
 const assert=require('node:assert/strict');
 const http=require('node:http');
 const {validate}=require('./core-path-data.cjs');
-async function run(){
-const base=new URL(process.argv[2]);
+async function run(address=process.argv[2]){
+const base=new URL(address);
 if(base.hostname!=='127.0.0.1')throw Error('Local preview URL required');
 function request(path,method='GET',body='',headers={}){return new Promise((resolve,reject)=>{
 const req=http.request(new URL(path,base),{method,headers:{'Content-Length':Buffer.byteLength(body),...headers}},res=>{let text='';res.setEncoding('utf8');res.on('data',s=>text+=s);res.on('end',()=>resolve({status:res.statusCode,text}));});req.setTimeout(5000,()=>req.destroy(Error('timeout')));req.on('error',reject);req.end(body);
@@ -16,6 +16,13 @@ assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 3')).status,40
 assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 3',{...headers,Origin:'https://example.invalid'})).status,403);
 assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 3',{...headers,Host:'evil.invalid'})).status,403);
 assert.equal((await request('/api/cancel','POST','',headers)).status,200);
+assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 1e-300',headers)).status,422);
+assert.equal((await request('/api/unknown','POST','',headers)).status,404);
+// A bounded parser can close with unread oversized input: Windows may report
+// a reset instead of delivering the 400 response. Either must reject the input.
+try { assert.equal((await request('/api/facing','POST','1'.repeat(1025),headers)).status,400); }
+catch(e) { if(e.code!=='ECONNRESET')throw e; }
 console.log('Live HTTP checks passed: page, valid path, invalid depth, missing/foreign origin, wrong host, cancellation endpoint.');
 }
-run().catch(e=>{console.error(e);process.exitCode=1;});
+module.exports={run};
+if(require.main===module)run().catch(e=>{console.error(e);process.exitCode=1;});
