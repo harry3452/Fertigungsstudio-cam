@@ -3,6 +3,66 @@
 use super::*;
 
 #[test]
+fn tools_are_validated_and_library_updates_are_explicit() {
+    use crate::tools::*;
+    let (_, geometry, _) = fixture();
+    let make = |number| MillingTool::new(number, "Flat mill".into(), geometry, 500.0, 100.0);
+    assert_eq!(make(0).unwrap_err(), ToolError::InvalidNumber);
+    assert_eq!(
+        MillingTool::new(1, "\n".into(), geometry, 500.0, 100.0).unwrap_err(),
+        ToolError::InvalidName
+    );
+    assert_eq!(
+        MillingTool::new(1, "Tool".into(), geometry, f64::NAN, 100.0).unwrap_err(),
+        ToolError::InvalidFeed
+    );
+    let mut library = ToolLibrary::default();
+    library.insert(make(2).unwrap()).unwrap();
+    library.insert(make(1).unwrap()).unwrap();
+    assert_eq!(
+        library.iter().map(MillingTool::number).collect::<Vec<_>>(),
+        vec![1, 2]
+    );
+    assert_eq!(
+        library.insert(make(2).unwrap()),
+        Err(ToolError::DuplicateNumber)
+    );
+    assert_eq!(
+        library.replace(make(3).unwrap()),
+        Err(ToolError::MissingTool)
+    );
+    library.replace(make(2).unwrap()).unwrap();
+    assert_eq!(library.get(2).unwrap().name(), "Flat mill");
+    assert_eq!(library.remove(2).unwrap().number(), 2);
+    assert!(library.get(2).is_none());
+}
+
+#[test]
+fn selected_tool_controls_feeds_and_limits_depth() {
+    use crate::tools::*;
+    let (setup, geometry, op) = fixture();
+    let tool = MillingTool::new(7, "Facing tool".into(), geometry, 650.0, 90.0).unwrap();
+    let path = tool.face(setup, op, || false).unwrap();
+    assert_eq!(path.moves[1].motion, Motion::Feed { mm_per_min: 90.0 });
+    assert_eq!(path.moves[2].motion, Motion::Feed { mm_per_min: 650.0 });
+    let short = MillingTool::new(
+        7,
+        "Short".into(),
+        FlatTool {
+            cutting_length: 1.0,
+            ..geometry
+        },
+        650.0,
+        90.0,
+    )
+    .unwrap();
+    assert_eq!(
+        short.face(setup, op, || false).unwrap_err(),
+        Error::InvalidDepth
+    );
+}
+
+#[test]
 fn cancellation_discards_work_before_during_and_after_generation() {
     let (setup, tool, op) = fixture();
     let original = face(setup, tool, op).unwrap();
