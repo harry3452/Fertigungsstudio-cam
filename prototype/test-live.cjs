@@ -4,7 +4,7 @@ const path=require('node:path');
 const {run}=require('./live-server-tests.cjs');
 async function main(){
   const binary=path.resolve(__dirname,'../target/debug/examples/preview_server'+(process.platform==='win32'?'.exe':''));
-  const child=spawn(binary,[],{stdio:['ignore','pipe','pipe'],windowsHide:true});
+  const child=spawn(binary,['--ephemeral'],{stdio:['ignore','pipe','pipe'],windowsHide:true});
   let diagnostic='';child.stderr.setEncoding('utf8');child.stderr.on('data',s=>{diagnostic=(diagnostic+s).slice(-4000);});
   try {
     const address=await new Promise((resolve,reject)=>{
