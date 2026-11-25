@@ -21,8 +21,10 @@ contextual parameters and settings dialogs. The integration selector is a mockup
 
 The initial Rust core calculates restricted facing paths for rectangular raw
 blocks. The prototype's “Rust-Demo” button displays a calculated dataset, and
-“Rust-Bahn laden” imports additional Rust-generated JSON paths. This is file
-interchange, not live calculation or collision verification in the UI. See
+“Rust-Bahn laden” imports additional Rust-generated JSON paths. For live local
+calculation run `cargo run --locked --offline --example preview_server`, open
+the printed address and select “Live-Planfräsen”. There is no collision
+verification. See
 [the core contract and limitations](docs/core-first-step.md).
 
 There is no CAD import, general machining toolpath calculation, stock-removal or
