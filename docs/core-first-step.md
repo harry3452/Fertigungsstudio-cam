@@ -1,0 +1,50 @@
+# First Rust core increment
+
+Original, dependency-free Rust library: `crates/cam-core`.
+
+## Run locally
+
+Requires Rust with edition 2024 support, Cargo, and a native linker.
+Validated with Rust 1.99.1 on Windows.
+
+```text
+cargo test --offline --workspace
+cargo clippy --offline --workspace --all-targets -- -D warnings
+cargo fmt --all -- --check
+```
+
+## Contract
+
+All coordinates are work coordinates in millimetres, with a fixed upright +Z
+tool axis. Feed is mm/min. Language and UI are not part of this crate.
+`face(Setup, FlatTool, Facing)` returns moves and an explicit required start
+position. The caller must establish that position; no safe arrival from an
+unknown machine state is implied.
+
+This slice faces the entire top of an axis-aligned rectangular raw block with
+a flat centre-cutting cylindrical tool. X passes run in one direction; row
+spacing is at most half the tool diameter. Each row descends outside the block,
+cuts across it, then retracts vertically outside the block before traversing
+to the next row. The final depth is explicit, with bounded intermediate passes.
+There is no climb/conventional selector or cutter-engagement optimisation yet.
+
+Coordinates, stock bounds, feeds, tool geometry, cutting length, depths, step
+sizes and the move budget are checked before path allocation. Errors are
+stable enum variants for a future translated UI. Production code forbids
+unsafe and denies unwrap/expect/panic; test assertions may panic.
+
+## Evidence and limits
+
+Tests check an analytic 20 × 10 × 5 block, final depth and row positions,
+grid-point footprint coverage, work-coordinate translation, clearance on
+lateral rapids and rejection of invalid/unbounded inputs.
+
+This is a restricted planner, not a collision verifier: no CAD/STEP import,
+part preservation, islands, clamps, fixtures, holder, machine travel, spindle,
+stock-removal simulation, G-code generation, UI integration, persistence or
+3+2 kinematics. Space outside the raw block is assumed free. No machine has
+executed this output. The HTML preview still uses illustrative paths.
+
+Next: agree on the scope and verification contract in issue #1, then a small
+CLI demo and a separately reviewed output adapter. The core stays independent
+of the eventual GUI and SolidCraft host adapter.
