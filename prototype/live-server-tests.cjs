@@ -11,6 +11,9 @@ const req=http.request(new URL(path,base),{method,headers:{'Content-Length':Buff
 const page=await request('/');assert.equal(page.status,200);assert.ok(page.text.includes('Live-Planfräsen'));
 const headers={Origin:base.origin,'Content-Type':'application/x-fertigungsstudio'};
 const good=await request('/api/facing','POST','20 10 5 2.5 6 1 3',headers);assert.equal(good.status,200);assert.equal(validate(JSON.parse(good.text)).moves.length,60);
+const configured=await request('/api/facing','POST','20 10 5 2.5 6 1 3 7 10 650 90',headers);assert.equal(configured.status,200);const toolData=validate(JSON.parse(configured.text));assert.equal(toolData.tool_number,7);assert.equal(toolData.cutting_feed,650);assert.equal(toolData.plunge_feed,90);
+assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 3 7 1 650 90',headers)).status,422);
+assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 3 7.5 10 650 90',headers)).status,422);
 assert.equal((await request('/api/facing','POST','20 10 5 -1 6 1 3',headers)).status,422);
 assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 3')).status,403);
 assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 3',{...headers,Origin:'https://example.invalid'})).status,403);
