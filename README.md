@@ -71,6 +71,6 @@ Bedingungen nutzbar; eine spätere andere Lizenz gilt nicht rückwirkend.
 SolidCraft- oder CamCraft-Code und die bisherigen Rust-Patches sind hier nicht
 enthalten. Deren Wiederverwendung muss separat geprüft werden.
 
-Das [GitHub-Repository](https://github.com/harry3452/fertigungsstudio-cam) wurde
-privat eingerichtet. Der öffentliche Start wird in [PUBLISHING.md](PUBLISHING.md)
-vorbereitet.
+Das [GitHub-Repository](https://github.com/harry3452/Fertigungsstudio-cam) ist
+öffentlich. Interessierte können die [offenen Aufgaben](https://github.com/harry3452/Fertigungsstudio-cam/issues)
+ansehen und sich dort zur Mitarbeit melden.
