@@ -6,7 +6,7 @@ Ein gemeinschaftlich zu entwickelndes CAM mit zwei geplanten Zugängen: als
 eigenständiges Programm und optional direkt in SolidCraft. Die Oberfläche soll
 übersichtlich, mehrsprachig und auf den Arbeitsablauf in der Werkstatt ausgelegt sein.
 
-**Status: Konzept und interaktiver Oberflächenprototyp. Noch kein nutzbares CAM.**
+**Status: Oberflächenprototyp und erster experimenteller Rust-Kern. Noch kein nutzbares CAM.**
 Fertigungsstudio ist ein Arbeitsname und kein offizielles SolidCraft-Projekt.
 
 ![Fertigungsstudio CAM: deutsche Symbolkacheln, Bearbeitungsbaum und schematische Werkstückvorschau](docs/images/fertigungsstudio-preview.jpg)
@@ -24,7 +24,11 @@ Beispielplatte, schematische Werkzeugbewegungen und Dialoge für Aufspannung,
 Darstellung und Ausgabe. Die Ansicht kann zwischen integriertem und
 eigenständigem Betrieb umgeschaltet werden; das ist nur eine Darstellung.
 
-Nicht vorhanden: realer CAD-Import, echte Werkzeugwegberechnung, Materialabtrags-
+Der erste Rust-Kern berechnet eingeschränkte Planfräsbahnen für rechteckige
+Rohblöcke. Er ist noch nicht an die Vorschau angeschlossen.
+Aufbau, Prüfungen und Grenzen: [Erster Kernbaustein](docs/core-first-step.md).
+
+Nicht vorhanden: realer CAD-Import, allgemeine Werkzeugwegberechnung, Materialabtrags-
 und Kollisionsprüfung, geprüfter NC-Export oder eine SolidCraft-Anbindung.
 Der Entwurf darf nicht zur Steuerung einer Maschine verwendet werden.
 
