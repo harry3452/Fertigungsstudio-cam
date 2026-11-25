@@ -9,6 +9,8 @@ function request(path,method='GET',body='',headers={}){return new Promise((resol
 const req=http.request(new URL(path,base),{method,headers:{'Content-Length':Buffer.byteLength(body),...headers}},res=>{let text='';res.setEncoding('utf8');res.on('data',s=>text+=s);res.on('end',()=>resolve({status:res.statusCode,text}));});req.setTimeout(5000,()=>req.destroy(Error('timeout')));req.on('error',reject);req.end(body);
 });}
 const page=await request('/');assert.equal(page.status,200);assert.ok(page.text.includes('Live-Planfräsen'));
+assert.ok(page.text.includes('Eigene Werkzeugbibliothek'));
+for(const match of page.text.matchAll(/<script>([\s\S]*?)<\/script>/g))new(require('node:vm').Script)(match[1]);
 const headers={Origin:base.origin,'Content-Type':'application/x-fertigungsstudio'};
 const good=await request('/api/facing','POST','20 10 5 2.5 6 1 3',headers);assert.equal(good.status,200);assert.equal(validate(JSON.parse(good.text)).moves.length,60);
 const configured=await request('/api/facing','POST','20 10 5 2.5 6 1 3 7 10 650 90',headers);assert.equal(configured.status,200);const toolData=validate(JSON.parse(configured.text));assert.equal(toolData.tool_number,7);assert.equal(toolData.cutting_feed,650);assert.equal(toolData.plunge_feed,90);
