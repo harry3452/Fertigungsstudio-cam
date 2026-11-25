@@ -23,7 +23,7 @@ function loadCore(d){
   document.querySelector('.panel h2').textContent='Rust-Rohblock';
   sidebar.querySelector('p').textContent=dims(coreData)+' mm · Rechteckrohteil';
   sidebar.querySelectorAll('.tree,.tools,.setup').forEach(e=>e.hidden=true);
-  summary.hidden=false;summary.textContent='Planfräsen · Werkzeug Ø '+coreData.tool_diameter+' mm · Endhöhe '+coreData.bottom_z+' mm · Freiraum außerhalb des Rohteils vorausgesetzt.';
+  summary.hidden=false;summary.textContent='Planfräsen · '+(coreData.tool_number?'T'+coreData.tool_number+' · ':'')+'Werkzeug Ø '+coreData.tool_diameter+' mm · Endhöhe '+coreData.bottom_z+' mm'+(coreData.cutting_feed?' · Vorschub '+coreData.cutting_feed+' mm/min':'')+' · Freiraum außerhalb des Rohteils vorausgesetzt.';
   $('status').textContent='Rust-Bahndaten · keine Kollisions- oder Maschinenprüfung';
   $('editOperation').disabled=true;returnButton.hidden=false;resize();
 }
