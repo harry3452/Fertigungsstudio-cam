@@ -2,6 +2,44 @@
 
 use super::*;
 
+#[test]
+fn cancellation_discards_work_before_during_and_after_generation() {
+    let (setup, tool, op) = fixture();
+    let original = face(setup, tool, op).unwrap();
+    let mut calls = 0;
+    let completed = face_with_cancel(setup, tool, op, || {
+        calls += 1;
+        false
+    })
+    .unwrap();
+    assert_eq!(completed.moves, original.moves);
+    assert_eq!(calls, 17); // before allocation, 15 rows, before return
+    for cancel_at in [1, 2, 8, 17] {
+        let mut calls = 0;
+        let result = face_with_cancel(setup, tool, op, || {
+            calls += 1;
+            calls >= cancel_at
+        });
+        assert_eq!(result.unwrap_err(), Error::Cancelled);
+        assert_eq!(calls, cancel_at);
+    }
+}
+
+#[test]
+fn worker_can_read_shared_cancel_flag() {
+    use std::sync::{
+        Arc,
+        atomic::{AtomicBool, Ordering},
+    };
+    let (setup, tool, op) = fixture();
+    let flag = Arc::new(AtomicBool::new(true));
+    let worker_flag = Arc::clone(&flag);
+    let worker = std::thread::spawn(move || {
+        face_with_cancel(setup, tool, op, || worker_flag.load(Ordering::Relaxed))
+    });
+    assert_eq!(worker.join().unwrap().unwrap_err(), Error::Cancelled);
+}
+
 fn fixture() -> (Setup, FlatTool, Facing) {
     (
         Setup {
