@@ -46,8 +46,15 @@ invalidates the result in the browser and signals cooperative cancellation.
 The live form has two example flat-tool presets and editable tool number,
 diameter, cutting length, cutting feed and plunge feed. These values are sent
 to Rust and validated; shorter cutting length can refuse a previously valid
-depth. Presets are not cutting-data recommendations. Values are held only in
-the open page, not persisted as a project or user tool library yet.
+depth. Presets are not cutting-data recommendations. Own named tools can be
+explicitly saved, selected, updated and deleted in a browser-local library.
+It holds at most 64 tools under a versioned localStorage key; number/name,
+dimensions and feeds are validated before writing. Replacement and deletion
+require confirmation. A failed write leaves the in-memory list unchanged;
+unreadable/version-mismatched data is reported and not overwritten.
+This is not a project file or a portable library backup. Browser profile changes,
+private mode and clearing site data can remove access to saved tools. Export
+and import of a portable tool library remain future work.
 
 The core `tools` module provides a validated `MillingTool` and a bounded,
 number-sorted in-memory `ToolLibrary`, with separate insert/replace/remove
@@ -56,7 +63,8 @@ are 1..9999; the library holds at most 1024 tools. Only flat centre-cutting
 milling tools are supported in this increment. Turning/laser tools are future
 separate models, not treated as milling cutters.
 
-The server uses an ephemeral loopback port, serves only its embedded page,
+The server uses loopback port 47631 so the browser storage origin stays stable
+across normal restarts. It serves only its embedded page,
 rejects foreign Host/Origin values on calculation requests, caps request sizes
 and connections, and does not write files or connect to CNC equipment. It is
 a small local demo bridge, not a production HTTP framework. Stop it with Ctrl+C.
@@ -71,7 +79,8 @@ measure cancel latency or certify browser rendering.
 
 For a self-contained HTTP test, first build the example and then run
 `node prototype/test-live.cjs`. It starts its own preview server, checks it and
-stops that same process. GitHub runs this on Windows and Linux. In addition to
+stops that same process. The harness uses `--ephemeral` for an isolated test
+port. GitHub runs this on Windows and Linux. In addition to
 the cases above, oversized request bodies, excessive output and unknown API
 routes are tested. No existing user preview server is stopped.
 
