@@ -48,7 +48,7 @@ Multilingual requirements are recorded in [docs/multilingual.md](docs/multilingu
 The prototype does not yet use translation catalogs. Machine output, project
 data and command identifiers must remain independent of the display language.
 
-## Before publication
+## License and participation
 
 The project's own code, documentation and symbols in this package are licensed
 under the [Apache License 2.0](LICENSE). See [NOTICE](NOTICE) for provenance.
@@ -56,5 +56,6 @@ The license does not grant trademark rights in the project name or logo.
 Material released under Apache 2.0 remains available under those terms; a later
 license change cannot revoke those permissions.
 No SolidCraft/CamCraft code or earlier Rust patches are bundled.
-The [repository](https://github.com/harry3452/fertigungsstudio-cam) has been created
-privately. See [PUBLISHING.md](PUBLISHING.md) for the public launch preparation.
+The [repository](https://github.com/harry3452/Fertigungsstudio-cam) is public.
+Browse the [open issues](https://github.com/harry3452/Fertigungsstudio-cam/issues)
+and join a task discussion if you would like to contribute.
