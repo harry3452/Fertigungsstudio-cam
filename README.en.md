@@ -20,7 +20,9 @@ tiles, an operation tree, a rotatable example part, schematic tool movement,
 contextual parameters and settings dialogs. The integration selector is a mockup.
 
 The initial Rust core calculates restricted facing paths for rectangular raw
-blocks. It is not connected to the interface prototype. See
+blocks. The prototype's “Rust-Demo” button displays a calculated dataset, and
+“Rust-Bahn laden” imports additional Rust-generated JSON paths. This is file
+interchange, not live calculation or collision verification in the UI. See
 [the core contract and limitations](docs/core-first-step.md).
 
 There is no CAD import, general machining toolpath calculation, stock-removal or
