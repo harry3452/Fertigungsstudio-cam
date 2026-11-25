@@ -7,7 +7,7 @@ and optional integration into SolidCraft. Clear workflows and a multilingual
 interface are central requirements. Fertigungsstudio is a working name, not
 an official SolidCraft project.
 
-**Current status: concept and interactive interface prototype, not working CAM.**
+**Current status: interface prototype and first experimental Rust core, not usable CAM.**
 
 ![Fertigungsstudio CAM: German ribbon tiles, operation tree and schematic part preview](docs/images/fertigungsstudio-preview.jpg)
 
@@ -19,7 +19,11 @@ server is required. The current prototype is in German. It demonstrates ribbon
 tiles, an operation tree, a rotatable example part, schematic tool movement,
 contextual parameters and settings dialogs. The integration selector is a mockup.
 
-There is no CAD import, machining toolpath calculation, stock-removal or
+The initial Rust core calculates restricted facing paths for rectangular raw
+blocks. It is not connected to the interface prototype. See
+[the core contract and limitations](docs/core-first-step.md).
+
+There is no CAD import, general machining toolpath calculation, stock-removal or
 collision verification, usable NC output, or SolidCraft integration. Do not
 use this prototype to control machinery.
 
