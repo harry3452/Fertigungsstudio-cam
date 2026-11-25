@@ -26,8 +26,10 @@ eigenständigem Betrieb umgeschaltet werden; das ist nur eine Darstellung.
 
 Der erste Rust-Kern berechnet eingeschränkte Planfräsbahnen für rechteckige
 Rohblöcke. Über „Rust-Demo“ zeigt die Vorschau einen berechneten Datensatz;
-weitere Rust-Bahnen können als JSON-Datei geladen werden. Dies ist noch keine
-Live-Berechnung oder Kollisionsprüfung in der Oberfläche.
+weitere Rust-Bahnen können als JSON-Datei geladen werden. Mit
+`cargo run --locked --offline --example preview_server` startet eine lokale
+Live-Vorschau: gedruckte Adresse öffnen, „Live-Planfräsen“ wählen und Maße eingeben.
+Eine Kollisionsprüfung ist noch nicht vorhanden.
 Aufbau, Prüfungen und Grenzen: [Erster Kernbaustein](docs/core-first-step.md).
 
 Nicht vorhanden: realer CAD-Import, allgemeine Werkzeugwegberechnung, Materialabtrags-
