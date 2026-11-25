@@ -32,6 +32,12 @@ Invalid input returns a nonzero exit status without printing a partial path.
 
 ### Live local calculation
 
+Windows: double-click `Start-Fertigungsstudio.cmd`. It builds the example,
+opens the local URL and keeps a console window open. Press Enter there to stop
+that server. Rust/Cargo and a native linker are required; this is a source
+development launcher, not a packaged end-user installation. The PowerShell
+script runs only this project's build and owned preview process.
+
 Run `cargo run --locked --offline --example preview_server` and open the printed
 `http://127.0.0.1:PORT/` URL. Click **Live-Planfräsen** or **Berechnen**. Enter the
 seven dimensions/steps and calculate. The response comes from Rust, replaces
@@ -51,6 +57,12 @@ HTTP integration checks: `node prototype/live-server-tests.cjs URL` against the
 printed local URL. These cover successful generation, invalid depth, rejected
 missing/foreign origins, wrong host and the cancellation endpoint. They do not
 measure cancel latency or certify browser rendering.
+
+For a self-contained HTTP test, first build the example and then run
+`node prototype/test-live.cjs`. It starts its own preview server, checks it and
+stops that same process. GitHub runs this on Windows and Linux. In addition to
+the cases above, oversized request bodies, excessive output and unknown API
+routes are tested. No existing user preview server is stopped.
 
 ### File interchange
 
