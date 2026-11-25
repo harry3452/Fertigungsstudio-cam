@@ -7,7 +7,7 @@ fn report(args: &[String], out: &mut impl Write) -> Result<(), Box<dyn std::erro
     if args.iter().any(|s| s == "--help" || s == "-h") {
         writeln!(
             out,
-            "Usage: facing [width length height depth diameter stepdown stepover]"
+            "Usage: facing [--json] [width length height depth diameter stepdown stepover]"
         )?;
         writeln!(
             out,
@@ -15,6 +15,8 @@ fn report(args: &[String], out: &mut impl Write) -> Result<(), Box<dyn std::erro
         )?;
         return Ok(());
     }
+    let json = args.first().is_some_and(|s| s == "--json");
+    let args = if json { &args[1..] } else { args };
     let mut values: [f64; 7] = [120.0, 80.0, 12.0, 2.0, 10.0, 1.0, 4.0];
     if !args.is_empty() {
         if args.len() != 7 {
@@ -56,6 +58,43 @@ fn report(args: &[String], out: &mut impl Write) -> Result<(), Box<dyn std::erro
         plunge_feed: 200.0,
     };
     let path = face(setup, tool, op)?;
+    if json {
+        writeln!(
+            out,
+            "{{\"format\":\"fertigungsstudio-facing-v1\",\"units\":\"mm\","
+        )?;
+        writeln!(
+            out,
+            "\"stock\":{{\"min\":[0,0,0],\"max\":[{width},{length},{height}]}},"
+        )?;
+        writeln!(
+            out,
+            "\"tool_diameter\":{diameter},\"bottom_z\":{},\"clearance_z\":{},",
+            op.bottom_z, setup.clearance_z
+        )?;
+        writeln!(
+            out,
+            "\"start\":[{},{},{}],\"moves\":[",
+            path.start.x, path.start.y, path.start.z
+        )?;
+        for (i, m) in path.moves.iter().enumerate() {
+            let motion = if m.motion == Motion::Rapid {
+                "rapid"
+            } else {
+                "feed"
+            };
+            writeln!(
+                out,
+                "{{\"to\":[{},{},{}],\"motion\":\"{motion}\"}}{}",
+                m.to.x,
+                m.to.y,
+                m.to.z,
+                if i + 1 == path.moves.len() { "" } else { "," }
+            )?;
+        }
+        writeln!(out, "]}}")?;
+        return Ok(());
+    }
     writeln!(
         out,
         "Fertigungsstudio CAM - experimental move report (NOT G-code)"
