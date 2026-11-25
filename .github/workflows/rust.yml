@@ -44,3 +44,7 @@ jobs:
           node prototype/build-ribbon.cjs
           node --check prototype/live-preview.js
           node --check prototype/live-server-tests.cjs
+      - name: Build and test local Rust preview connection
+        run: |
+          cargo +1.99.1 build --locked --offline --example preview_server
+          node prototype/test-live.cjs
