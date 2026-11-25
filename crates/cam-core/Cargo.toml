@@ -1,0 +1,9 @@
+[package]
+name = "fertigungsstudio-cam-core"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Host-independent experimental CAM planning core"
+
+[lints]
+workspace = true
