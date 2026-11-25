@@ -13,6 +13,21 @@ cargo clippy --offline --workspace --all-targets -- -D warnings
 cargo fmt --all -- --check
 ```
 
+## Executable demo
+
+```text
+cargo run --offline --example facing
+cargo run --offline --example facing -- 120 80 12 2 10 1 4
+cargo run --offline --example facing -- --help
+```
+
+Optional arguments are width, length, height, removal depth, tool diameter,
+maximum stepdown and maximum row spacing, all in mm. Provide all seven or none.
+The demo uses a tool with 20 mm cutting length, 800 mm/min cutting feed,
+200 mm/min plunge feed and clearance 5 mm above stock. The report contains
+counts, the required start position and CSV move rows. It is not G-code.
+Invalid input returns a nonzero exit status without printing a partial path.
+
 ## Contract
 
 All coordinates are work coordinates in millimetres, with a fixed upright +Z
