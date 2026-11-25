@@ -43,7 +43,18 @@ Run `cargo run --locked --offline --example preview_server` and open the printed
 seven dimensions/steps and calculate. The response comes from Rust, replaces
 the displayed stock/path and uses the existing playback controls. **Abbrechen**
 invalidates the result in the browser and signals cooperative cancellation.
-The tool/feed defaults are the same as the CLI example, not machine settings.
+The live form has two example flat-tool presets and editable tool number,
+diameter, cutting length, cutting feed and plunge feed. These values are sent
+to Rust and validated; shorter cutting length can refuse a previously valid
+depth. Presets are not cutting-data recommendations. Values are held only in
+the open page, not persisted as a project or user tool library yet.
+
+The core `tools` module provides a validated `MillingTool` and a bounded,
+number-sorted in-memory `ToolLibrary`, with separate insert/replace/remove
+operations. Duplicate insertion never silently replaces a tool. Tool numbers
+are 1..9999; the library holds at most 1024 tools. Only flat centre-cutting
+milling tools are supported in this increment. Turning/laser tools are future
+separate models, not treated as milling cutters.
 
 The server uses an ephemeral loopback port, serves only its embedded page,
 rejects foreign Host/Origin values on calculation requests, caps request sizes
