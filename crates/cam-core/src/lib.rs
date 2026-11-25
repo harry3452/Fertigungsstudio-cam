@@ -4,6 +4,8 @@
 
 use std::fmt;
 
+pub mod tools;
+
 const MAX_COORD: f64 = 1_000_000.0;
 const MAX_MOVES: usize = 100_000;
 
