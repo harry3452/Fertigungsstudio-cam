@@ -29,6 +29,8 @@ Rohblöcke. Über „Rust-Demo“ zeigt die Vorschau einen berechneten Datensatz
 weitere Rust-Bahnen können als JSON-Datei geladen werden. Mit
 `cargo run --locked --offline --example preview_server` startet eine lokale
 Live-Vorschau: gedruckte Adresse öffnen, „Live-Planfräsen“ wählen und Maße eingeben.
+Unter Windows geht das auch per Doppelklick auf `Start-Fertigungsstudio.cmd`
+(Rust und Build-Werkzeuge müssen installiert sein).
 Eine Kollisionsprüfung ist noch nicht vorhanden.
 Aufbau, Prüfungen und Grenzen: [Erster Kernbaustein](docs/core-first-step.md).
 
