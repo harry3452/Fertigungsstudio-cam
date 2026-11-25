@@ -68,6 +68,17 @@ unsafe and denies unwrap/expect/panic; test assertions may panic.
 
 ## Evidence and limits
 
+### Cooperative cancellation
+
+`face_with_cancel` accepts a fast `FnMut() -> bool` callback. It checks before
+allocation, once before each four-move row, and before returning the result.
+An abort returns `Error::Cancelled` and drops the incomplete path. A GUI worker
+can check a shared atomic flag without introducing a GUI dependency into core.
+`face` remains the same API and delegates with cancellation disabled.
+Cancellation does not stop an executing machine and has no hard real-time
+latency guarantee. The calling application still needs worker scheduling and
+must handle a cancel request that arrives after result delivery.
+
 Tests check an analytic 20 × 10 × 5 block, final depth and row positions,
 grid-point footprint coverage, work-coordinate translation, clearance on
 lateral rapids and rejection of invalid/unbounded inputs.
