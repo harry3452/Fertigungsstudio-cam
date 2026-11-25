@@ -13,6 +13,8 @@ use std::{
 
 const PAGE: &str = include_str!("../../../prototype/fertigungsstudio-kacheln.html");
 const LIVE: &str = include_str!("../../../prototype/live-preview.js");
+const TOOL_STORAGE: &str = include_str!("../../../prototype/tool-storage.cjs");
+const TOOL_UI: &str = include_str!("../../../prototype/tool-library-ui.js");
 
 struct Request {
     method: String,
@@ -215,7 +217,7 @@ fn handle(stream: &mut TcpStream, host: &str, generation: &AtomicU64) -> std::io
         return respond(stream, "403 Forbidden", "text/plain", "InvalidHost");
     }
     if req.method == "GET" && req.path == "/" {
-        let page = PAGE.replace("</html>", &format!("<script>{LIVE}</script></html>"));
+        let page = PAGE.replace("</html>", &format!("<script>{TOOL_STORAGE}</script><script>{LIVE}</script><script>{{{TOOL_UI}}}</script></html>"));
         return respond(stream, "200 OK", "text/html", &page);
     }
     if req.method != "POST"
@@ -251,7 +253,13 @@ fn handle(stream: &mut TcpStream, host: &str, generation: &AtomicU64) -> std::io
 }
 
 fn run() -> std::io::Result<()> {
-    let listener = TcpListener::bind("127.0.0.1:0")?;
+    // Stable origin retains browser-local tools across normal restarts.
+    let ephemeral = std::env::args().skip(1).any(|a| a == "--ephemeral");
+    let listener = TcpListener::bind(if ephemeral {
+        "127.0.0.1:0"
+    } else {
+        "127.0.0.1:47631"
+    })?;
     let host = listener.local_addr()?.to_string();
     println!(
         "Fertigungsstudio local preview: http://{host}/\nStop with Ctrl+C. No CNC connection."
