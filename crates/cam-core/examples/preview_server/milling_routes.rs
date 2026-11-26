@@ -6,7 +6,7 @@ use fertigungsstudio_cam_core::milling::{
     outside_contour_with_cancel, rectangular_pocket_with_cancel,
 };
 use fertigungsstudio_cam_core::{
-    Error, FlatTool, Motion, Point3, Setup, StockBox, Toolpath,
+    FlatTool, Motion, Point3, Setup, StockBox, Toolpath,
 };
 use std::fmt::Write as _;
 
@@ -170,6 +170,7 @@ fn serialize(
 mod tests {
     #![allow(clippy::unwrap_used)]
     use super::*;
+    use fertigungsstudio_cam_core::Error;
 
     #[test]
     fn contour_pocket_and_drilling_routes_return_distinct_valid_data() {
