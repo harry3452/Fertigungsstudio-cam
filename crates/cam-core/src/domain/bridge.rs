@@ -6,6 +6,10 @@ use super::operation::{MillingOperation, OperationKind};
 use super::plan::{PlanDefinition, PlanError};
 use super::setup::StockGeometry;
 use super::tool::{MillingToolKind, ToolGeometry};
+use crate::milling::{
+    Cut, DrillBit, Drilling, Pocket, drill_points_with_cancel, outside_contour_with_cancel,
+    rectangular_pocket_with_cancel,
+};
 use crate::tools::ToolLibrary;
 use crate::{Error, Facing, Point3, Setup, StockBox, Toolpath};
 
@@ -14,6 +18,7 @@ pub enum BridgeError {
     InvalidPlan(PlanError),
     UnknownOperation,
     NotFacing,
+    WrongMillingOperation,
     UnsupportedStock,
     UnsupportedTool,
     UnknownLibraryTool,
@@ -96,6 +101,107 @@ pub fn face_plan_operation(
             cancelled,
         )
         .map_err(BridgeError::Planner)
+}
+
+/// Concrete experimental 3-axis milling calculations. Not a postprocessor.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub enum MillingJob<'a> {
+    OutsideContour(Cut),
+    RectangularPocket(Pocket),
+    Drilling(Drilling<'a>),
+}
+
+/// Resolve the operation from the existing shared project records.
+/// A contour or pocket uses the existing milling-tool library's feeds;
+/// a drill uses an explicitly supplied feed and its drilling-tool geometry.
+///
+/// This only converts already work-aligned rectangular stock. There is no
+/// 5-axis kinematics, CAD projection, fixture clearance, or NC verification.
+pub fn milling_plan_operation(
+    plan: &PlanDefinition,
+    library: &ToolLibrary,
+    operation_id: &str,
+    clearance_z_mm: f64,
+    request: MillingJob<'_>,
+    cancelled: impl FnMut() -> bool,
+) -> Result<Toolpath, BridgeError> {
+    plan.validate().map_err(BridgeError::InvalidPlan)?;
+    let op = plan
+        .operations
+        .iter()
+        .find(|op| op.id == operation_id)
+        .ok_or(BridgeError::UnknownOperation)?;
+    let setup = plan
+        .setups
+        .iter()
+        .find(|s| s.id == op.setup_id)
+        .ok_or(BridgeError::UnknownOperation)?;
+    let tool = plan
+        .tools
+        .iter()
+        .find(|t| t.id == op.tool_id)
+        .ok_or(BridgeError::UnknownOperation)?;
+    let stock = match setup.stock {
+        StockGeometry::Box { min_mm, max_mm } => StockBox {
+            min: point(min_mm),
+            max: point(max_mm),
+        },
+        _ => return Err(BridgeError::UnsupportedStock),
+    };
+    let setup = Setup { stock, clearance_z: clearance_z_mm };
+    match (op.kind, request) {
+        (OperationKind::Milling(MillingOperation::Contour2D), MillingJob::OutsideContour(mut cut)) => {
+            let selected = select_flat_mill(tool, library)?;
+            cut.cutting_feed_mm_min = selected.cutting_feed();
+            cut.plunge_feed_mm_min = selected.plunge_feed();
+            outside_contour_with_cancel(setup, selected.geometry(), cut, cancelled)
+                .map_err(BridgeError::Planner)
+        }
+        (OperationKind::Milling(MillingOperation::Pocket2D), MillingJob::RectangularPocket(mut pocket)) => {
+            let selected = select_flat_mill(tool, library)?;
+            pocket.cut.cutting_feed_mm_min = selected.cutting_feed();
+            pocket.cut.plunge_feed_mm_min = selected.plunge_feed();
+            rectangular_pocket_with_cancel(setup, selected.geometry(), pocket, cancelled)
+                .map_err(BridgeError::Planner)
+        }
+        (OperationKind::Milling(MillingOperation::Drilling), MillingJob::Drilling(drilling)) => {
+            let bit = match tool.geometry {
+                ToolGeometry::Milling {
+                    kind: MillingToolKind::Drill,
+                    diameter_mm,
+                    flute_length_mm,
+                    ..
+                } => DrillBit { diameter_mm, flute_length_mm },
+                _ => return Err(BridgeError::UnsupportedTool),
+            };
+            drill_points_with_cancel(setup, bit, drilling, cancelled).map_err(BridgeError::Planner)
+        }
+        _ => Err(BridgeError::WrongMillingOperation),
+    }
+}
+
+fn select_flat_mill<'a>(
+    tool: &super::tool::ToolDefinition,
+    library: &'a ToolLibrary,
+) -> Result<&'a crate::tools::MillingTool, BridgeError> {
+    let (diameter, flute_length) = match tool.geometry {
+        ToolGeometry::Milling {
+            kind: MillingToolKind::FlatEndMill,
+            diameter_mm,
+            flute_length_mm,
+            center_cutting: true,
+            ..
+        } => (diameter_mm, flute_length_mm),
+        _ => return Err(BridgeError::UnsupportedTool),
+    };
+    let station = tool.station_number.ok_or(BridgeError::UnknownLibraryTool)?;
+    let number = u16::try_from(station).map_err(|_| BridgeError::UnknownLibraryTool)?;
+    let selected = library.get(number).ok_or(BridgeError::UnknownLibraryTool)?;
+    let geometry = selected.geometry();
+    if geometry.diameter != diameter || geometry.cutting_length != flute_length {
+        return Err(BridgeError::ToolGeometryMismatch);
+    }
+    Ok(selected)
 }
 
 #[cfg(test)]
@@ -254,4 +360,74 @@ mod tests {
             BridgeError::Planner(Error::Cancelled),
         );
     }
+    #[test]
+    fn contour_and_pocket_reuse_selected_mill_and_feed() {
+        let (mut plan, library, facing) = fixture();
+        let cut = Cut {
+            bottom_z: facing.bottom_z,
+            stepdown_mm: facing.stepdown,
+            cutting_feed_mm_min: 1.0,
+            plunge_feed_mm_min: 1.0,
+        };
+        plan.operations[0].kind = OperationKind::Milling(MillingOperation::Contour2D);
+        let outside = milling_plan_operation(
+            &plan, &library, "OP1", 10.0, MillingJob::OutsideContour(cut), || false,
+        ).unwrap();
+        assert_eq!(outside.depth_passes, 3);
+        assert_eq!(outside.moves[2].motion, Motion::Feed { mm_per_min: 650.0 });
+        assert_eq!(outside.moves[1].motion, Motion::Feed { mm_per_min: 90.0 });
+
+        plan.operations[0].kind = OperationKind::Milling(MillingOperation::Pocket2D);
+        let pocket = Pocket {
+            rectangle: crate::milling::RectangleXY {
+                min_x: 1.0, min_y: 1.0, max_x: 19.0, max_y: 9.0,
+            },
+            cut,
+            stepover_mm: 3.0,
+        };
+        let path = milling_plan_operation(
+            &plan, &library, "OP1", 10.0, MillingJob::RectangularPocket(pocket), || false,
+        ).unwrap();
+        assert_eq!(path.depth_passes, 3);
+        assert_eq!(path.moves[1].motion, Motion::Feed { mm_per_min: 90.0 });
+        assert_eq!(path.moves[2].motion, Motion::Feed { mm_per_min: 650.0 });
+        assert_eq!(
+            milling_plan_operation(&plan, &library, "OP1", 10.0, MillingJob::OutsideContour(cut), || false)
+                .unwrap_err(),
+            BridgeError::WrongMillingOperation,
+        );
+    }
+
+    #[test]
+    fn drilling_is_explicitly_matched_to_drill_tool() {
+        let (mut plan, library, _) = fixture();
+        plan.operations[0].kind = OperationKind::Milling(MillingOperation::Drilling);
+        plan.tools[0].geometry = ToolGeometry::Milling {
+            kind: MillingToolKind::Drill,
+            diameter_mm: 4.0,
+            flute_length_mm: 10.0,
+            overall_length_mm: 60.0,
+            center_cutting: true,
+        };
+        let points = [crate::milling::DrillPoint { x: 10.0, y: 5.0 }];
+        let drill = Drilling {
+            points: &points, bottom_z: 2.5, peck_mm: Some(1.0), feed_mm_min: 120.0,
+        };
+        let path = milling_plan_operation(
+            &plan, &library, "OP1", 10.0, MillingJob::Drilling(drill), || false,
+        ).unwrap();
+        assert_eq!(path.depth_passes, 3);
+        assert_eq!(path.moves.last().unwrap().to.z, 10.0);
+        plan.tools[0].geometry = ToolGeometry::Milling {
+            kind: MillingToolKind::FlatEndMill,
+            diameter_mm: 4.0, flute_length_mm: 10.0,
+            overall_length_mm: 60.0, center_cutting: true,
+        };
+        assert_eq!(
+            milling_plan_operation(&plan, &library, "OP1", 10.0, MillingJob::Drilling(drill), || false)
+                .unwrap_err(),
+            BridgeError::UnsupportedTool,
+        );
+    }
+
 }
