@@ -11,8 +11,8 @@ an official SolidCraft project.
 
 ![Fertigungsstudio CAM: German ribbon tiles, operation tree and schematic part preview](docs/images/fertigungsstudio-preview.jpg)
 
-*Interface concept, 24 November 2026. Paths are illustrative, not calculated
-or verified machine movements.*
+*Early interface concept, 24 November 2026. The current prototype additionally
+shows four prominent operation cards; the screenshot has not yet been updated.*
 
 Open `prototype/fertigungsstudio-kacheln.html` in a browser. No installation or
 server is required. The current prototype is in German. It demonstrates ribbon
@@ -20,7 +20,10 @@ tiles, an operation tree, a rotatable example part, schematic tool movement,
 contextual parameters and settings dialogs. The integration selector is a mockup.
 
 The initial Rust core calculates restricted facing paths for rectangular raw
-blocks. The prototype's “Rust-Demo” button displays a calculated dataset, and
+blocks.
+The updated UI has prominent cards for facing, contouring, pocketing and drilling,
+which open the corresponding calculation form when served locally by Rust.
+When opened as a standalone HTML file, they show only illustrative paths. The prototype's “Rust-Demo” button displays a calculated dataset, and
 “Rust-Bahn laden” imports additional Rust-generated JSON paths. For live local
 calculation run `cargo run --locked --offline --example preview_server`, open
 the printed address and select “Live-Planfräsen”. There is no collision

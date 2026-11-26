@@ -11,8 +11,9 @@ Fertigungsstudio ist ein Arbeitsname und kein offizielles SolidCraft-Projekt.
 
 ![Fertigungsstudio CAM: deutsche Symbolkacheln, Bearbeitungsbaum und schematische Werkstückvorschau](docs/images/fertigungsstudio-preview.jpg)
 
-*Bedienentwurf vom 24. November 2026. Gezeigt werden illustrative Bahnen,
-keine berechneten oder geprüften Maschinenbewegungen.*
+*Das Bild zeigt den ersten Bedienentwurf vom 24. November 2026. Die aktuelle
+Oberfläche enthält zusätzlich vier große Bearbeitungsschaltflächen; die
+Abbildung wurde noch nicht aktualisiert.*
 
 ## Vorschau starten
 
@@ -41,7 +42,7 @@ Unter Windows geht das auch per Doppelklick auf `Start-Fertigungsstudio.cmd`
 (Rust und Build-Werkzeuge müssen installiert sein).
 Eine Kollisionsprüfung ist noch nicht vorhanden.
 
-**Experimenteller Entwicklungszweig:** Zusätzlich berechnet der Rust-Kern
+**Experimenteller Rust-Kern:** Zusätzlich berechnet der Rust-Kern
 jetzt einfache rechteckige Außenkonturen, Taschen und axiale Bohrungen mit
 optionalem vollständigem Rückzug zwischen den Bohrschritten. Diese Funktionen
 sind mit der gemeinsamen Auftragsstruktur verbunden und im lokalen Rust-Server
