@@ -153,7 +153,7 @@ pub fn outside_contour_with_cancel(
     setup: Setup, tool: FlatTool, cut: Cut, mut cancelled: impl FnMut() -> bool,
 ) -> Result<Toolpath, Error> {
     let (_, pass_count) = validate_cut(setup, tool, cut)?;
-    let cap = bound_moves(pass_count * 6.0)?;
+    let cap = bound_moves(pass_count * 7.0)?;
     let passes = pass_count as usize;
     let r = tool.diameter / 2.0;
     let s = setup.stock;
