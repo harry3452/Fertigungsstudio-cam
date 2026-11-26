@@ -1,0 +1,16 @@
+const assert=require('node:assert/strict');
+const fs=require('node:fs');
+const path=require('node:path');
+const {validate}=require('./core-path-data.cjs');
+const data=JSON.parse(fs.readFileSync(path.join(__dirname,'rust-facing-demo.json'),'utf8'));
+assert.equal(validate(data).moves.length,168);
+const mutate=fn=>{const d=structuredClone(data);fn(d);assert.throws(()=>validate(d));};
+mutate(d=>d.units='inch');
+mutate(d=>d.stock.max[0]=0);
+mutate(d=>d.start[2]=0);
+mutate(d=>d.moves[0].to[0]=Infinity);
+mutate(d=>d.moves[2].motion='unknown');
+mutate(d=>{d.moves[1].motion='rapid';});
+mutate(d=>d.moves[d.moves.length-1].to[2]=d.bottom_z);
+mutate(d=>d.moves=Array(100001).fill(d.moves[0]));
+console.log('Rust demo accepted; 8 malformed-path cases rejected.');

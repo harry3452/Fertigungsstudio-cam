@@ -7,7 +7,7 @@ and optional integration into SolidCraft. Clear workflows and a multilingual
 interface are central requirements. Fertigungsstudio is a working name, not
 an official SolidCraft project.
 
-**Current status: concept and interactive interface prototype, not working CAM.**
+**Current status: interface prototype and first experimental Rust core, not usable CAM.**
 
 ![Fertigungsstudio CAM: German ribbon tiles, operation tree and schematic part preview](docs/images/fertigungsstudio-preview.jpg)
 
@@ -19,7 +19,21 @@ server is required. The current prototype is in German. It demonstrates ribbon
 tiles, an operation tree, a rotatable example part, schematic tool movement,
 contextual parameters and settings dialogs. The integration selector is a mockup.
 
-There is no CAD import, machining toolpath calculation, stock-removal or
+The initial Rust core calculates restricted facing paths for rectangular raw
+blocks. The prototype's “Rust-Demo” button displays a calculated dataset, and
+“Rust-Bahn laden” imports additional Rust-generated JSON paths. For live local
+calculation run `cargo run --locked --offline --example preview_server`, open
+the printed address and select “Live-Planfräsen”. There is no collision
+verification. See
+[the core contract and limitations](docs/core-first-step.md).
+
+The modular Rust extension in PR #7 introduces machine, tool, setup and
+operation records for milling, turning and laser. An explicit adapter validates
+a 3-axis facing request and reuses the existing bounded facing planner and tool
+library. Turning, laser and 5-axis operations remain **data contracts only**.
+See the [architecture document](docs/ARCHITECTURE.md).
+
+There is no CAD import, general machining toolpath calculation, stock-removal or
 collision verification, usable NC output, or SolidCraft integration. Do not
 use this prototype to control machinery.
 
@@ -30,7 +44,10 @@ use this prototype to control machinery.
 - A clear ribbon, operation tree, large viewport and contextual parameter editor.
 - Central application settings and a saved per-user language choice.
 - German and English first; additional languages through translation catalogs.
-- An initial 3-axis scope: facing, contours, pockets and drilling.
+- The core is structured for **3-/5-axis milling, turning and laser cutting**.
+  The first implemented calculation is restricted **3-axis facing**.
+  Contours, pockets, drilling, turning, laser and simultaneous 5-axis
+  toolpaths are not implemented yet.
 
 The intended application language is Rust. HTML/JavaScript is only a design
 prototype. The SolidCraft integration route remains to be researched; no

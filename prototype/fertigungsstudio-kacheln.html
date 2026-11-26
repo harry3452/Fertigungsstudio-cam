@@ -7,7 +7,7 @@
 
 header{padding:12px 22px;gap:24px}.document-name{color:var(--muted)}.header-right{margin-left:auto;display:flex;align-items:center;gap:12px}.header-right label{font-size:12px;color:var(--muted)}.header-right select{width:auto}.workspace-tabs{display:flex;gap:6px;padding:6px 22px 0;border-bottom:1px solid var(--line);align-items:center}.workspace-tabs button{border:0;border-radius:5px 5px 0 0;background:transparent;padding:10px 22px}.workspace-tabs button.active{background:#233c3b;color:var(--accent);border-bottom:3px solid var(--accent)}.workspace-tabs span{margin-left:auto;color:var(--muted);font-size:12px}.ribbon{display:flex;flex-wrap:wrap;padding:10px 14px 7px;background:var(--panel);gap:0;border-bottom:1px solid var(--line)}.ribbon-group{display:flex;flex-direction:column;justify-content:space-between;border-right:1px solid var(--line);padding:0 12px;gap:6px}.ribbon-group:last-child{border:0}.tiles{display:flex;gap:5px}.tile{min-width:70px;max-width:105px;min-height:79px;padding:9px 8px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:7px;background:transparent;border:1px solid transparent;border-radius:6px;font-size:13px}.tile svg{width:30px;height:32px;color:#9fbed1}.tile:hover{background:#293b48;border-color:#4c6575}.tile.active{background:#173e35;border-color:#4e9c84}.tile.active svg{color:var(--accent)}.group-label{text-align:center;font-size:12px;color:var(--muted)}.layout{height:calc(100vh - 320px);min-height:430px;grid-template-columns:260px minmax(280px,1fr) 310px}.layout.inspector-hidden{grid-template-columns:260px minmax(280px,1fr)}.inspector-hidden .right{display:none}.panel.right{position:relative}.close-panel{float:right;padding:3px 8px}.timeline{height:66px}.status{padding:7px 22px}.viewtitle strong{font-size:16px}.tools{margin-top:22px}.panel{padding:18px}.op{padding:10px}.op small{font-size:12px}.eyebrow{font-size:12px}.settings-dialog{width:min(680px,94vw);color:var(--ink);background:var(--panel);border:1px solid #536879;border-radius:12px;padding:26px;box-shadow:0 30px 100px #0008}.settings-dialog::backdrop{background:#0009}.dialog-head{display:flex;justify-content:space-between;align-items:center;gap:20px}.dialog-body{display:grid;gap:18px;margin:24px 0}.dialog-body label{display:grid;gap:8px}.dialog-body .check{display:flex}.dialog-actions{display:flex;gap:10px;justify-content:flex-end}.settings-dialog input:not([type=checkbox]),.settings-dialog select{width:100%;padding:10px;background:var(--bg);border:1px solid var(--line);border-radius:5px;color:var(--ink)}button:focus-visible,[role=button]:focus-visible{outline:2px solid var(--accent);outline-offset:3px}body.large-text{font-size:16px}body.light{--bg:#e9eef3;--panel:#f8fafc;--line:#bcc9d4;--muted:#4f6073;--ink:#203347;--accent:#167454;color-scheme:light}body.light button{background:#e2eaf1;color:#263e52;border-color:#b6c6d4}body.light button.active,body.light button.primary{background:#d6eee4;color:#11583f}body.light .setup{background:#e0e9f0}body.light .view{background:radial-gradient(ellipse,#536c7d,#253948)}body.light .viewtitle,body.light .viewtitle span,body.light .legend{color:#e8eef6}body.light .info{background:#e0f0e7;color:#285641}body.light .field label{color:#3c5368}body.light input[type=number],body.light select{background:#fff;color:#203347}#postCode{font-family:Consolas,monospace;white-space:pre-wrap;color:var(--muted)}
 @media(min-width:1600px){.tile{min-width:85px}.ribbon-group{padding:0 18px}.layout{min-height:520px}}@media(max-width:1100px){.layout,.layout.inspector-hidden{height:auto;grid-template-columns:220px minmax(280px,1fr)}.view{min-height:540px}.layout .right{grid-column:1/-1}.inspector-hidden .right{display:none}.ribbon{gap:12px 0}.header-right label{display:none}}@media(max-width:650px){.layout,.layout.inspector-hidden{display:flex;flex-direction:column}.header-right{margin-left:0}.document-name{display:none}header{flex-wrap:wrap}.tile{min-width:64px;font-size:12px}.workspace-tabs span{display:none}.viewbuttons{top:80px}.ribbon-group{padding:0 6px}.view{min-height:430px}.panel.right{display:block}.inspector-hidden .right{display:none}.timeline{flex-wrap:wrap;height:auto}.timeline input{min-width:120px}}
-</style>
+[hidden]{display:none!important}</style>
 <header><div class="brand">Fertigungs<span>studio</span></div><span class="document-name">Trägerplatte · CAM</span><div class="header-right"><label for="hostMode">Betrieb</label><select id="hostMode"><option>Eigenständig</option><option>In SolidCraft integriert</option></select><span class="pill">Bedienentwurf</span></div></header><div class="workspace-tabs"><button>Projekt</button><button class="active">Fertigung</button><button id="tabSimulation">Simulation</button><span id="connectionLabel">Importiertes Bauteil</span></div>
 <nav class="ribbon" aria-label="CAM-Werkzeugleiste"><section class="ribbon-group" aria-label="Einrichten"><div class="tiles"><button id="setupButton" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M5 8h22v17H5zM9 8V4h14v4M10 13h12M10 18h8"/></svg><span>Aufspannung</span></button><button id="stockTile" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="m4 10 12-6 12 6v14l-12 6-12-6zM4 10l12 6 12-6M16 16v14"/></svg><span>Rohteil</span></button><button id="originTile" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M7 25h20M7 25V5M7 25l14-14M23 21l4 4-4 4M3 9l4-4 4 4"/><circle cx="7" cy="25" r="2"/></svg><span>Nullpunkt</span></button><button id="toolButton" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M11 3h10v13l-3 4v8l-2 3-2-3v-8l-3-4zM11 12h10M14 23l4 3"/></svg><span>Werkzeuge</span></button></div><span class="group-label">Einrichten</span></section><section class="ribbon-group" aria-label="Fräsen"><div class="tiles"><button  class="tile" data-operation="0"><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M3 24h26v5H3zM5 18h22M5 14h22M5 10h22M11 3h10v4H11z"/></svg><span>Planen</span></button><button  class="tile" data-operation="1"><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M3 9h26v20H3zM8 14h16v10H8zM12 18h8v3h-8"/></svg><span>Tasche</span></button><button  class="tile" data-operation="2"><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M7 8h18v18H7zM3 4h26v26H3z"/><path d="m12 4 4-3 4 3"/></svg><span>Kontur</span></button></div><span class="group-label">Fräsen</span></section><section class="ribbon-group" aria-label="Bohren"><div class="tiles"><button  class="tile" data-operation="3"><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2h8v16l-4 6-4-6zM12 7l8 4M12 13l8 4M3 27h26M7 23v8M25 23v8"/></svg><span>Bohren</span></button></div><span class="group-label">Bohren</span></section><section class="ribbon-group" aria-label="Prüfen"><div class="tiles"><button id="calculateTile" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="m5 18 7 7L28 7"/><path d="M5 8V4h9M28 24v5h-9"/></svg><span>Berechnen</span></button><button id="simulationTile" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="m11 6 16 11-16 10z"/></svg><span>Simulation</span></button></div><span class="group-label">Prüfen</span></section><section class="ribbon-group" aria-label="Ausgeben"><div class="tiles"><button id="postTile" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h12l6 6v21H8zM20 3v7h6M12 16h10M12 21h10M12 26h6"/></svg><span>Postprozessor</span></button><button id="export" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h12l6 6v21H8zM20 3v7h6M12 16h10M12 21h10M12 26h6"/></svg><span>Konzept speichern</span></button></div><span class="group-label">Ausgeben</span></section><section class="ribbon-group" aria-label="Ansicht"><div class="tiles"><button id="reset" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="m4 11 12-7 12 7-12 7zM4 11v13l12 7 12-7V11M16 18v13"/></svg><span>Einpassen</span></button><button id="preferencesTile" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><circle cx="16" cy="16" r="6"/><path d="M16 2v6M16 24v6M2 16h6M24 16h6M6 6l4 4M22 22l4 4M6 26l4-4M22 10l4-4"/></svg><span>Einstellungen</span></button></div><span class="group-label">Ansicht</span></section></nav>
 <main class="layout inspector-hidden"><aside class="panel"><div class="eyebrow">FERTIGUNGSABLAUF</div><h2>Demoteil · Trägerplatte</h2><p style="font-size:12px">100 × 70 × 18 mm · Aluminium</p><div class="setup" role="button" tabindex="0" id="setupTree"><strong id="setupName">Aufspannung 1 · Oberseite</strong><span style="font-size:12px;color:var(--muted)">G54 · Nullpunkt auf Rohteiloberseite</span></div><div class="tree" id="operations"></div><section class="tools" id="tools"><div class="eyebrow">WERKZEUGBIBLIOTHEK</div><div class="tool">T1 · Planfräser Ø 32<small>Planen · 4 Schneiden</small></div><div class="tool">T2 · Schaftfräser Ø 8<small>Tasche und Kontur · 3 Schneiden</small></div><div class="tool">T3 · Spiralbohrer Ø 6<small>Vier Befestigungsbohrungen</small></div></section></aside>
@@ -51,4 +51,252 @@ $('preferencesTile').onclick=()=> $('generalSettings').showModal();$('postTile')
 $('themeChoice').onchange=()=>document.body.classList.toggle('light',$('themeChoice').value==='light');$('fontChoice').onchange=()=>{document.body.classList.toggle('large-text',$('fontChoice').value==='large');resize();};$('hostMode').onchange=()=>{$('connectionLabel').textContent=$('hostMode').selectedIndex?'Integrierter Betrieb · Konzept':'Importiertes Bauteil';};
 $('calculateTile').onclick=()=>{makePath();progress=0;$('progress').value=0;toast('Beispielbahnen aktualisiert. Noch keine echte CAM-Berechnung.');};
 function startSimulation(){playing=true;progress=0;$('play').textContent='Ⅱ Pause';$('status').textContent='Schematische Werkzeugbewegung · keine Materialabtragsprüfung';} $('simulationTile').onclick=startSimulation;$('tabSimulation').onclick=startSimulation;syncTiles();
+</script><script id="rust-demo-data" type="application/json">{"format":"fertigungsstudio-facing-v1","units":"mm",
+"stock":{"min":[0,0,0],"max":[120,80,12]},
+"tool_diameter":10,"bottom_z":10,"clearance_z":17,
+"start":[-10,0,17],"moves":[
+{"to":[-10,0,17],"motion":"rapid"},
+{"to":[-10,0,11],"motion":"feed"},
+{"to":[130,0,11],"motion":"feed"},
+{"to":[130,0,17],"motion":"rapid"},
+{"to":[-10,4,17],"motion":"rapid"},
+{"to":[-10,4,11],"motion":"feed"},
+{"to":[130,4,11],"motion":"feed"},
+{"to":[130,4,17],"motion":"rapid"},
+{"to":[-10,8,17],"motion":"rapid"},
+{"to":[-10,8,11],"motion":"feed"},
+{"to":[130,8,11],"motion":"feed"},
+{"to":[130,8,17],"motion":"rapid"},
+{"to":[-10,12,17],"motion":"rapid"},
+{"to":[-10,12,11],"motion":"feed"},
+{"to":[130,12,11],"motion":"feed"},
+{"to":[130,12,17],"motion":"rapid"},
+{"to":[-10,16,17],"motion":"rapid"},
+{"to":[-10,16,11],"motion":"feed"},
+{"to":[130,16,11],"motion":"feed"},
+{"to":[130,16,17],"motion":"rapid"},
+{"to":[-10,20,17],"motion":"rapid"},
+{"to":[-10,20,11],"motion":"feed"},
+{"to":[130,20,11],"motion":"feed"},
+{"to":[130,20,17],"motion":"rapid"},
+{"to":[-10,24,17],"motion":"rapid"},
+{"to":[-10,24,11],"motion":"feed"},
+{"to":[130,24,11],"motion":"feed"},
+{"to":[130,24,17],"motion":"rapid"},
+{"to":[-10,28,17],"motion":"rapid"},
+{"to":[-10,28,11],"motion":"feed"},
+{"to":[130,28,11],"motion":"feed"},
+{"to":[130,28,17],"motion":"rapid"},
+{"to":[-10,32,17],"motion":"rapid"},
+{"to":[-10,32,11],"motion":"feed"},
+{"to":[130,32,11],"motion":"feed"},
+{"to":[130,32,17],"motion":"rapid"},
+{"to":[-10,36,17],"motion":"rapid"},
+{"to":[-10,36,11],"motion":"feed"},
+{"to":[130,36,11],"motion":"feed"},
+{"to":[130,36,17],"motion":"rapid"},
+{"to":[-10,40,17],"motion":"rapid"},
+{"to":[-10,40,11],"motion":"feed"},
+{"to":[130,40,11],"motion":"feed"},
+{"to":[130,40,17],"motion":"rapid"},
+{"to":[-10,44,17],"motion":"rapid"},
+{"to":[-10,44,11],"motion":"feed"},
+{"to":[130,44,11],"motion":"feed"},
+{"to":[130,44,17],"motion":"rapid"},
+{"to":[-10,48,17],"motion":"rapid"},
+{"to":[-10,48,11],"motion":"feed"},
+{"to":[130,48,11],"motion":"feed"},
+{"to":[130,48,17],"motion":"rapid"},
+{"to":[-10,52,17],"motion":"rapid"},
+{"to":[-10,52,11],"motion":"feed"},
+{"to":[130,52,11],"motion":"feed"},
+{"to":[130,52,17],"motion":"rapid"},
+{"to":[-10,56,17],"motion":"rapid"},
+{"to":[-10,56,11],"motion":"feed"},
+{"to":[130,56,11],"motion":"feed"},
+{"to":[130,56,17],"motion":"rapid"},
+{"to":[-10,60,17],"motion":"rapid"},
+{"to":[-10,60,11],"motion":"feed"},
+{"to":[130,60,11],"motion":"feed"},
+{"to":[130,60,17],"motion":"rapid"},
+{"to":[-10,64,17],"motion":"rapid"},
+{"to":[-10,64,11],"motion":"feed"},
+{"to":[130,64,11],"motion":"feed"},
+{"to":[130,64,17],"motion":"rapid"},
+{"to":[-10,68,17],"motion":"rapid"},
+{"to":[-10,68,11],"motion":"feed"},
+{"to":[130,68,11],"motion":"feed"},
+{"to":[130,68,17],"motion":"rapid"},
+{"to":[-10,72,17],"motion":"rapid"},
+{"to":[-10,72,11],"motion":"feed"},
+{"to":[130,72,11],"motion":"feed"},
+{"to":[130,72,17],"motion":"rapid"},
+{"to":[-10,76,17],"motion":"rapid"},
+{"to":[-10,76,11],"motion":"feed"},
+{"to":[130,76,11],"motion":"feed"},
+{"to":[130,76,17],"motion":"rapid"},
+{"to":[-10,80,17],"motion":"rapid"},
+{"to":[-10,80,11],"motion":"feed"},
+{"to":[130,80,11],"motion":"feed"},
+{"to":[130,80,17],"motion":"rapid"},
+{"to":[-10,0,17],"motion":"rapid"},
+{"to":[-10,0,10],"motion":"feed"},
+{"to":[130,0,10],"motion":"feed"},
+{"to":[130,0,17],"motion":"rapid"},
+{"to":[-10,4,17],"motion":"rapid"},
+{"to":[-10,4,10],"motion":"feed"},
+{"to":[130,4,10],"motion":"feed"},
+{"to":[130,4,17],"motion":"rapid"},
+{"to":[-10,8,17],"motion":"rapid"},
+{"to":[-10,8,10],"motion":"feed"},
+{"to":[130,8,10],"motion":"feed"},
+{"to":[130,8,17],"motion":"rapid"},
+{"to":[-10,12,17],"motion":"rapid"},
+{"to":[-10,12,10],"motion":"feed"},
+{"to":[130,12,10],"motion":"feed"},
+{"to":[130,12,17],"motion":"rapid"},
+{"to":[-10,16,17],"motion":"rapid"},
+{"to":[-10,16,10],"motion":"feed"},
+{"to":[130,16,10],"motion":"feed"},
+{"to":[130,16,17],"motion":"rapid"},
+{"to":[-10,20,17],"motion":"rapid"},
+{"to":[-10,20,10],"motion":"feed"},
+{"to":[130,20,10],"motion":"feed"},
+{"to":[130,20,17],"motion":"rapid"},
+{"to":[-10,24,17],"motion":"rapid"},
+{"to":[-10,24,10],"motion":"feed"},
+{"to":[130,24,10],"motion":"feed"},
+{"to":[130,24,17],"motion":"rapid"},
+{"to":[-10,28,17],"motion":"rapid"},
+{"to":[-10,28,10],"motion":"feed"},
+{"to":[130,28,10],"motion":"feed"},
+{"to":[130,28,17],"motion":"rapid"},
+{"to":[-10,32,17],"motion":"rapid"},
+{"to":[-10,32,10],"motion":"feed"},
+{"to":[130,32,10],"motion":"feed"},
+{"to":[130,32,17],"motion":"rapid"},
+{"to":[-10,36,17],"motion":"rapid"},
+{"to":[-10,36,10],"motion":"feed"},
+{"to":[130,36,10],"motion":"feed"},
+{"to":[130,36,17],"motion":"rapid"},
+{"to":[-10,40,17],"motion":"rapid"},
+{"to":[-10,40,10],"motion":"feed"},
+{"to":[130,40,10],"motion":"feed"},
+{"to":[130,40,17],"motion":"rapid"},
+{"to":[-10,44,17],"motion":"rapid"},
+{"to":[-10,44,10],"motion":"feed"},
+{"to":[130,44,10],"motion":"feed"},
+{"to":[130,44,17],"motion":"rapid"},
+{"to":[-10,48,17],"motion":"rapid"},
+{"to":[-10,48,10],"motion":"feed"},
+{"to":[130,48,10],"motion":"feed"},
+{"to":[130,48,17],"motion":"rapid"},
+{"to":[-10,52,17],"motion":"rapid"},
+{"to":[-10,52,10],"motion":"feed"},
+{"to":[130,52,10],"motion":"feed"},
+{"to":[130,52,17],"motion":"rapid"},
+{"to":[-10,56,17],"motion":"rapid"},
+{"to":[-10,56,10],"motion":"feed"},
+{"to":[130,56,10],"motion":"feed"},
+{"to":[130,56,17],"motion":"rapid"},
+{"to":[-10,60,17],"motion":"rapid"},
+{"to":[-10,60,10],"motion":"feed"},
+{"to":[130,60,10],"motion":"feed"},
+{"to":[130,60,17],"motion":"rapid"},
+{"to":[-10,64,17],"motion":"rapid"},
+{"to":[-10,64,10],"motion":"feed"},
+{"to":[130,64,10],"motion":"feed"},
+{"to":[130,64,17],"motion":"rapid"},
+{"to":[-10,68,17],"motion":"rapid"},
+{"to":[-10,68,10],"motion":"feed"},
+{"to":[130,68,10],"motion":"feed"},
+{"to":[130,68,17],"motion":"rapid"},
+{"to":[-10,72,17],"motion":"rapid"},
+{"to":[-10,72,10],"motion":"feed"},
+{"to":[130,72,10],"motion":"feed"},
+{"to":[130,72,17],"motion":"rapid"},
+{"to":[-10,76,17],"motion":"rapid"},
+{"to":[-10,76,10],"motion":"feed"},
+{"to":[130,76,10],"motion":"feed"},
+{"to":[130,76,17],"motion":"rapid"},
+{"to":[-10,80,17],"motion":"rapid"},
+{"to":[-10,80,10],"motion":"feed"},
+{"to":[130,80,10],"motion":"feed"},
+{"to":[130,80,17],"motion":"rapid"}
+]}
+</script><script>// Original interchange validator. Drawing checks are not collision certification.
+(function(root) {
+  function validate(d) {
+    const finite = n => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= 1000000;
+    const point = p => Array.isArray(p) && p.length === 3 && p.every(finite);
+    if (!d || d.format !== 'fertigungsstudio-facing-v1' || d.units !== 'mm') throw Error('Unbekanntes Bahnformat oder Einheit.');
+    if (!d.stock || !point(d.stock.min) || !point(d.stock.max) || !d.stock.max.every((v,i)=>v>d.stock.min[i])) throw Error('Ungültiges Rohteil.');
+    if (!finite(d.tool_diameter) || d.tool_diameter <= 0 || !finite(d.bottom_z) || !finite(d.clearance_z) || d.clearance_z<=d.stock.max[2] || d.bottom_z<d.stock.min[2] || d.bottom_z>=d.stock.max[2]) throw Error('Ungültiges Werkzeug oder Höhen.');
+    if(d.tool_number!==undefined&&(!Number.isInteger(d.tool_number)||d.tool_number<1||d.tool_number>9999))throw Error('Ungültige Werkzeugnummer.');
+    for(const key of ['cutting_length','cutting_feed','plunge_feed'])if(d[key]!==undefined&&(!finite(d[key])||d[key]<=0))throw Error('Ungültige Werkzeugdaten.');
+    if (!point(d.start) || d.start[2] !== d.clearance_z || !Array.isArray(d.moves) || d.moves.length<1 || d.moves.length>100000) throw Error('Ungültiger Start oder zu viele Bewegungen.');
+    let prev=d.start;
+    for (const m of d.moves) {
+      if (!m || !point(m.to) || !['rapid','feed'].includes(m.motion) || m.to[2]<d.bottom_z || m.to[2]>d.clearance_z) throw Error('Ungültige Bewegung.');
+      if (m.motion==='rapid' && ((m.to[0]!==prev[0] || m.to[1]!==prev[1]) ? (prev[2]!==d.clearance_z || m.to[2]!==d.clearance_z) : m.to[2]<prev[2])) throw Error('Ungültige Eilganghöhe.');
+      prev=m.to;
+    }
+    if (prev[2]!==d.clearance_z) throw Error('Rückzug am Bahnende fehlt.');
+    // Return only the understood fields; file values are never inserted as markup.
+    return d;
+  }
+  root.CamPathData={validate};
+  if(typeof module!=='undefined')module.exports={validate};
+})(globalThis);
+</script><script>// Original bridge: imported Rust data, no browser-side CAM calculation.
+let coreData=null;
+const originalDraw=draw;
+const coreBadge=document.createElement('span');
+coreBadge.style.cssText='margin-left:12px;color:var(--accent)';
+document.querySelector('.workspace-tabs').appendChild(coreBadge);
+const sidebar=document.querySelector('.panel');
+const originalStockText=sidebar.querySelector('p').textContent;
+const summary=document.createElement('p');summary.hidden=true;sidebar.appendChild(summary);
+const importButton=document.createElement('button');importButton.textContent='Rust-Bahn laden';
+const demoButton=document.createElement('button');demoButton.textContent='Rust-Demo';
+const returnButton=document.createElement('button');returnButton.textContent='Zurück zum Bedienentwurf';returnButton.hidden=true;
+document.querySelector('.viewbuttons').prepend(importButton,demoButton,returnButton);
+const picker=document.createElement('input');picker.type='file';picker.accept='.json';picker.hidden=true;document.body.appendChild(picker);
+importButton.onclick=()=>picker.click();
+function loadCore(d){
+  coreData=CamPathData.validate(d);playing=false;progress=0;$('play').textContent='▶ Abspielen';
+  document.querySelector('.layout').classList.add('inspector-hidden');
+  $('opTitle').textContent='Planfräsen · Rust-Kern';
+  $('connectionLabel').textContent='Berechnete Bahn · rechteckiger Rohblock';
+  coreBadge.textContent=coreData.moves.length+' Bewegungen';
+  document.querySelector('.legend').firstElementChild.lastChild.textContent='Berechnete Bahn';
+  document.querySelector('.panel h2').textContent='Rust-Rohblock';
+  sidebar.querySelector('p').textContent=dims(coreData)+' mm · Rechteckrohteil';
+  sidebar.querySelectorAll('.tree,.tools,.setup').forEach(e=>e.hidden=true);
+  summary.hidden=false;summary.textContent='Planfräsen · '+(coreData.tool_number?'T'+coreData.tool_number+' · ':'')+'Werkzeug Ø '+coreData.tool_diameter+' mm · Endhöhe '+coreData.bottom_z+' mm'+(coreData.cutting_feed?' · Vorschub '+coreData.cutting_feed+' mm/min':'')+' · Freiraum außerhalb des Rohteils vorausgesetzt.';
+  $('status').textContent='Rust-Bahndaten · keine Kollisions- oder Maschinenprüfung';
+  $('editOperation').disabled=true;returnButton.hidden=false;resize();
+}
+demoButton.onclick=()=>{try{loadCore(JSON.parse(document.getElementById('rust-demo-data').textContent));}catch(e){toast(e.message);}};
+picker.onchange=async()=>{const file=picker.files[0];if(!file)return;try{if(file.size>12000000)throw Error('Datei zu groß (maximal 12 MB).');const d=JSON.parse(await file.text());loadCore(d);}catch(e){toast('Bahn nicht geladen: '+e.message);}picker.value='';};
+function dims(d){return d.stock.max.map((v,i)=>v-d.stock.min[i]).join(' × ');}
+returnButton.onclick=()=>{coreData=null;coreBadge.textContent='';returnButton.hidden=true;$('editOperation').disabled=false;selectOperation(selected);document.querySelector('.panel h2').textContent='Demoteil · Trägerplatte';sidebar.querySelector('p').textContent=originalStockText;sidebar.querySelectorAll('.tree,.tools,.setup').forEach(e=>e.hidden=false);summary.hidden=true;document.querySelector('.legend').firstElementChild.lastChild.textContent='Beispielbahn';$('connectionLabel').textContent='Bedienentwurf · illustrative Bahnen';resize();};
+// Operation selection returns explicitly to the old illustrative part.
+document.querySelectorAll('[data-operation],.op').forEach(b=>b.addEventListener('click',()=>{if(coreData)returnButton.click();}));
+const originalMakePath=makePath;makePath=function(){if(!coreData)originalMakePath();};
+draw=function(){
+  if(!coreData){originalDraw();return;}
+  const d=coreData,w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);
+  const center=d.stock.min.map((v,i)=>(v+d.stock.max[i])/2);
+  const scale=100/Math.max(...d.stock.max.map((v,i)=>v-d.stock.min[i]),d.clearance_z-d.stock.min[2],1);
+  const map=p=>point((p[0]-center[0])*scale,(p[1]-center[1])*scale,(p[2]-center[2])*scale);
+  const lo=map(d.stock.min),hi=map(d.stock.max);
+  box(lo.x,lo.y,lo.z,hi.x,hi.y,hi.z,['#b2c5cf','#6d8797','#839eae']);
+  const moves=d.moves,shown=Math.min(moves.length,5000),end=progress*moves.length;
+  if($('paths').checked){for(let i=0;i<shown;i++){const m=moves[i];line(map(i?moves[i-1].to:d.start),map(m.to),m.motion==='rapid'?'#e7b76399':i<end?'#a5ffcf':'#50d7b3',1.7,m.motion==='rapid'?[4,5]:[]);}}
+  const i=Math.min(moves.length-1,Math.floor(end));const a=i?moves[i-1].to:d.start,b=moves[i].to,t=Math.min(1,end-i);const tip=map(a.map((v,j)=>v+(b[j]-v)*t));
+  line(tip,point(tip.x,tip.y,tip.z+24),'#c4d5e1',Math.max(2,Math.min(14,d.tool_diameter*scale)));
+  $('progressText').textContent=Math.round(progress*100)+' % · Rust-Bahn';
+  coreBadge.textContent=moves.length>5000?moves.length+' Bewegungen · Anzeige: erste 5000':moves.length+' Bewegungen';
+};
 </script></html>

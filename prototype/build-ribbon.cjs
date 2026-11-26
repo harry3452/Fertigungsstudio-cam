@@ -45,7 +45,12 @@ $('themeChoice').onchange=()=>document.body.classList.toggle('light',$('themeCho
 $('calculateTile').onclick=()=>{makePath();progress=0;$('progress').value=0;toast('Beispielbahnen aktualisiert. Noch keine echte CAM-Berechnung.');};
 function startSimulation(){playing=true;progress=0;$('play').textContent='Ⅱ Pause';$('status').textContent='Schematische Werkzeugbewegung · keine Materialabtragsprüfung';} $('simulationTile').onclick=startSimulation;$('tabSimulation').onclick=startSimulation;syncTiles();
 </script>`;
-html=html.replace('</html>',dialogs+extra+'</html>');
+html=html.replace('</style>','[hidden]{display:none!important}</style>');
+const coreValidator=fs.readFileSync(path.join(__dirname,'core-path-data.cjs'),'utf8');
+const corePreview=fs.readFileSync(path.join(__dirname,'core-preview.js'),'utf8');
+const demoJson=fs.readFileSync(path.join(__dirname,'rust-facing-demo.json'),'utf8').replace(/^\uFEFF/,'');
+JSON.parse(demoJson);
+html=html.replace('</html>',dialogs+extra+'<script id="rust-demo-data" type="application/json">'+demoJson+'</script><script>'+coreValidator+'</script><script>'+corePreview+'</script></html>');
 fs.writeFileSync(path.join(__dirname,'fertigungsstudio-kacheln.html'),html,'utf8');
 for(const match of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) new (require('vm').Script)(match[1]);
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);

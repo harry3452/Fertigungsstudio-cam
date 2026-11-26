@@ -1,0 +1,12 @@
+const assert=require('node:assert/strict');const api=require('./tool-storage.cjs');
+let raw=null;const storage={getItem:()=>raw,setItem:(_,value)=>raw=value};
+const tool={number:7,name:'Fräser Ø 6',diameter:6,cuttingLength:15,cuttingFeed:650,plungeFeed:120};
+assert.deepEqual(api.load(storage),[]);api.save(storage,[tool]);assert.deepEqual(api.load(storage),[tool]);
+api.save(storage,[{...tool,cuttingFeed:700}]);assert.equal(api.load(storage)[0].cuttingFeed,700);
+assert.throws(()=>api.save(storage,[tool,tool]));assert.throws(()=>api.save(storage,[{...tool,diameter:NaN}]));
+assert.throws(()=>api.save(storage,[{...tool,name:'\n'}]));assert.throws(()=>api.save(storage,[{...tool,number:1.5}]));
+assert.throws(()=>api.save({setItem(){throw Error('Quota');}},[tool]));
+raw='{broken';assert.throws(()=>api.load(storage));raw=JSON.stringify({version:99,tools:[]});assert.throws(()=>api.load(storage));
+raw=JSON.stringify({version:1,tools:[tool,tool]});assert.throws(()=>api.load(storage));
+api.save(storage,[]);assert.deepEqual(api.load(storage),[]);
+console.log('Tool storage: reload, update, deletion, invalid data, duplicates, version and write failure checked.');
