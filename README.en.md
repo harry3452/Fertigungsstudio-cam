@@ -29,10 +29,11 @@ verification. See
 
 **Experimental development branch:** The Rust core additionally calculates
 simple rectangular outer contours, pockets and axial drilling with optional
-full-clearance retracts between pecks. These operations are now connected to
-the shared machining plan, but are **not yet available in the live preview**.
-Run `cargo run --locked --offline --example milling_ops` to inspect neutral
-motion counts. [Scope and limitations](docs/milling-operations.md).
+full-clearance retracts between pecks. These operations are connected to the
+shared machining plan and are available in the local Rust preview under
+**Live-Bearbeitung → Bearbeitungsart**. This is experimental neutral motion,
+not machine output. Run `cargo run --locked --offline --example milling_ops`
+to inspect motion counts. See [live UI](docs/live-milling-preview.md). [Scope and limitations](docs/milling-operations.md).
 
 The modular Rust extension in PR #7 introduces machine, tool, setup and
 operation records for milling, turning and laser. An explicit adapter validates
