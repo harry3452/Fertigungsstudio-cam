@@ -5,6 +5,7 @@
 use std::fmt;
 
 pub mod domain;
+pub mod milling;
 pub mod tools;
 
 const MAX_COORD: f64 = 1_000_000.0;
@@ -77,6 +78,10 @@ pub enum Error {
     InvalidDepth,
     InvalidStep,
     InvalidFeed,
+    InvalidBounds,
+    InvalidPoint,
+    InvalidPeck,
+    NoDrillPoints,
     TooManyMoves,
     CoordinateLimit,
     Cancelled,
