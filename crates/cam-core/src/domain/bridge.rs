@@ -9,7 +9,7 @@ use super::tool::{MillingToolKind, ToolGeometry};
 use crate::tools::ToolLibrary;
 use crate::{Error, Facing, Point3, Setup, StockBox, Toolpath};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq)]
 pub enum BridgeError {
     InvalidPlan(PlanError),
     UnknownOperation,
