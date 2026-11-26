@@ -1,0 +1,21 @@
+<section class="cam-workbench" id="camWorkbench" aria-labelledby="camWorkbenchTitle">
+  <div class="cam-workbench-head">
+    <div><span class="cam-eyebrow">FRÄSEN · 3 ACHSEN</span><h2 id="camWorkbenchTitle">Werkzeugwege berechnen</h2></div>
+    <span class="cam-runtime" id="camRuntimeStatus" role="status" aria-live="polite">Demomodus · Rust-Server nicht verbunden</span>
+  </div>
+  <div class="cam-operation-grid" aria-label="Bearbeitungsverfahren">
+    <button class="cam-operation-card active" type="button" data-cam-operation="facing" aria-pressed="true">
+      <span class="cam-op-number">01</span><strong>Planfräsen</strong><span>Rohteiloberseite bearbeiten</span>
+    </button>
+    <button class="cam-operation-card" type="button" data-cam-operation="contour" aria-pressed="false">
+      <span class="cam-op-number">02</span><strong>Außenkontur</strong><span>Rechteck mit Werkzeugradius</span>
+    </button>
+    <button class="cam-operation-card" type="button" data-cam-operation="pocket" aria-pressed="false">
+      <span class="cam-op-number">03</span><strong>Taschenfräsen</strong><span>Rechteck mit Tiefenzustellungen</span>
+    </button>
+    <button class="cam-operation-card" type="button" data-cam-operation="drilling" aria-pressed="false">
+      <span class="cam-op-number">04</span><strong>Bohren</strong><span>Vier Bohrpunkte mit Bohrschritt</span>
+    </button>
+  </div>
+  <div class="cam-workbench-note">Bearbeitung anklicken: Rust-Parameterdialog im lokalen Livebetrieb · HTML-Datei allein zeigt illustrative Bahnen · Kein NC-Code</div>
+</section>
