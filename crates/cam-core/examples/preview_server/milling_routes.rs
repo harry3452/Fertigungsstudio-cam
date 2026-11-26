@@ -8,6 +8,14 @@ use fertigungsstudio_cam_core::milling::{
 use fertigungsstudio_cam_core::{FlatTool, Motion, Point3, Setup, StockBox, Toolpath};
 use std::fmt::Write as _;
 
+struct ToolMeta {
+    number: u16,
+    diameter: f64,
+    cutting_length: f64,
+    cutting_feed: f64,
+    plunge_feed: f64,
+}
+
 /// Shared input fields: stock width/length/height, removal depth, tool
 /// diameter, depth step, stepover, tool number, flute length, feed and plunge.
 /// Pocket/drilling append X and Y margins measured from stock boundaries.
@@ -164,11 +172,13 @@ pub(super) fn calculate(
         operation,
         setup,
         &path,
-        *number as u16,
-        *diameter,
-        *cutting_length,
-        *cutting_feed,
-        *plunge_feed,
+        ToolMeta {
+            number: *number as u16,
+            diameter: *diameter,
+            cutting_length: *cutting_length,
+            cutting_feed: *cutting_feed,
+            plunge_feed: *plunge_feed,
+        },
         cut.bottom_z,
     )
 }
@@ -177,13 +187,16 @@ fn serialize(
     operation: &str,
     setup: Setup,
     path: &Toolpath,
-    number: u16,
-    diameter: f64,
-    cutting_length: f64,
-    cutting_feed: f64,
-    plunge_feed: f64,
+    tool: ToolMeta,
     bottom_z: f64,
 ) -> Result<String, String> {
+    let ToolMeta {
+        number,
+        diameter,
+        cutting_length,
+        cutting_feed,
+        plunge_feed,
+    } = tool;
     let max = setup.stock.max;
     let mut json = format!(
         "{{\"format\":\"fertigungsstudio-toolpath-v1\",\"operation\":\"{operation}\",         \"units\":\"mm\",\"stock\":{{\"min\":[0,0,0],\"max\":[{},{},{}]}},         \"tool_diameter\":{diameter},\"bottom_z\":{bottom_z},\"clearance_z\":{},         \"start\":[{},{},{}],\"moves\":[",
