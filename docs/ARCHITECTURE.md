@@ -1,7 +1,8 @@
 # Fertigungsstudio CAM — gemeinsame Rust-Architektur
 
 **Stand:** Ein eingeschränkter 3-Achs-Planfräsalgorithmus mit Live-Vorschau
-existiert im Entwicklungszweig. Die Datentypen für 5-Achs-Fräsen, Drehen und
+existiert. Im neuen Entwicklungszweig kommen experimentelle rechteckige
+Kontur-, Taschen- und Bohrbahnen hinzu. Die Datentypen für 5-Achs-Fräsen, Drehen und
 Laser sind vorbereitet, **aber dafür gibt es noch keine Werkzeugwegberechnung**.
 Es existieren kein geprüfter NC-Export, keine Maschinenanbindung und keine
 nachgewiesene SolidCraft-Integration. **Die Ausgabe darf keine Maschine steuern.**
@@ -24,8 +25,10 @@ Rust-Workspace: `crates/cam-core` — ein Crate, keine parallelen CAM-Engines.
 - `src/domain/setup.rs`: Werkstückkoordinaten, Rohmaterial und Aufspannungen.
 - `src/domain/plan.rs`: Zuordnung Maschine → Aufspannung → Werkzeug →
   Operation; prüft Verweise und Technologiekompatibilität.
-- `src/domain/bridge.rs`: **gemeinsame Nutzung des vorhandenen Planfräsers**
-  statt einer zweiten Implementierung.
+- `src/domain/bridge.rs`: **gemeinsame Nutzung der Bearbeitungs- und Werkzeugdaten**
+  statt paralleler Berechnungskerne.
+- `src/milling.rs`: experimentelle Rechteck-Außenkontur, Zickzack-Rechtecktasche
+  und axiale Bohrpunkte mit optionalen Tiefenstufen (noch keine UI-Anbindung).
 
 Die zwei Werkzeugmodelle haben unterschiedliche Aufgaben: `ToolDefinition`
 beschreibt das prozessübergreifende Werkzeug, während `MillingTool` derzeit
@@ -39,7 +42,7 @@ zu einem Fehler statt zu einer stillen Übernahme.
 
 | Bereich | Datenmodell | Berechnete Werkzeugwege |
 | --- | --- | --- |
-| 3-Achs-Fräsen | Maschine, Werkzeuge, Nullpunkte, Planen/Kontur/Tasche/Bohren | Nur eingeschränktes Rechteck-Planfräsen |
+| 3-Achs-Fräsen | Maschine, Werkzeuge, Nullpunkte, Planen/Kontur/Tasche/Bohren | Rechteck-Planfräsen plus experimentelle Rechteck-Außenkontur, Tasche und axiales Bohren |
 | 3+2-Indexfräsen | Werkzeuglage, zwei Rundachsen, eigene Operationskennung | Noch keine |
 | 5-Achs-simultan | Werkzeugorientierung, getrennte Operationskennung | Noch keine |
 | Drehen | X/Z-Achsen, Radius-/Durchmesser-Konvention, mm/Umdrehung, Drehwerkzeugtypen | Noch keine |
@@ -71,7 +74,9 @@ Projektdateiformat und die dauerhafte Speicherung sind noch nicht definiert.
 ## Geplanter Ausbau
 
 1. Versioniertes Projekt-/Werkzeugformat und konsistente Werkzeugmetadaten.
-2. Echte 3-Achs-Kontur-/Taschen-/Bohrbahnen und unabhängige Prüffälle.
+2. Geometrie aus CAD statt nur aus Rechteck-/Bohrpunktparametern übernehmen;
+   experimentelle Kontur-/Taschen-/Bohrbahnen unabhängig verifizieren und in
+   der Oberfläche nutzbar machen.
 3. Maschinenspezifische Kinematik und Werkzeug-/Halter-/Spannmittelprüfung.
 4. Getrennter Dreh- und Laser-Bahnplaner.
 5. Verifizierte, controllerabhängige Postprozessoren, später auch Mach4.

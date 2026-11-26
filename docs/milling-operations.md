@@ -5,8 +5,13 @@
 geometry in millimetres. The output is neutral `Toolpath` data, **not NC code**.
 
 The established rectangular facing algorithm and its live preview remain
-unchanged. The new APIs are under `fertigungsstudio_cam_core::milling`;
-the HTML frontend and persistence do **not** yet expose these three operations.
+unchanged. The new calculation APIs are under `fertigungsstudio_cam_core::milling`.
+They can also be called from the shared project via
+`domain::bridge::milling_plan_operation`, using a validated matching
+`OperationKind`, a rectangular stock setup, and a matching tool. Contour and
+pocket use feeds from the existing `MillingTool` library. Drilling requires
+`MillingToolKind::Drill` and an explicitly provided drilling feed.
+The HTML frontend and persistence do **not** yet expose these three operations.
 
 ## Example
 

@@ -32,6 +32,14 @@ Live-Vorschau: gedruckte Adresse öffnen, „Live-Planfräsen“ wählen und Ma�
 Unter Windows geht das auch per Doppelklick auf `Start-Fertigungsstudio.cmd`
 (Rust und Build-Werkzeuge müssen installiert sein).
 Eine Kollisionsprüfung ist noch nicht vorhanden.
+
+**Experimenteller Entwicklungszweig:** Zusätzlich berechnet der Rust-Kern
+jetzt einfache rechteckige Außenkonturen, Taschen und axiale Bohrungen mit
+optionalem vollständigem Rückzug zwischen den Bohrschritten. Diese Funktionen
+sind mit der gemeinsamen Auftragsstruktur verbunden, aber **noch nicht über
+die Live-Vorschau auswählbar**. Das Rust-Beispiel lässt sich mit
+`cargo run --locked --offline --example milling_ops` ausführen.
+[Umfang und Grenzen](docs/milling-operations.md).
 Aufbau, Prüfungen und Grenzen: [Erster Kernbaustein](docs/core-first-step.md).
 
 Die modulare Rust-Erweiterung in PR #7 definiert Maschinen, Werkzeugtypen,
