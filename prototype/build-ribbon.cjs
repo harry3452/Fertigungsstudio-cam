@@ -21,7 +21,8 @@ function group(label, content){return `<section class="ribbon-group" aria-label=
 const ribbon = `<nav class="ribbon" aria-label="CAM-Werkzeugleiste">${group('Einrichten',tile('setupButton','setup','Aufspannung')+tile('stockTile','stock','Rohteil')+tile('originTile','origin','Nullpunkt')+tile('toolButton','tool','Werkzeuge'))}${group('Fräsen',tile('','face','Planen','data-operation="0"')+tile('','pocket','Tasche','data-operation="1"')+tile('','contour','Kontur','data-operation="2"'))}${group('Bohren',tile('','drill','Bohren','data-operation="3"'))}${group('Prüfen',tile('calculateTile','check','Berechnen')+tile('simulationTile','play','Simulation'))}${group('Ausgeben',tile('postTile','post','Postprozessor')+tile('export','post','Konzept speichern'))}${group('Ansicht',tile('reset','view','Einpassen')+tile('preferencesTile','settings','Einstellungen'))}</nav>`;
 html = html.replace(/<nav class="toolbar"[\s\S]*?<\/nav>/,ribbon);
 html = html.replace(/<header>[\s\S]*?<\/header>/,`<header><div class="brand">Fertigungs<span>studio</span></div><span class="document-name">Trägerplatte · CAM</span><div class="header-right"><label for="hostMode">Betrieb</label><select id="hostMode"><option>Eigenständig</option><option>In SolidCraft integriert</option></select><span class="pill">Bedienentwurf</span></div></header><div class="workspace-tabs"><button>Projekt</button><button class="active">Fertigung</button><button id="tabSimulation">Simulation</button><span id="connectionLabel">Importiertes Bauteil</span></div>`);
-html=html.replace('<main class="layout">','<main class="layout inspector-hidden">');
+const camWorkbench=fs.readFileSync(path.join(__dirname,'workbench-panel.html'),'utf8');
+html=html.replace('<main class="layout">',camWorkbench+'<main class="layout inspector-hidden">');
 html=html.replace('<aside class="panel right">','<aside class="panel right" aria-label="Bearbeitungsparameter"><button id="closeInspector" class="close-panel" aria-label="Einstellungen schließen">✕</button>');
 html=html.replace('<div class="setup">','<div class="setup" role="button" tabindex="0" id="setupTree">');
 html=html.replace('<div class="viewbuttons">','<div class="viewbuttons"><button id="editOperation">Bearbeitung ändern</button>');
@@ -45,12 +46,15 @@ $('themeChoice').onchange=()=>document.body.classList.toggle('light',$('themeCho
 $('calculateTile').onclick=()=>{makePath();progress=0;$('progress').value=0;toast('Beispielbahnen aktualisiert. Noch keine echte CAM-Berechnung.');};
 function startSimulation(){playing=true;progress=0;$('play').textContent='Ⅱ Pause';$('status').textContent='Schematische Werkzeugbewegung · keine Materialabtragsprüfung';} $('simulationTile').onclick=startSimulation;$('tabSimulation').onclick=startSimulation;syncTiles();
 </script>`;
+const camWorkbenchCss=fs.readFileSync(path.join(__dirname,'workbench.css'),'utf8');
+html=html.replace('</style>',camWorkbenchCss+'</style>');
 html=html.replace('</style>','[hidden]{display:none!important}</style>');
 const coreValidator=fs.readFileSync(path.join(__dirname,'core-path-data.cjs'),'utf8');
 const corePreview=fs.readFileSync(path.join(__dirname,'core-preview.js'),'utf8');
+const camWorkbenchJs=fs.readFileSync(path.join(__dirname,'workbench.js'),'utf8');
 const demoJson=fs.readFileSync(path.join(__dirname,'rust-facing-demo.json'),'utf8').replace(/^\uFEFF/,'');
 JSON.parse(demoJson);
-html=html.replace('</html>',dialogs+extra+'<script id="rust-demo-data" type="application/json">'+demoJson+'</script><script>'+coreValidator+'</script><script>'+corePreview+'</script></html>');
+html=html.replace('</html>',dialogs+extra+'<script id="rust-demo-data" type="application/json">'+demoJson+'</script><script>'+coreValidator+'</script><script>'+corePreview+'</script><script>'+camWorkbenchJs+'</script></html>');
 fs.writeFileSync(path.join(__dirname,'fertigungsstudio-kacheln.html'),html,'utf8');
 for(const match of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) new (require('vm').Script)(match[1]);
 const ids=[...html.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
