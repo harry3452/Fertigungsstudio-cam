@@ -1,7 +1,11 @@
 //! Machining families are separate, so milling rules cannot silently govern laser or turning.
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum Process { Milling, Turning, Laser }
+pub enum Process {
+    Milling,
+    Turning,
+    Laser,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MillingOperation {
@@ -26,7 +30,12 @@ pub enum TurningOperation {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum LaserOperation { ProfileCut, Engraving, Marking, Piercing }
+pub enum LaserOperation {
+    ProfileCut,
+    Engraving,
+    Marking,
+    Piercing,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum OperationKind {
@@ -52,8 +61,17 @@ mod tests {
 
     #[test]
     fn distinct_operation_families() {
-        assert_eq!(OperationKind::Milling(MillingOperation::Simultaneous5Axis).process(), Process::Milling);
-        assert_eq!(OperationKind::Turning(TurningOperation::Threading).process(), Process::Turning);
-        assert_eq!(OperationKind::Laser(LaserOperation::ProfileCut).process(), Process::Laser);
+        assert_eq!(
+            OperationKind::Milling(MillingOperation::Simultaneous5Axis).process(),
+            Process::Milling
+        );
+        assert_eq!(
+            OperationKind::Turning(TurningOperation::Threading).process(),
+            Process::Turning
+        );
+        assert_eq!(
+            OperationKind::Laser(LaserOperation::ProfileCut).process(),
+            Process::Laser
+        );
     }
 }

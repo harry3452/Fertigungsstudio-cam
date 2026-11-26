@@ -1,16 +1,34 @@
 //! Machine classes and axis requirements. Kinematics and collision checks are future work.
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Hash)]
-pub enum AxisName { X, Y, Z, A, B, C }
+pub enum AxisName {
+    X,
+    Y,
+    Z,
+    A,
+    B,
+    C,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum AxisMotion { LinearMm, RotaryDeg }
+pub enum AxisMotion {
+    LinearMm,
+    RotaryDeg,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum MachineClass { Mill3, Mill5, Lathe, Laser }
+pub enum MachineClass {
+    Mill3,
+    Mill5,
+    Lathe,
+    Laser,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum TurningXMode { Radius, Diameter }
+pub enum TurningXMode {
+    Radius,
+    Diameter,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct AxisSpec {
@@ -44,7 +62,9 @@ pub enum MachineError {
 impl MachineDefinition {
     /// Validates the initial structural contract, not machine kinematics or safety.
     pub fn validate(&self) -> Result<(), MachineError> {
-        if self.id.trim().is_empty() { return Err(MachineError::EmptyId); }
+        if self.id.trim().is_empty() {
+            return Err(MachineError::EmptyId);
+        }
         for (i, axis) in self.axes.iter().enumerate() {
             if !axis.min.is_finite() || !axis.max.is_finite() || axis.min >= axis.max {
                 return Err(MachineError::InvalidLimit(axis.name));
@@ -53,7 +73,9 @@ impl MachineDefinition {
                 AxisName::X | AxisName::Y | AxisName::Z => AxisMotion::LinearMm,
                 AxisName::A | AxisName::B | AxisName::C => AxisMotion::RotaryDeg,
             };
-            if axis.motion != expected { return Err(MachineError::InvalidAxisType(axis.name)); }
+            if axis.motion != expected {
+                return Err(MachineError::InvalidAxisType(axis.name));
+            }
             if self.axes[..i].iter().any(|other| other.name == axis.name) {
                 return Err(MachineError::DuplicateAxis(axis.name));
             }
@@ -74,8 +96,14 @@ impl MachineDefinition {
         if self.class != MachineClass::Lathe && self.turning_x_mode.is_some() {
             return Err(MachineError::TurningModeOnNonLathe);
         }
-        if self.class == MachineClass::Mill5 &&
-            self.axes.iter().filter(|axis| axis.motion == AxisMotion::RotaryDeg).count() < 2 {
+        if self.class == MachineClass::Mill5
+            && self
+                .axes
+                .iter()
+                .filter(|axis| axis.motion == AxisMotion::RotaryDeg)
+                .count()
+                < 2
+        {
             return Err(MachineError::MissingRotaryAxes);
         }
         Ok(())
@@ -92,20 +120,41 @@ mod tests {
             AxisName::X | AxisName::Y | AxisName::Z => AxisMotion::LinearMm,
             _ => AxisMotion::RotaryDeg,
         };
-        AxisSpec { name, motion, min: -100.0, max: 100.0 }
+        AxisSpec {
+            name,
+            motion,
+            min: -100.0,
+            max: 100.0,
+        }
     }
 
     #[test]
     fn three_axis_mill_needs_xyz() {
-        let machine = MachineDefinition { id: "mill".into(), class: MachineClass::Mill3,
-            axes: vec![axis(AxisName::X), axis(AxisName::Y)], turning_x_mode: None };
-        assert_eq!(machine.validate(), Err(MachineError::MissingAxis(AxisName::Z)));
+        let machine = MachineDefinition {
+            id: "mill".into(),
+            class: MachineClass::Mill3,
+            axes: vec![axis(AxisName::X), axis(AxisName::Y)],
+            turning_x_mode: None,
+        };
+        assert_eq!(
+            machine.validate(),
+            Err(MachineError::MissingAxis(AxisName::Z))
+        );
     }
 
     #[test]
     fn five_axis_mill_needs_two_rotaries() {
-        let mut machine = MachineDefinition { id: "mill5".into(), class: MachineClass::Mill5,
-            axes: vec![axis(AxisName::X), axis(AxisName::Y), axis(AxisName::Z), axis(AxisName::B)], turning_x_mode: None };
+        let mut machine = MachineDefinition {
+            id: "mill5".into(),
+            class: MachineClass::Mill5,
+            axes: vec![
+                axis(AxisName::X),
+                axis(AxisName::Y),
+                axis(AxisName::Z),
+                axis(AxisName::B),
+            ],
+            turning_x_mode: None,
+        };
         assert_eq!(machine.validate(), Err(MachineError::MissingRotaryAxes));
         machine.axes.push(axis(AxisName::C));
         assert!(machine.validate().is_ok());
@@ -113,8 +162,12 @@ mod tests {
 
     #[test]
     fn lathe_requires_explicit_diameter_or_radius() {
-        let mut machine = MachineDefinition { id: "lathe".into(), class: MachineClass::Lathe,
-            axes: vec![axis(AxisName::X), axis(AxisName::Z)], turning_x_mode: None };
+        let mut machine = MachineDefinition {
+            id: "lathe".into(),
+            class: MachineClass::Lathe,
+            axes: vec![axis(AxisName::X), axis(AxisName::Z)],
+            turning_x_mode: None,
+        };
         assert_eq!(machine.validate(), Err(MachineError::MissingTurningXMode));
         machine.turning_x_mode = Some(TurningXMode::Radius);
         assert!(machine.validate().is_ok());
@@ -122,12 +175,22 @@ mod tests {
 
     #[test]
     fn duplicate_and_invalid_limits_are_refused() {
-        let mut machine = MachineDefinition { id: "lathe".into(), class: MachineClass::Lathe,
-            axes: vec![axis(AxisName::X), axis(AxisName::Z)], turning_x_mode: Some(TurningXMode::Diameter) };
+        let mut machine = MachineDefinition {
+            id: "lathe".into(),
+            class: MachineClass::Lathe,
+            axes: vec![axis(AxisName::X), axis(AxisName::Z)],
+            turning_x_mode: Some(TurningXMode::Diameter),
+        };
         machine.axes.push(axis(AxisName::X));
-        assert_eq!(machine.validate(), Err(MachineError::DuplicateAxis(AxisName::X)));
+        assert_eq!(
+            machine.validate(),
+            Err(MachineError::DuplicateAxis(AxisName::X))
+        );
         machine.axes.pop();
         machine.axes[0].max = f64::INFINITY;
-        assert_eq!(machine.validate(), Err(MachineError::InvalidLimit(AxisName::X)));
+        assert_eq!(
+            machine.validate(),
+            Err(MachineError::InvalidLimit(AxisName::X))
+        );
     }
 }

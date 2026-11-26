@@ -102,9 +102,7 @@ pub fn face_plan_operation(
 mod tests {
     #![allow(clippy::unwrap_used)]
     use super::*;
-    use crate::domain::machine::{
-        AxisMotion, AxisName, AxisSpec, MachineClass, MachineDefinition,
-    };
+    use crate::domain::machine::{AxisMotion, AxisName, AxisSpec, MachineClass, MachineDefinition};
     use crate::domain::motion::Vec3;
     use crate::domain::plan::OperationDefinition;
     use crate::domain::setup::{SetupDefinition, WorkFrame};
@@ -124,9 +122,24 @@ mod tests {
                 id: "mill".into(),
                 class: MachineClass::Mill3,
                 axes: vec![
-                    AxisSpec { name: AxisName::X, motion: AxisMotion::LinearMm, min: -100.0, max: 100.0 },
-                    AxisSpec { name: AxisName::Y, motion: AxisMotion::LinearMm, min: -100.0, max: 100.0 },
-                    AxisSpec { name: AxisName::Z, motion: AxisMotion::LinearMm, min: -100.0, max: 100.0 },
+                    AxisSpec {
+                        name: AxisName::X,
+                        motion: AxisMotion::LinearMm,
+                        min: -100.0,
+                        max: 100.0,
+                    },
+                    AxisSpec {
+                        name: AxisName::Y,
+                        motion: AxisMotion::LinearMm,
+                        min: -100.0,
+                        max: 100.0,
+                    },
+                    AxisSpec {
+                        name: AxisName::Z,
+                        motion: AxisMotion::LinearMm,
+                        min: -100.0,
+                        max: 100.0,
+                    },
                 ],
                 turning_x_mode: None,
             }],
@@ -187,19 +200,10 @@ mod tests {
     #[test]
     fn existing_facing_planner_and_library_are_reused() {
         let (plan, library, facing) = fixture();
-        let toolpath = face_plan_operation(
-            &plan, &library, "OP1", 10.0, facing, || false,
-        )
-        .unwrap();
+        let toolpath = face_plan_operation(&plan, &library, "OP1", 10.0, facing, || false).unwrap();
         assert_eq!(toolpath.moves.len(), 60);
-        assert_eq!(
-            toolpath.moves[1].motion,
-            Motion::Feed { mm_per_min: 90.0 },
-        );
-        assert_eq!(
-            toolpath.moves[2].motion,
-            Motion::Feed { mm_per_min: 650.0 },
-        );
+        assert_eq!(toolpath.moves[1].motion, Motion::Feed { mm_per_min: 90.0 },);
+        assert_eq!(toolpath.moves[2].motion, Motion::Feed { mm_per_min: 650.0 },);
     }
 
     #[test]
@@ -208,16 +212,20 @@ mod tests {
         library
             .replace(
                 MillingTool::new(
-                    1, "Wrong tool".into(),
-                    FlatTool { diameter: 8.0, cutting_length: 10.0 },
-                    650.0, 90.0,
+                    1,
+                    "Wrong tool".into(),
+                    FlatTool {
+                        diameter: 8.0,
+                        cutting_length: 10.0,
+                    },
+                    650.0,
+                    90.0,
                 )
                 .unwrap(),
             )
             .unwrap();
         assert_eq!(
-            face_plan_operation(&plan, &library, "OP1", 10.0, facing, || false)
-                .unwrap_err(),
+            face_plan_operation(&plan, &library, "OP1", 10.0, facing, || false).unwrap_err(),
             BridgeError::ToolGeometryMismatch,
         );
     }
@@ -225,12 +233,15 @@ mod tests {
     #[test]
     fn non_center_cutting_tool_is_refused() {
         let (mut plan, library, facing) = fixture();
-        if let ToolGeometry::Milling { ref mut center_cutting, .. } = plan.tools[0].geometry {
+        if let ToolGeometry::Milling {
+            ref mut center_cutting,
+            ..
+        } = plan.tools[0].geometry
+        {
             *center_cutting = false;
         }
         assert_eq!(
-            face_plan_operation(&plan, &library, "OP1", 10.0, facing, || false)
-                .unwrap_err(),
+            face_plan_operation(&plan, &library, "OP1", 10.0, facing, || false).unwrap_err(),
             BridgeError::UnsupportedTool,
         );
     }
@@ -239,8 +250,7 @@ mod tests {
     fn cancel_propagates_without_partial_toolpaths() {
         let (plan, library, facing) = fixture();
         assert_eq!(
-            face_plan_operation(&plan, &library, "OP1", 10.0, facing, || true)
-                .unwrap_err(),
+            face_plan_operation(&plan, &library, "OP1", 10.0, facing, || true).unwrap_err(),
             BridgeError::Planner(Error::Cancelled),
         );
     }

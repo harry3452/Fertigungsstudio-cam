@@ -5,10 +5,21 @@ use super::machine::MachineClass;
 use super::operation::Process;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum MillingToolKind { FlatEndMill, BallEndMill, Drill }
+pub enum MillingToolKind {
+    FlatEndMill,
+    BallEndMill,
+    Drill,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum TurningToolKind { External, Internal, Grooving, Parting, Threading, Drill }
+pub enum TurningToolKind {
+    External,
+    Internal,
+    Grooving,
+    Parting,
+    Threading,
+    Drill,
+}
 
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub enum ToolGeometry {
@@ -69,27 +80,52 @@ fn positive_length(value: f64) -> bool {
 
 impl ToolDefinition {
     pub fn validate(&self) -> Result<(), ToolError> {
-        if self.id.trim().is_empty() { return Err(ToolError::EmptyId); }
+        if self.id.trim().is_empty() {
+            return Err(ToolError::EmptyId);
+        }
         match self.station_number {
             Some(0) | Some(10_000..) => return Err(ToolError::InvalidStation),
-            None if self.geometry.process() != Process::Laser => return Err(ToolError::MissingStation),
+            None if self.geometry.process() != Process::Laser => {
+                return Err(ToolError::MissingStation);
+            }
             _ => {}
         }
         match self.geometry {
-            ToolGeometry::Milling { diameter_mm, flute_length_mm, overall_length_mm, .. } => {
-                if !positive_length(diameter_mm) { return Err(ToolError::InvalidDiameter); }
-                if !positive_length(flute_length_mm) { return Err(ToolError::InvalidCuttingLength); }
-                if !positive_length(overall_length_mm) { return Err(ToolError::InvalidOverallLength); }
-                if flute_length_mm > overall_length_mm { return Err(ToolError::CuttingLengthExceedsOverall); }
+            ToolGeometry::Milling {
+                diameter_mm,
+                flute_length_mm,
+                overall_length_mm,
+                ..
+            } => {
+                if !positive_length(diameter_mm) {
+                    return Err(ToolError::InvalidDiameter);
+                }
+                if !positive_length(flute_length_mm) {
+                    return Err(ToolError::InvalidCuttingLength);
+                }
+                if !positive_length(overall_length_mm) {
+                    return Err(ToolError::InvalidOverallLength);
+                }
+                if flute_length_mm > overall_length_mm {
+                    return Err(ToolError::CuttingLengthExceedsOverall);
+                }
             }
-            ToolGeometry::Turning { nose_radius_mm, stickout_mm, .. } => {
+            ToolGeometry::Turning {
+                nose_radius_mm,
+                stickout_mm,
+                ..
+            } => {
                 if !nose_radius_mm.is_finite() || !(0.0..=1_000_000.0).contains(&nose_radius_mm) {
                     return Err(ToolError::InvalidNoseRadius);
                 }
-                if !positive_length(stickout_mm) { return Err(ToolError::InvalidStickout); }
+                if !positive_length(stickout_mm) {
+                    return Err(ToolError::InvalidStickout);
+                }
             }
             ToolGeometry::Laser { kerf_mm } => {
-                if !positive_length(kerf_mm) { return Err(ToolError::InvalidKerf); }
+                if !positive_length(kerf_mm) {
+                    return Err(ToolError::InvalidKerf);
+                }
             }
         }
         Ok(())
@@ -103,7 +139,11 @@ impl ToolDefinition {
                 | (Process::Turning, MachineClass::Lathe)
                 | (Process::Laser, MachineClass::Laser)
         );
-        if matches { Ok(()) } else { Err(ToolError::IncompatibleMachine) }
+        if matches {
+            Ok(())
+        } else {
+            Err(ToolError::IncompatibleMachine)
+        }
     }
 }
 
@@ -130,7 +170,10 @@ mod tests {
     fn mill_tool_checks_dimensions_and_machine_family() {
         let mut tool = mill();
         assert!(tool.validate_for_machine(MachineClass::Mill5).is_ok());
-        assert_eq!(tool.validate_for_machine(MachineClass::Lathe), Err(ToolError::IncompatibleMachine));
+        assert_eq!(
+            tool.validate_for_machine(MachineClass::Lathe),
+            Err(ToolError::IncompatibleMachine)
+        );
         tool.geometry = ToolGeometry::Milling {
             kind: MillingToolKind::Drill,
             diameter_mm: 6.0,
