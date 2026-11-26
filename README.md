@@ -34,6 +34,12 @@ Unter Windows geht das auch per Doppelklick auf `Start-Fertigungsstudio.cmd`
 Eine Kollisionsprüfung ist noch nicht vorhanden.
 Aufbau, Prüfungen und Grenzen: [Erster Kernbaustein](docs/core-first-step.md).
 
+Die modulare Rust-Erweiterung in PR #7 definiert Maschinen, Werkzeugtypen,
+Aufspannungen sowie Fräs-, Dreh- und Laseroperationen. Ein Adapter verbindet
+validierte 3-Achs-Planfräsaufträge mit der bestehenden Planfräsberechnung und
+Werkzeugbibliothek. Andere Verfahren sind derzeit **nur Datenmodelle**.
+Die Einzelheiten stehen in [Architektur](docs/ARCHITECTURE.md).
+
 Nicht vorhanden: realer CAD-Import, allgemeine Werkzeugwegberechnung, Materialabtrags-
 und Kollisionsprüfung, geprüfter NC-Export oder eine SolidCraft-Anbindung.
 Der Entwurf darf nicht zur Steuerung einer Maschine verwendet werden.
@@ -47,7 +53,10 @@ Der Entwurf darf nicht zur Steuerung einer Maschine verwendet werden.
 - Einen zentralen Einstellungsdialog und gezielt einblendbare Bearbeitungsparameter.
 - Mehrsprachigkeit von Beginn an: zunächst Deutsch und Englisch, weitere
   Sprachen über Übersetzungsdateien. Die Sprache ist eine Nutzereinstellung.
-- Als ersten Bearbeitungsumfang 3-Achs-Planen, Konturen, Taschen und Bohren.
+- Der Kern wird für **3-/5-Achs-Fräsen, Drehen und Laserschneiden** ausgelegt.
+  Die erste vorhandene Berechnung ist das begrenzte **3-Achs-Planfräsen**.
+  Konturen, Taschen, Bohren, Drehen, Laser und simultane 5-Achs-Bewegungen
+  sind noch keine implementierten Werkzeugwegverfahren.
 
 Der Integrationsweg muss noch untersucht werden. Weder ein funktionierendes
 SolidCraft-Plugin noch eine Zustimmung der SolidCraft-Maintainer wird behauptet.

@@ -4,6 +4,7 @@
 
 use std::fmt;
 
+pub mod domain;
 pub mod tools;
 
 const MAX_COORD: f64 = 1_000_000.0;

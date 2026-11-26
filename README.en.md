@@ -27,6 +27,12 @@ the printed address and select “Live-Planfräsen”. There is no collision
 verification. See
 [the core contract and limitations](docs/core-first-step.md).
 
+The modular Rust extension in PR #7 introduces machine, tool, setup and
+operation records for milling, turning and laser. An explicit adapter validates
+a 3-axis facing request and reuses the existing bounded facing planner and tool
+library. Turning, laser and 5-axis operations remain **data contracts only**.
+See the [architecture document](docs/ARCHITECTURE.md).
+
 There is no CAD import, general machining toolpath calculation, stock-removal or
 collision verification, usable NC output, or SolidCraft integration. Do not
 use this prototype to control machinery.
@@ -38,7 +44,10 @@ use this prototype to control machinery.
 - A clear ribbon, operation tree, large viewport and contextual parameter editor.
 - Central application settings and a saved per-user language choice.
 - German and English first; additional languages through translation catalogs.
-- An initial 3-axis scope: facing, contours, pockets and drilling.
+- The core is structured for **3-/5-axis milling, turning and laser cutting**.
+  The first implemented calculation is restricted **3-axis facing**.
+  Contours, pockets, drilling, turning, laser and simultaneous 5-axis
+  toolpaths are not implemented yet.
 
 The intended application language is Rust. HTML/JavaScript is only a design
 prototype. The SolidCraft integration route remains to be researched; no
