@@ -7,7 +7,7 @@ and optional integration into SolidCraft. Clear workflows and a multilingual
 interface are central requirements. Fertigungsstudio is a working name, not
 an official SolidCraft project.
 
-**Current status: concept and interactive interface prototype, not working CAM.**
+**Current status: interactive interface prototype and first Rust data contracts (on a development branch), not working CAM.**
 
 ![Fertigungsstudio CAM: German ribbon tiles, operation tree and schematic part preview](docs/images/fertigungsstudio-preview.jpg)
 
@@ -30,10 +30,12 @@ use this prototype to control machinery.
 - A clear ribbon, operation tree, large viewport and contextual parameter editor.
 - Central application settings and a saved per-user language choice.
 - German and English first; additional languages through translation catalogs.
-- An initial 3-axis scope: facing, contours, pockets and drilling.
+- Separate paths for **3-/5-axis milling, turning and laser cutting** from the beginning. The first implemented machining scope will be 3-axis facing, then contours, pockets and drilling. Indexed 3+2 and simultaneous 5-axis work require later kinematics and collision validation.
 
 The intended application language is Rust. HTML/JavaScript is only a design
-prototype. The SolidCraft integration route remains to be researched; no
+prototype. The development branch contains initial Rust types for machines,
+tools, setups and operations, but no cutting-path calculation. See
+[docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). The SolidCraft integration route remains to be researched; no
 plugin capability or upstream approval is assumed. All design work must be
 original or properly licensed, without copied vendor interfaces or assets.
 

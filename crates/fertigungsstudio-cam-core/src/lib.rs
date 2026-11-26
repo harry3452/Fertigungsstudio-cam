@@ -5,3 +5,6 @@
 pub mod machine;
 pub mod motion;
 pub mod operation;
+pub mod plan;
+pub mod setup;
+pub mod tool;

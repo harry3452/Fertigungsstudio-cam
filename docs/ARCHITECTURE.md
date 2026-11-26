@@ -29,6 +29,9 @@ maschinenbezogen abzubilden. 3+2 und simultane 5-Achs-Bewegungen bleiben getrenn
 - crates/fertigungsstudio-cam-core/src/machine.rs: Maschinen- und Achstypen.
 - crates/fertigungsstudio-cam-core/src/motion.rs: Posen, Vorschubarten, Bewegungen, Prozesszustände.
 - crates/fertigungsstudio-cam-core/src/operation.rs: Fräs-, Dreh- und Laseroperationen.
+- crates/fertigungsstudio-cam-core/src/tool.rs: werkzeugtypisierte Werkzeugbibliothek.
+- crates/fertigungsstudio-cam-core/src/setup.rs: orthonormales WKS, Rohteilformen und Aufspannungen.
+- crates/fertigungsstudio-cam-core/src/plan.rs: Querverweise und Kompatibilitätsprüfung für Maschinen, Aufspannungen, Werkzeuge und Operationen.
 
 Der Kern hat noch keine externen Rust-Abhängigkeiten. Zusätzliche Crates kommen
 erst hinzu, wenn die jeweiligen Schnittstellen und Tests feststehen.
@@ -50,6 +53,17 @@ erst hinzu, wenn die jeweiligen Schnittstellen und Tests feststehen.
 - Laser muss bei Verfahrbewegungen und Fehlerzuständen abgeschaltet sein.
 - Datenvalidierung ist keine Kollisionsprüfung und keine sichere NC-Freigabe.
 
+## Grenzen der neuen Datenmodelle
+
+- Maschinen und Werkzeuge werden strukturell validiert; Maschinenkinematik,
+  Werkzeugstandzeit, Nullpunktkalibrierung und Kollisionsprüfung fehlen weiterhin.
+- Drehmaschinen erfordern explizite Radius-/Durchmesser-Kennzeichnung; dies ist
+  noch keine implementierte Postprozessor-Konvention.
+- Bei Werkzeuglagen wird ein nahezu orthogonaler numerischer Achsversatz
+  korrigiert; deutlich schiefe Achsen werden abgelehnt.
+- PlanDefinition ist **nur im Speicher**, kein gespeichertes Projektformat.
+  Projektversionierung und Migrationen sind noch festzulegen.
+
 **Nächster Schritt:** Mit Issue #1 den ersten Umfang bestätigen, ein
-versioniertes Aufspannungs-/Projektformat definieren und anschließend einen
-analytisch prüfbaren 3-Achs-Planfräs-Vorgang implementieren.
+versioniertes Projektformat mit Maschinen, Werkzeugen und Aufspannungen
+entwerfen und einen analytisch prüfbaren 3-Achs-Planfräs-Vorgang implementieren.

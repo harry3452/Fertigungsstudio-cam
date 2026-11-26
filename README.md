@@ -6,7 +6,7 @@ Ein gemeinschaftlich zu entwickelndes CAM mit zwei geplanten Zugängen: als
 eigenständiges Programm und optional direkt in SolidCraft. Die Oberfläche soll
 übersichtlich, mehrsprachig und auf den Arbeitsablauf in der Werkstatt ausgelegt sein.
 
-**Status: Konzept und interaktiver Oberflächenprototyp. Noch kein nutzbares CAM.**
+**Status: Interaktiver Oberflächenprototyp und erste Rust-Datenmodelle (im Entwicklungszweig). Noch kein nutzbares CAM.**
 Fertigungsstudio ist ein Arbeitsname und kein offizielles SolidCraft-Projekt.
 
 ![Fertigungsstudio CAM: deutsche Symbolkacheln, Bearbeitungsbaum und schematische Werkstückvorschau](docs/images/fertigungsstudio-preview.jpg)
@@ -37,12 +37,14 @@ Der Entwurf darf nicht zur Steuerung einer Maschine verwendet werden.
 - Einen zentralen Einstellungsdialog und gezielt einblendbare Bearbeitungsparameter.
 - Mehrsprachigkeit von Beginn an: zunächst Deutsch und Englisch, weitere
   Sprachen über Übersetzungsdateien. Die Sprache ist eine Nutzereinstellung.
-- Als ersten Bearbeitungsumfang 3-Achs-Planen, Konturen, Taschen und Bohren.
+- Von Anfang an getrennte Bereiche für **3-/5-Achs-Fräsen, Drehen und Laserschneiden**. Der erste implementierte Bearbeitungsumfang soll 3-Achs-Planen sein; anschließend Konturen, Taschen und Bohren. 3+2- und simultanes 5-Achs-Fräsen folgen erst nach Kinematik- und Kollisionsprüfung.
 
 Der Integrationsweg muss noch untersucht werden. Weder ein funktionierendes
 SolidCraft-Plugin noch eine Zustimmung der SolidCraft-Maintainer wird behauptet.
 Die spätere Anwendung soll in Rust entstehen; HTML/JavaScript dienen hier nur
-zum Erproben des Bedienkonzepts. Funktionen werden eigenständig gestaltet;
+zum Erproben des Bedienkonzepts. Der Entwicklungszweig enthält erste Rust-Typen
+für Maschinen, Werkzeuge, Aufspannungen und Bearbeitungsvorgänge; das ist noch
+keine Werkzeugwegberechnung. Details in [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Funktionen werden eigenständig gestaltet;
 Herstellercode, Symbole oder Oberflächen anderer CAD-Produkte werden nicht kopiert.
 
 ## Mitentwickler gesucht
