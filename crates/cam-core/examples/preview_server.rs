@@ -242,11 +242,9 @@ fn handle(stream: &mut TcpStream, host: &str, generation: &AtomicU64) -> std::io
     let result = if req.path == "/api/facing" {
         calculate(&req.body, || generation.load(Ordering::Relaxed) != mine)
     } else {
-        milling_routes::calculate(
-            &req.path,
-            &req.body,
-            || generation.load(Ordering::Relaxed) != mine,
-        )
+        milling_routes::calculate(&req.path, &req.body, || {
+            generation.load(Ordering::Relaxed) != mine
+        })
     };
     match result {
         Ok(json) if generation.load(Ordering::Relaxed) == mine => {

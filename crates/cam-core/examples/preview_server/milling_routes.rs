@@ -5,9 +5,7 @@ use fertigungsstudio_cam_core::milling::{
     Cut, DrillBit, DrillPoint, Drilling, Pocket, RectangleXY, drill_points_with_cancel,
     outside_contour_with_cancel, rectangular_pocket_with_cancel,
 };
-use fertigungsstudio_cam_core::{
-    FlatTool, Motion, Point3, Setup, StockBox, Toolpath,
-};
+use fertigungsstudio_cam_core::{FlatTool, Motion, Point3, Setup, StockBox, Toolpath};
 use std::fmt::Write as _;
 
 /// Shared input fields: stock width/length/height, removal depth, tool
@@ -32,9 +30,19 @@ pub(super) fn calculate(
         return Err("InvalidNumbers".into());
     }
     let [
-        width, length, height, depth, diameter, stepdown, stepover,
-        number, cutting_length, cutting_feed, plunge_feed,
-    ] = &args[..11] else {
+        width,
+        length,
+        height,
+        depth,
+        diameter,
+        stepdown,
+        stepover,
+        number,
+        cutting_length,
+        cutting_feed,
+        plunge_feed,
+    ] = &args[..11]
+    else {
         return Err("InvalidNumberCount".into());
     };
     if *number < 1.0 || *number > 9999.0 || number.fract() != 0.0 {
@@ -45,8 +53,16 @@ pub(super) fn calculate(
     }
     let setup = Setup {
         stock: StockBox {
-            min: Point3 { x: 0.0, y: 0.0, z: 0.0 },
-            max: Point3 { x: *width, y: *length, z: *height },
+            min: Point3 {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            max: Point3 {
+                x: *width,
+                y: *length,
+                z: *height,
+            },
         },
         clearance_z: height + 5.0,
     };
@@ -100,12 +116,28 @@ pub(super) fn calculate(
                 return Err("InvalidNumberCount".into());
             };
             let holes = [
-                DrillPoint { x: *margin_x, y: *margin_y },
-                DrillPoint { x: width - margin_x, y: *margin_y },
-                DrillPoint { x: width - margin_x, y: length - margin_y },
-                DrillPoint { x: *margin_x, y: length - margin_y },
+                DrillPoint {
+                    x: *margin_x,
+                    y: *margin_y,
+                },
+                DrillPoint {
+                    x: width - margin_x,
+                    y: *margin_y,
+                },
+                DrillPoint {
+                    x: width - margin_x,
+                    y: length - margin_y,
+                },
+                DrillPoint {
+                    x: *margin_x,
+                    y: length - margin_y,
+                },
             ];
-            let peck_mm = if *stepdown == 0.0 { None } else { Some(*stepdown) };
+            let peck_mm = if *stepdown == 0.0 {
+                None
+            } else {
+                Some(*stepdown)
+            };
             let drilling = Drilling {
                 points: &holes,
                 bottom_z: cut.bottom_z,
@@ -128,8 +160,17 @@ pub(super) fn calculate(
         _ => return Err("UnknownOperation".into()),
     };
     let path = path.map_err(|e| e.to_string())?;
-    serialize(operation, setup, &path, *number as u16, *diameter,
-        *cutting_length, *cutting_feed, *plunge_feed, cut.bottom_z)
+    serialize(
+        operation,
+        setup,
+        &path,
+        *number as u16,
+        *diameter,
+        *cutting_length,
+        *cutting_feed,
+        *plunge_feed,
+        cut.bottom_z,
+    )
 }
 
 fn serialize(
@@ -146,18 +187,23 @@ fn serialize(
     let max = setup.stock.max;
     let mut json = format!(
         "{{\"format\":\"fertigungsstudio-toolpath-v1\",\"operation\":\"{operation}\",         \"units\":\"mm\",\"stock\":{{\"min\":[0,0,0],\"max\":[{},{},{}]}},         \"tool_diameter\":{diameter},\"bottom_z\":{bottom_z},\"clearance_z\":{},         \"start\":[{},{},{}],\"moves\":[",
-        max.x, max.y, max.z, setup.clearance_z,
-        path.start.x, path.start.y, path.start.z,
+        max.x, max.y, max.z, setup.clearance_z, path.start.x, path.start.y, path.start.z,
     );
     for (index, movement) in path.moves.iter().enumerate() {
         if index > 0 {
             json.push(',');
         }
-        let kind = if movement.motion == Motion::Rapid { "rapid" } else { "feed" };
+        let kind = if movement.motion == Motion::Rapid {
+            "rapid"
+        } else {
+            "feed"
+        };
         write!(
-            json, "{{\"to\":[{},{},{}],\"motion\":\"{kind}\"}}",
+            json,
+            "{{\"to\":[{},{},{}],\"motion\":\"{kind}\"}}",
             movement.to.x, movement.to.y, movement.to.z,
-        ).map_err(|_| "FormatError")?;
+        )
+        .map_err(|_| "FormatError")?;
     }
     write!(
         json,
@@ -177,7 +223,11 @@ mod tests {
         let cases = [
             ("/api/contour", "40 30 10 4 6 2 3 1 12 500 100", "contour"),
             ("/api/pocket", "40 30 10 4 6 2 3 1 12 500 100 5 5", "pocket"),
-            ("/api/drilling", "40 30 10 5 5 2 2 3 10 120 100 10 10", "drilling"),
+            (
+                "/api/drilling",
+                "40 30 10 5 5 2 2 3 10 120 100 10 10",
+                "drilling",
+            ),
         ];
         for (route, input, operation) in cases {
             let json = calculate(route, input, || false).unwrap();
@@ -190,11 +240,15 @@ mod tests {
     #[test]
     fn routes_reject_invalid_geometry_and_cancellation() {
         assert_eq!(
-            calculate("/api/pocket", "40 30 10 4 6 2 3 1 12 500 100 19 5", || false),
+            calculate("/api/pocket", "40 30 10 4 6 2 3 1 12 500 100 19 5", || {
+                false
+            }),
             Err(Error::InvalidBounds.to_string()),
         );
         assert_eq!(
-            calculate("/api/drilling", "40 30 10 5 5 2 2 3 10 120 100 1 1", || false),
+            calculate("/api/drilling", "40 30 10 5 5 2 2 3 10 120 100 1 1", || {
+                false
+            }),
             Err(Error::InvalidPoint.to_string()),
         );
         assert_eq!(
