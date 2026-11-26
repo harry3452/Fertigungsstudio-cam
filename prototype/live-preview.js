@@ -160,12 +160,17 @@ document.getElementById('live-cancel').onclick=cancel;
 document.getElementById('live-close').onclick=()=>{void cancel();panel.close();};
 panel.addEventListener('cancel',()=>{void cancel();});
 
+function openForKind(kind){
+  if(!Object.hasOwn(titles,kind))return;
+  operationSelect.value=kind;
+  refresh();
+  if(!panel.open)panel.showModal();
+}
 function openForCurrent(){
   const selectedType=['facing','pocket','contour','drilling'][selected]||'facing';
-  operationSelect.value=selectedType;
-  refresh();
-  panel.showModal();
+  openForKind(selectedType);
 }
+globalThis.FertigungsstudioCamWorkbench?.connect(openForKind);
 $('calculateTile').onclick=openForCurrent;
 $('toolButton').onclick=openForCurrent;
 const liveButton=document.createElement('button');
@@ -209,6 +214,7 @@ document.getElementById('live-form').onsubmit=async event=>{
     const data=await response.json();
     if(mine!==revision)return;
     loadCore(data);
+    globalThis.FertigungsstudioCamWorkbench?.highlight(kind);
     state.textContent='Fertig: '+data.moves.length+' berechnete Bewegungen.';
     panel.close();
     toast(titles[kind]+': '+data.moves.length+' Bewegungen – nicht maschinell geprüft.');
