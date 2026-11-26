@@ -136,6 +136,7 @@ mod tests {
             diameter_mm: 6.0,
             flute_length_mm: 61.0,
             overall_length_mm: 60.0,
+            center_cutting: true,
         };
         assert_eq!(tool.validate(), Err(ToolError::CuttingLengthExceedsOverall));
     }
