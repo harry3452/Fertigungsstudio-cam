@@ -2,6 +2,11 @@
 
 Der lokale Rust-Vorschauserver zeigt jetzt **Planfräsen, rechteckige
 Außenkontur, rechteckige Tasche und Bohren** in derselben 3D-Bahnansicht.
+Über der 3D-Vorschau gibt es vier auffällige, direkt anklickbare Schaltflächen.
+Sie öffnen bei laufendem Rust-Server sofort den passenden Berechnungsdialog.
+Beim direkten Öffnen der HTML-Datei bleiben die Schaltflächen sichtbar,
+wählen aber nur eine illustrative Beispielbahn; der Status zeigt ausdrücklich
+»Demomodus · Rust-Server nicht verbunden«.
 
 ## Start
 

@@ -9,6 +9,9 @@ function request(path,method='GET',body='',headers={}){return new Promise((resol
 const req=http.request(new URL(path,base),{method,headers:{'Content-Length':Buffer.byteLength(body),...headers}},res=>{let text='';res.setEncoding('utf8');res.on('data',s=>text+=s);res.on('end',()=>resolve({status:res.statusCode,text}));});req.setTimeout(5000,()=>req.destroy(Error('timeout')));req.on('error',reject);req.end(body);
 });}
 const page=await request('/');assert.equal(page.status,200);assert.ok(page.text.includes('Live-Bearbeitung'));assert.ok(page.text.includes('live-operation'));
+assert.ok(page.text.includes('Werkzeugwege berechnen'));
+assert.equal((page.text.match(/data-cam-operation=/g)||[]).length,4);
+assert.ok(page.text.includes('Rust-Livebetrieb · Berechnung bereit'));
 assert.ok(page.text.includes('Eigene Werkzeugbibliothek'));
 for(const match of page.text.matchAll(/<script>([\s\S]*?)<\/script>/g))new(require('node:vm').Script)(match[1]);
 const headers={Origin:base.origin,'Content-Type':'application/x-fertigungsstudio'};

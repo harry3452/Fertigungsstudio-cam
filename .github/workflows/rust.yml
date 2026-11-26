@@ -44,6 +44,8 @@ jobs:
         run: |
           node prototype/core-path-tests.cjs
           node prototype/tool-storage-tests.cjs
+          node prototype/workbench-tests.cjs
+          node --check prototype/workbench.js
           node --check prototype/tool-library-ui.js
           node prototype/build-ribbon.cjs
           node --check prototype/live-preview.js

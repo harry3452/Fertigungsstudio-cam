@@ -8,8 +8,8 @@ class Element{
   constructor(value=''){this.dataset={};this.textContent='';this.attributes={};this.listeners={};this.classes=new Set();this.classList={
     toggle:(name,enabled)=>enabled?this.classes.add(name):this.classes.delete(name),
   };if(value)this.dataset.camOperation=value;}
-  addEventListener(name,handler){this.listeners[name]=handler;}
-  click(){this.listeners.click?.();}
+  addEventListener(name,handler){(this.listeners[name]??=[]).push(handler);}
+  click(){for(const fn of this.listeners.click??[])fn();}
   setAttribute(key,value){this.attributes[key]=value;}
 }
 const kinds=['facing','contour','pocket','drilling'];
@@ -19,7 +19,7 @@ const ribbons=Array.from({length:4},(_,i)=>{const e=new Element();e.dataset.oper
 const tree=Array.from({length:4},()=>new Element());
 const messages=[];
 let lastRibbon=null;
-ribbons.forEach((r,i)=>r.listeners.click=()=>{lastRibbon=i;});
+ribbons.forEach((r,i)=>r.addEventListener('click',()=>{lastRibbon=i;}));
 const document={
   querySelectorAll(selector){
     if(selector==='[data-cam-operation]')return cards;
