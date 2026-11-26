@@ -11,13 +11,19 @@ Fertigungsstudio ist ein Arbeitsname und kein offizielles SolidCraft-Projekt.
 
 ![Fertigungsstudio CAM: deutsche Symbolkacheln, Bearbeitungsbaum und schematische Werkstückvorschau](docs/images/fertigungsstudio-preview.jpg)
 
-*Bedienentwurf vom 24. November 2026. Gezeigt werden illustrative Bahnen,
-keine berechneten oder geprüften Maschinenbewegungen.*
+*Das Bild zeigt den ersten Bedienentwurf vom 24. November 2026. Die aktuelle
+Oberfläche enthält zusätzlich vier große Bearbeitungsschaltflächen; die
+Abbildung wurde noch nicht aktualisiert.*
 
 ## Vorschau starten
 
 `prototype/fertigungsstudio-kacheln.html` im Browser öffnen. Keine Installation,
 kein Server und keine zusätzlichen Pakete nötig. Die Anzeige ist derzeit deutsch.
+
+**Neu:** Über der 3D-Ansicht stehen vier große Bearbeitungsschaltflächen:
+Planfräsen, Außenkontur, Taschenfräsen und Bohren. Beim direkten Öffnen
+als HTML-Datei ist das ausdrücklich **nur ein Bedienentwurf**.
+Ein sichtbarer Status zeigt: »Demomodus · Rust-Server nicht verbunden«.
 
 Ausprobierbar sind gruppierte Symbolkacheln, Bearbeitungsauswahl, eine drehbare
 Beispielplatte, schematische Werkzeugbewegungen und Dialoge für Aufspannung,
@@ -28,12 +34,15 @@ Der erste Rust-Kern berechnet eingeschränkte Planfräsbahnen für rechteckige
 Rohblöcke. Über „Rust-Demo“ zeigt die Vorschau einen berechneten Datensatz;
 weitere Rust-Bahnen können als JSON-Datei geladen werden. Mit
 `cargo run --locked --offline --example preview_server` startet eine lokale
-Live-Vorschau: gedruckte Adresse öffnen, „Live-Bearbeitung“ wählen, Bearbeitungsart auswählen und Maße eingeben.
+Live-Vorschau: gedruckte Adresse öffnen und **direkt auf eine der vier
+Bearbeitungsschaltflächen** klicken. Der passende Rust-Parameterdialog öffnet
+sich. Der Status lautet dann »Rust-Livebetrieb · Berechnung bereit«.
+Eine alte lokal gespeicherte HTML-Kopie muss nach dem Update ersetzt werden.
 Unter Windows geht das auch per Doppelklick auf `Start-Fertigungsstudio.cmd`
 (Rust und Build-Werkzeuge müssen installiert sein).
 Eine Kollisionsprüfung ist noch nicht vorhanden.
 
-**Experimenteller Entwicklungszweig:** Zusätzlich berechnet der Rust-Kern
+**Experimenteller Rust-Kern:** Zusätzlich berechnet der Rust-Kern
 jetzt einfache rechteckige Außenkonturen, Taschen und axiale Bohrungen mit
 optionalem vollständigem Rückzug zwischen den Bohrschritten. Diese Funktionen
 sind mit der gemeinsamen Auftragsstruktur verbunden und im lokalen Rust-Server
