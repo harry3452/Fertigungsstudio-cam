@@ -8,7 +8,7 @@ if(base.hostname!=='127.0.0.1')throw Error('Local preview URL required');
 function request(path,method='GET',body='',headers={}){return new Promise((resolve,reject)=>{
 const req=http.request(new URL(path,base),{method,headers:{'Content-Length':Buffer.byteLength(body),...headers}},res=>{let text='';res.setEncoding('utf8');res.on('data',s=>text+=s);res.on('end',()=>resolve({status:res.statusCode,text}));});req.setTimeout(5000,()=>req.destroy(Error('timeout')));req.on('error',reject);req.end(body);
 });}
-const page=await request('/');assert.equal(page.status,200);assert.ok(page.text.includes('Live-Planfräsen'));
+const page=await request('/');assert.equal(page.status,200);assert.ok(page.text.includes('Live-Bearbeitung'));assert.ok(page.text.includes('live-operation'));
 assert.ok(page.text.includes('Eigene Werkzeugbibliothek'));
 for(const match of page.text.matchAll(/<script>([\s\S]*?)<\/script>/g))new(require('node:vm').Script)(match[1]);
 const headers={Origin:base.origin,'Content-Type':'application/x-fertigungsstudio'};
@@ -22,12 +22,28 @@ assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 3',{...headers
 assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 3',{...headers,Host:'evil.invalid'})).status,403);
 assert.equal((await request('/api/cancel','POST','',headers)).status,200);
 assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 1e-300',headers)).status,422);
+const contour=await request('/api/contour','POST','40 30 10 4 6 2 3 1 12 500 100',headers);
+assert.equal(contour.status,200);
+const contourPath=validate(JSON.parse(contour.text));
+assert.equal(contourPath.operation,'contour');assert.equal(contourPath.moves.length,14);
+const pocket=await request('/api/pocket','POST','40 30 10 4 6 2 3 1 12 500 100 5 5',headers);
+assert.equal(pocket.status,200);
+const pocketPath=validate(JSON.parse(pocket.text));
+assert.equal(pocketPath.operation,'pocket');assert.ok(pocketPath.moves.length>10);
+const drilling=await request('/api/drilling','POST','40 30 10 5 5 2 2 3 10 120 100 10 10',headers);
+assert.equal(drilling.status,200);
+const drillingPath=validate(JSON.parse(drilling.text));
+assert.equal(drillingPath.operation,'drilling');assert.equal(drillingPath.moves.length,28);
+assert.equal((await request('/api/contour','POST','40 30 10 4 6 2 3 1 12 500 100')).status,403);
+assert.equal((await request('/api/pocket','POST','40 30 10 4 6 2 3 1 12 500 100 19 5',headers)).status,422);
+assert.equal((await request('/api/drilling','POST','40 30 10 5 5 2 2 3 10 120 100 1 1',headers)).status,422);
+assert.equal((await request('/api/pocket','POST','40 30 10 4 6 2 3 1 12 500 100',headers)).status,422);
 assert.equal((await request('/api/unknown','POST','',headers)).status,404);
 // A bounded parser can close with unread oversized input: Windows may report
 // a reset instead of delivering the 400 response. Either must reject the input.
 try { assert.equal((await request('/api/facing','POST','1'.repeat(1025),headers)).status,400); }
 catch(e) { if(e.code!=='ECONNRESET')throw e; }
-console.log('Live HTTP checks passed: page, valid path, invalid depth, missing/foreign origin, wrong host, cancellation endpoint.');
+console.log('Live HTTP checks passed: facing, contour, pocket, drilling, validation, same-origin restrictions and cancellation.');
 }
 module.exports={run};
 if(require.main===module)run().catch(e=>{console.error(e);process.exitCode=1;});

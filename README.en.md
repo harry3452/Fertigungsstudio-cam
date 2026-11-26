@@ -27,6 +27,14 @@ the printed address and select “Live-Planfräsen”. There is no collision
 verification. See
 [the core contract and limitations](docs/core-first-step.md).
 
+**Experimental development branch:** The Rust core additionally calculates
+simple rectangular outer contours, pockets and axial drilling with optional
+full-clearance retracts between pecks. These operations are connected to the
+shared machining plan and are available in the local Rust preview under
+**Live-Bearbeitung → Bearbeitungsart**. This is experimental neutral motion,
+not machine output. Run `cargo run --locked --offline --example milling_ops`
+to inspect motion counts. See [live UI](docs/live-milling-preview.md). [Scope and limitations](docs/milling-operations.md).
+
 The modular Rust extension in PR #7 introduces machine, tool, setup and
 operation records for milling, turning and laser. An explicit adapter validates
 a 3-axis facing request and reuses the existing bounded facing planner and tool

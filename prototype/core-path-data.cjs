@@ -3,7 +3,14 @@
   function validate(d) {
     const finite = n => typeof n === 'number' && Number.isFinite(n) && Math.abs(n) <= 1000000;
     const point = p => Array.isArray(p) && p.length === 3 && p.every(finite);
-    if (!d || d.format !== 'fertigungsstudio-facing-v1' || d.units !== 'mm') throw Error('Unbekanntes Bahnformat oder Einheit.');
+    if (!d || d.units !== 'mm') throw Error('Unbekanntes Bahnformat oder Einheit.');
+    if (d.format === 'fertigungsstudio-facing-v1') {
+      if (d.operation !== undefined && d.operation !== 'facing') throw Error('Falsche Operationskennung.');
+    } else if (d.format === 'fertigungsstudio-toolpath-v1') {
+      if (!['contour','pocket','drilling'].includes(d.operation)) throw Error('Unbekannte Bearbeitung.');
+    } else {
+      throw Error('Unbekanntes Bahnformat.');
+    }
     if (!d.stock || !point(d.stock.min) || !point(d.stock.max) || !d.stock.max.every((v,i)=>v>d.stock.min[i])) throw Error('Ungültiges Rohteil.');
     if (!finite(d.tool_diameter) || d.tool_diameter <= 0 || !finite(d.bottom_z) || !finite(d.clearance_z) || d.clearance_z<=d.stock.max[2] || d.bottom_z<d.stock.min[2] || d.bottom_z>=d.stock.max[2]) throw Error('Ungültiges Werkzeug oder Höhen.');
     if(d.tool_number!==undefined&&(!Number.isInteger(d.tool_number)||d.tool_number<1||d.tool_number>9999))throw Error('Ungültige Werkzeugnummer.');
