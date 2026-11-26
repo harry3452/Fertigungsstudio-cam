@@ -11,6 +11,8 @@ use std::{
     time::Duration,
 };
 
+mod milling_routes;
+
 const PAGE: &str = include_str!("../../../prototype/fertigungsstudio-kacheln.html");
 const LIVE: &str = include_str!("../../../prototype/live-preview.js");
 const TOOL_STORAGE: &str = include_str!("../../../prototype/tool-storage.cjs");
@@ -230,11 +232,23 @@ fn handle(stream: &mut TcpStream, host: &str, generation: &AtomicU64) -> std::io
         generation.fetch_add(1, Ordering::Relaxed);
         return respond(stream, "200 OK", "text/plain", "Cancelled");
     }
-    if req.path != "/api/facing" {
+    if !matches!(
+        req.path.as_str(),
+        "/api/facing" | "/api/contour" | "/api/pocket" | "/api/drilling"
+    ) {
         return respond(stream, "404 Not Found", "text/plain", "NotFound");
     }
     let mine = generation.fetch_add(1, Ordering::Relaxed).wrapping_add(1);
-    match calculate(&req.body, || generation.load(Ordering::Relaxed) != mine) {
+    let result = if req.path == "/api/facing" {
+        calculate(&req.body, || generation.load(Ordering::Relaxed) != mine)
+    } else {
+        milling_routes::calculate(
+            &req.path,
+            &req.body,
+            || generation.load(Ordering::Relaxed) != mine,
+        )
+    };
+    match result {
         Ok(json) if generation.load(Ordering::Relaxed) == mine => {
             respond(stream, "200 OK", "application/json", &json)
         }
