@@ -11,6 +11,7 @@ use std::{
     time::Duration,
 };
 
+#[path = "preview_server/milling_routes.rs"]
 mod milling_routes;
 
 const PAGE: &str = include_str!("../../../prototype/fertigungsstudio-kacheln.html");
