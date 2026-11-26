@@ -9,6 +9,9 @@ pub enum AxisMotion { LinearMm, RotaryDeg }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum MachineClass { Mill3, Mill5, Lathe, Laser }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TurningXMode { Radius, Diameter }
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct AxisSpec {
     pub name: AxisName,
@@ -22,6 +25,8 @@ pub struct MachineDefinition {
     pub id: String,
     pub class: MachineClass,
     pub axes: Vec<AxisSpec>,
+    /// Required for a lathe; X output cannot be assumed to mean diameter.
+    pub turning_x_mode: Option<TurningXMode>,
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -32,6 +37,8 @@ pub enum MachineError {
     DuplicateAxis(AxisName),
     MissingAxis(AxisName),
     MissingRotaryAxes,
+    MissingTurningXMode,
+    TurningModeOnNonLathe,
 }
 
 impl MachineDefinition {
@@ -61,6 +68,12 @@ impl MachineDefinition {
                 return Err(MachineError::MissingAxis(name));
             }
         }
+        if self.class == MachineClass::Lathe && self.turning_x_mode.is_none() {
+            return Err(MachineError::MissingTurningXMode);
+        }
+        if self.class != MachineClass::Lathe && self.turning_x_mode.is_some() {
+            return Err(MachineError::TurningModeOnNonLathe);
+        }
         if self.class == MachineClass::Mill5 &&
             self.axes.iter().filter(|axis| axis.motion == AxisMotion::RotaryDeg).count() < 2 {
             return Err(MachineError::MissingRotaryAxes);
@@ -84,23 +97,32 @@ mod tests {
     #[test]
     fn three_axis_mill_needs_xyz() {
         let machine = MachineDefinition { id: "mill".into(), class: MachineClass::Mill3,
-            axes: vec![axis(AxisName::X), axis(AxisName::Y)] };
+            axes: vec![axis(AxisName::X), axis(AxisName::Y)], turning_x_mode: None };
         assert_eq!(machine.validate(), Err(MachineError::MissingAxis(AxisName::Z)));
     }
 
     #[test]
     fn five_axis_mill_needs_two_rotaries() {
         let mut machine = MachineDefinition { id: "mill5".into(), class: MachineClass::Mill5,
-            axes: vec![axis(AxisName::X), axis(AxisName::Y), axis(AxisName::Z), axis(AxisName::B)] };
+            axes: vec![axis(AxisName::X), axis(AxisName::Y), axis(AxisName::Z), axis(AxisName::B)], turning_x_mode: None };
         assert_eq!(machine.validate(), Err(MachineError::MissingRotaryAxes));
         machine.axes.push(axis(AxisName::C));
         assert!(machine.validate().is_ok());
     }
 
     #[test]
+    fn lathe_requires_explicit_diameter_or_radius() {
+        let mut machine = MachineDefinition { id: "lathe".into(), class: MachineClass::Lathe,
+            axes: vec![axis(AxisName::X), axis(AxisName::Z)], turning_x_mode: None };
+        assert_eq!(machine.validate(), Err(MachineError::MissingTurningXMode));
+        machine.turning_x_mode = Some(TurningXMode::Radius);
+        assert!(machine.validate().is_ok());
+    }
+
+    #[test]
     fn duplicate_and_invalid_limits_are_refused() {
         let mut machine = MachineDefinition { id: "lathe".into(), class: MachineClass::Lathe,
-            axes: vec![axis(AxisName::X), axis(AxisName::Z)] };
+            axes: vec![axis(AxisName::X), axis(AxisName::Z)], turning_x_mode: Some(TurningXMode::Diameter) };
         machine.axes.push(axis(AxisName::X));
         assert_eq!(machine.validate(), Err(MachineError::DuplicateAxis(AxisName::X)));
         machine.axes.pop();
