@@ -28,7 +28,7 @@ Der erste Rust-Kern berechnet eingeschränkte Planfräsbahnen für rechteckige
 Rohblöcke. Über „Rust-Demo“ zeigt die Vorschau einen berechneten Datensatz;
 weitere Rust-Bahnen können als JSON-Datei geladen werden. Mit
 `cargo run --locked --offline --example preview_server` startet eine lokale
-Live-Vorschau: gedruckte Adresse öffnen, „Live-Planfräsen“ wählen und Maße eingeben.
+Live-Vorschau: gedruckte Adresse öffnen, „Live-Bearbeitung“ wählen, Bearbeitungsart auswählen und Maße eingeben.
 Unter Windows geht das auch per Doppelklick auf `Start-Fertigungsstudio.cmd`
 (Rust und Build-Werkzeuge müssen installiert sein).
 Eine Kollisionsprüfung ist noch nicht vorhanden.
@@ -36,9 +36,10 @@ Eine Kollisionsprüfung ist noch nicht vorhanden.
 **Experimenteller Entwicklungszweig:** Zusätzlich berechnet der Rust-Kern
 jetzt einfache rechteckige Außenkonturen, Taschen und axiale Bohrungen mit
 optionalem vollständigem Rückzug zwischen den Bohrschritten. Diese Funktionen
-sind mit der gemeinsamen Auftragsstruktur verbunden, aber **noch nicht über
-die Live-Vorschau auswählbar**. Das Rust-Beispiel lässt sich mit
-`cargo run --locked --offline --example milling_ops` ausführen.
+sind mit der gemeinsamen Auftragsstruktur verbunden und im lokalen Rust-Server
+über **Live-Bearbeitung → Bearbeitungsart** auswählbar. Das Rust-Beispiel
+`cargo run --locked --offline --example milling_ops` ist weiterhin verfügbar.
+[Live-Bedienung](docs/live-milling-preview.md).
 [Umfang und Grenzen](docs/milling-operations.md).
 Aufbau, Prüfungen und Grenzen: [Erster Kernbaustein](docs/core-first-step.md).
 

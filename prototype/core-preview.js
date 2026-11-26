@@ -16,14 +16,16 @@ importButton.onclick=()=>picker.click();
 function loadCore(d){
   coreData=CamPathData.validate(d);playing=false;progress=0;$('play').textContent='▶ Abspielen';
   document.querySelector('.layout').classList.add('inspector-hidden');
-  $('opTitle').textContent='Planfräsen · Rust-Kern';
+  const operationNames={facing:'Planfräsen',contour:'Außenkontur',pocket:'Rechtecktasche',drilling:'Bohren'};
+  const operationName=operationNames[coreData.operation||'facing'];
+  $('opTitle').textContent=operationName+' · Rust-Kern';
   $('connectionLabel').textContent='Berechnete Bahn · rechteckiger Rohblock';
   coreBadge.textContent=coreData.moves.length+' Bewegungen';
   document.querySelector('.legend').firstElementChild.lastChild.textContent='Berechnete Bahn';
   document.querySelector('.panel h2').textContent='Rust-Rohblock';
   sidebar.querySelector('p').textContent=dims(coreData)+' mm · Rechteckrohteil';
   sidebar.querySelectorAll('.tree,.tools,.setup').forEach(e=>e.hidden=true);
-  summary.hidden=false;summary.textContent='Planfräsen · '+(coreData.tool_number?'T'+coreData.tool_number+' · ':'')+'Werkzeug Ø '+coreData.tool_diameter+' mm · Endhöhe '+coreData.bottom_z+' mm'+(coreData.cutting_feed?' · Vorschub '+coreData.cutting_feed+' mm/min':'')+' · Freiraum außerhalb des Rohteils vorausgesetzt.';
+  summary.hidden=false;summary.textContent=operationName+' · '+(coreData.tool_number?'T'+coreData.tool_number+' · ':'')+'Werkzeug Ø '+coreData.tool_diameter+' mm · Endhöhe '+coreData.bottom_z+' mm'+(coreData.cutting_feed?' · Vorschub '+coreData.cutting_feed+' mm/min':'')+' · Nur numerisch berechnete Bahnen; keine Spannmittel- oder Kollisionsprüfung.';
   $('status').textContent='Rust-Bahndaten · keine Kollisions- oder Maschinenprüfung';
   $('editOperation').disabled=true;returnButton.hidden=false;resize();
 }

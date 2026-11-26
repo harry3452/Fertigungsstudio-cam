@@ -11,7 +11,10 @@ They can also be called from the shared project via
 `OperationKind`, a rectangular stock setup, and a matching tool. Contour and
 pocket use feeds from the existing `MillingTool` library. Drilling requires
 `MillingToolKind::Drill` and an explicitly provided drilling feed.
-The HTML frontend and persistence do **not** yet expose these three operations.
+The local HTML/Rust preview can now calculate and visualize these three
+operations using dedicated same-origin HTTP endpoints. Browser-local project
+persistence for them is **not** implemented. See
+[live preview guide](live-milling-preview.md).
 
 ## Example
 
