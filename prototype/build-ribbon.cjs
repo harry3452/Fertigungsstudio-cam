@@ -44,7 +44,7 @@ $('toolButton').onclick=()=>{openInspector();$('tool').focus();};$('stockTile').
 $('preferencesTile').onclick=()=> $('generalSettings').showModal();$('postTile').onclick=()=> $('postDialog').showModal();document.querySelectorAll('[data-close]').forEach(b=>b.onclick=()=>$(b.dataset.close).close());$('saveConcept').onclick=()=> $('export').click();
 $('themeChoice').onchange=()=>document.body.classList.toggle('light',$('themeChoice').value==='light');$('fontChoice').onchange=()=>{document.body.classList.toggle('large-text',$('fontChoice').value==='large');resize();};$('hostMode').onchange=()=>{$('connectionLabel').textContent=$('hostMode').selectedIndex?'Integrierter Betrieb · Konzept':'Importiertes Bauteil';};
 $('calculateTile').onclick=()=>{makePath();progress=0;$('progress').value=0;toast('Beispielbahnen aktualisiert. Noch keine echte CAM-Berechnung.');};
-function startSimulation(){playing=true;progress=0;$('play').textContent='Ⅱ Pause';$('status').textContent='Schematische Werkzeugbewegung · keine Materialabtragsprüfung';} $('simulationTile').onclick=startSimulation;$('tabSimulation').onclick=startSimulation;syncTiles();
+function startSimulation(){globalThis.FertigungsstudioStudio?.enterSimulation();playing=true;progress=0;$('play').textContent='Ⅱ Pause';$('status').textContent='Schematische Werkzeugbewegung · keine Materialabtragsprüfung';} $('simulationTile').onclick=startSimulation;$('tabSimulation').onclick=startSimulation;syncTiles();
 </script>`;
 const studioCss=fs.readFileSync(path.join(__dirname,'studio-shell.css'),'utf8');
 const pathViewCss=fs.readFileSync(path.join(__dirname,'studio-path-view.css'),'utf8');
