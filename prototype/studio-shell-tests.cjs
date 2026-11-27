@@ -7,5 +7,5 @@ for(const word of ['studio-ready','studio-shell','studio-menu-tile','studio-tree
 assert.ok(html.includes("host.id='studioShell'"));
 assert.ok(html.includes('FertigungsstudioStudio'));
 assert.ok(html.includes('studio-origin-edge'));
-assert.ok(script.includes('studio-tool-illustration'));assert.ok(script.includes('tool-threadpitch'));assert.ok(script.includes('closeStudio'));
+assert.ok(script.includes('studio-tool-illustration'));assert.ok(script.includes('tool-threadpitch'));assert.ok(script.includes('closeStudio'));assert.ok(script.includes('restoring previous preview'));
 console.log('Studio shell integration checks passed.');

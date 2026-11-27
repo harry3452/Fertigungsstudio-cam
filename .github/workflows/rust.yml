@@ -50,6 +50,7 @@ jobs:
           node --check prototype/workbench.js
           node --check prototype/tool-library-ui.js
           node prototype/build-ribbon.cjs
+          git diff --exit-code -- prototype/fertigungsstudio-kacheln.html
           node --check prototype/live-preview.js
           node --check prototype/live-server-tests.cjs
       - name: Build and test local Rust preview connection

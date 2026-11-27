@@ -502,6 +502,7 @@ globalThis.FertigungsstudioCamWorkbench={
 // Dialogs store editable project/configuration data, not certified machining paths.
 (()=>{
 'use strict';
+try{
 if(globalThis.FertigungsstudioStudio)return;
 const host=document.createElement('div');
 host.className='studio-shell';
@@ -715,6 +716,7 @@ function redrawOrigin(){
   hit.addEventListener('click',e=>{e.stopPropagation();const q=fromEvent(e);if(q)setXYZ(x,y,(lo.y-q.y)/scale)});
   hit.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();setXYZ(x,y,s.z/2)}});
  }
+ sel.querySelectorAll('.studio-origin-point').forEach(point=>sel.appendChild(point));
  const center=P(Math.max(0,Math.min(s.x,o.x)),Math.max(0,Math.min(s.y,o.y)),z);
  svgEl('circle',{cx:center.x,cy:center.y,r:13,fill:'none',stroke:'#81ffd4','stroke-width':2,'stroke-dasharray':'4 3'},marker);
  svgEl('circle',{cx:center.x,cy:center.y,r:5,fill:'#48d5a4',stroke:'white','stroke-width':2},marker);
@@ -954,5 +956,14 @@ globalThis.FertigungsstudioStudio={
 };
 project.theme='dark';
 render();
+}catch(error){
+ console.error('Studio UI could not start; restoring previous preview.',error);
+ document.body.classList.remove('studio-ready');
+ const wrapper=document.getElementById('studioShell');
+ const oldLayout=document.querySelector('.layout');
+ const view=wrapper?.querySelector('.view');
+ if(view&&oldLayout)oldLayout.insertBefore(view,oldLayout.children[1]||null);
+ wrapper?.remove();
+}
 })();
 </script></html>

@@ -11,13 +11,11 @@ an official SolidCraft project.
 
 ![Fertigungsstudio CAM: German ribbon tiles, operation tree and schematic part preview](docs/images/fertigungsstudio-preview.jpg)
 
-*Early interface concept, 24 November 2026. The current prototype additionally
-shows four prominent operation cards; the screenshot has not yet been updated.*
+*Earlier interface concept, 24 November 2026. The current one-row ribbon and left-side operation tree are not yet reflected in this screenshot.*
 
-Open `prototype/fertigungsstudio-kacheln.html` in a browser. No installation or
-server is required. The current prototype is in German. It demonstrates ribbon
-tiles, an operation tree, a rotatable example part, schematic tool movement,
-contextual parameters and settings dialogs. The integration selector is a mockup.
+Open `prototype/fertigungsstudio-kacheln.html` directly in a browser (offline interface prototype, no installation). The German UI now has a single icon ribbon for **File / Setup / Tools / Milling / 3D Milling / Turning / Laser / Simulation / Post**, a left-side operation tree, a large rotatable 3D viewport, and dark/light controls. File includes JSON project save/open and a browser-only exit action.
+
+**Setup** supports stock size, workpiece material, a material library, origin-point selection at stock corners, edges or free XYZ coordinates, and XY-axis rotation/Z reversal. The **tool library** holds milling/turning tool geometry, editable holder associations and material-dependent feed/speed settings with numerical RPM/feed previews. STEP/STL/IGES uploads are currently only filename references, **not imported CAD geometry**. Saved JSON projects are editor data, not real machining programs. In **Simulation**, neutral Rust paths can be filtered by rapid/feed/Z-entry movement with illustrative scaled tool/holder display. No axis transformation, material removal, collision detection or NC output is implemented.
 
 The initial Rust core calculates restricted facing paths for rectangular raw
 blocks.
