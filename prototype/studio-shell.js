@@ -47,7 +47,7 @@ const defaults=()=>({
  {id:3,name:'Edelstahl 1.4301',group:'Edelstahl',grade:'1.4301',hardness:''}
  ],
  tools:[
- {id:1,name:'Planfräser Ø32',category:'mill',type:'Planfräser',diameter:32,cutLength:10,totalLength:80,teeth:4,radius:0,insert:'',holder:'',holderCad:'',profiles:{}},
+ {id:1,name:'Planfräser Ø32',category:'mill',type:'Planfräser',diameter:32,cutLength:10,totalLength:80,teeth:4,radius:0,insert:'',holder:'',holderCad:'',coneAngle:30,threadPitch:1.5,threadHand:'Rechts',turnAngle:95,profiles:{}},
  {id:2,name:'Schaftfräser Ø8',category:'mill',type:'Schaftfräser',diameter:8,cutLength:24,totalLength:70,teeth:3,radius:0,insert:'',holder:'',holderCad:'',profiles:{}},
  {id:3,name:'Außendrehmeißel',category:'turn',type:'Außendrehmeißel',diameter:0,cutLength:0,totalLength:70,teeth:1,radius:.8,insert:'CNMG',holder:'20 × 20',holderCad:'',profiles:{}}
  ],
@@ -249,15 +249,30 @@ function collectTool(){
  const t=toolEdit;
  for(const [key,id] of Object.entries({name:'tool-name',type:'tool-type',insert:'tool-insert',holder:'tool-holder'}))t[key]=val(id);
  for(const [key,id] of Object.entries({diameter:'tool-diameter',cutLength:'tool-cutlength',totalLength:'tool-length',teeth:'tool-teeth',radius:'tool-radius'}))t[key]=num(val(id));
+ for(const [key,id] of Object.entries({coneAngle:'tool-coneangle',threadPitch:'tool-threadpitch',turnAngle:'tool-turnangle'}))if($(id))t[key]=num(val(id));
+ if($('tool-threadhand'))t.threadHand=val('tool-threadhand');
  t.profiles=t.profiles||{};
  t.profiles[matProfile]={vc:val('tool-vc'),feed:val('tool-feed'),ap:val('tool-ap'),ae:val('tool-ae'),coolant:val('tool-coolant')};
+}
+function toolSketch(t){
+ const label=t.category==='turn'?'Drehmeißel + Schneidplatte':'Fräswerkzeug + Schaft';
+ const shape=t.category==='turn'?
+ '<path d="M15 69H170V100H15Z" fill="#7995a5" stroke="#c4d9e2" stroke-width="2"/><path d="M170 69L208 42L239 59L202 100H170Z" fill="#647d8b" stroke="#bcd1db" stroke-width="2"/><path d="M193 47L227 63L200 90L166 72Z" fill="#d0c17a" stroke="#fff2a3" stroke-width="2"/><circle cx="198" cy="67" r="5" fill="#4f6270"/>':
+ '<rect x="105" y="14" width="50" height="57" rx="4" fill="#91a9b8" stroke="#d1e4eb" stroke-width="2"/><rect id="studio-tool-cutrect" x="105" y="71" width="50" height="50" rx="3" fill="#2da784" stroke="#bde6d8" stroke-width="2"/><path d="M108 118L139 74M128 119L153 88" fill="none" stroke="#bde6d8" stroke-width="3"/>';
+ return '<div class="studio-tool-illustration"><svg viewBox="0 0 260 150" role="img" aria-label="'+label+'">'+shape+'<text x="130" y="142" fill="#b3c7d2" font-size="11" text-anchor="middle">'+label+' · schematisch</text></svg></div>';
+}
+function updateToolSketch(){
+ const r=$('studio-tool-cutrect');if(!r)return;
+ const d=Math.max(1,num(val('tool-diameter'),10)),len=Math.max(1,num(val('tool-cutlength'),25));
+ const width=Math.min(90,Math.max(14,d*5)),height=Math.min(58,Math.max(12,len*2));
+ r.setAttribute('x',130-width/2);r.setAttribute('width',width);r.setAttribute('y',121-height);r.setAttribute('height',height);
 }
 function renderToolForm(){
  const t=toolEdit,turn=t.category==='turn',types=turn?turningTypes:millingTypes;
  if(!types.includes(t.type))t.type=types[0];
  const p=t.profiles?.[matProfile]||{};
- showDialog(t.id?'Werkzeug bearbeiten':'Werkzeug anlegen','<div class="studio-modal-grid">'+chooser('Werkzeugbereich','tool-category',[['mill','Fräsen'],['turn','Drehen']],t.category)+chooser('Grundform','tool-type',types.map(x=>[x,x]),t.type)+field('Werkzeugname','tool-name',t.name)+'</div><h3>Geometrie</h3><div class="studio-modal-grid">'+field('Durchmesser, falls zutreffend (mm)','tool-diameter',t.diameter,'number','step="any"')+field('Schneidenlänge (mm)','tool-cutlength',t.cutLength,'number','step="any"')+field('Gesamtlänge (mm)','tool-length',t.totalLength,'number','step="any"')+field('Schneidenzahl','tool-teeth',t.teeth,'number','step="1"')+field('Eckenradius (mm)','tool-radius',t.radius,'number','step="any"')+field('Schneidplatte, falls zutreffend','tool-insert',t.insert)+'</div><h3>Werkzeugaufnahme und Halter</h3><div class="studio-modal-grid">'+field('Aufnahme / Halter frei eingeben','tool-holder',t.holder)+'</div><p>Zuordnung der 3D-CAD-Datei: '+escapeHTML(t.holderCad||'Keine')+'. STEP/STL/IGES-Geometrie kann hier noch nicht dargestellt oder für Kollisionen verwendet werden.</p><div class="studio-modal-actions">'+button('Halterdatei auswählen','choose-holder')+button('Halterdatei lösen','clear-holder')+'</div><h3>Materialspezifische Schnittwerte</h3><div class="studio-modal-grid">'+chooser('Werkstückmaterial','tool-material',project.materials.map(m=>[m.id,m.name]),matProfile)+field('Schnittgeschwindigkeit Vc (m/min)','tool-vc',p.vc||'','number','step="any"')+field(turn?'Vorschub f (mm/U)':'Zahnvorschub fz (mm/Zahn)','tool-feed',p.feed||'','number','step="any"')+field('Schnitttiefe ap (mm)','tool-ap',p.ap||'','number','step="any"')+field('Seitliche Zustellung ae (mm)','tool-ae',p.ae||'','number','step="any"')+chooser('Kühlung','tool-coolant',[['','Nicht festgelegt'],['Trocken','Trocken'],['KSS','Kühlschmierstoff'],['MMS','Minimalmengenschmierung']],p.coolant||'')+'</div><p id="tool-computed"></p><p>Bei Drehwerkzeugen wird die Drehzahl mit dem aktuellen Rohteil-Durchmesser als Beispiel gerechnet. Für echte G96/G97-Steuerung und Maschinenlimits ist weitere Implementierung nötig.</p><div class="studio-modal-actions">'+button('Werkzeug speichern','save-tool','primary')+button('Zur Werkzeugliste','tools')+'</div>');
- updateToolMath();
+ showDialog(t.id?'Werkzeug bearbeiten':'Werkzeug anlegen','<div class="studio-modal-grid">'+chooser('Werkzeugbereich','tool-category',[['mill','Fräsen'],['turn','Drehen']],t.category)+chooser('Grundform','tool-type',types.map(x=>[x,x]),t.type)+field('Werkzeugname','tool-name',t.name)+'</div>'+toolSketch(t)+'<h3>Geometrie</h3><div class="studio-modal-grid">'+field('Durchmesser, falls zutreffend (mm)','tool-diameter',t.diameter,'number','step="any"')+field('Schneidenlänge (mm)','tool-cutlength',t.cutLength,'number','step="any"')+field('Gesamtlänge (mm)','tool-length',t.totalLength,'number','step="any"')+field('Schneidenzahl','tool-teeth',t.teeth,'number','step="1"')+field('Eckenradius (mm)','tool-radius',t.radius,'number','step="any"')+field('Schneidplatte, falls zutreffend','tool-insert',t.insert)+'</div><div class="studio-modal-grid">'+(t.type.includes('Kegel')?field('Kegelwinkel (°)','tool-coneangle',t.coneAngle??30,'number','step="any"'):'')+(t.type.includes('Gewinde')?field('Gewindesteigung (mm)','tool-threadpitch',t.threadPitch??1.5,'number','step="any"')+chooser('Gewinderichtung','tool-threadhand',[['Rechts','Rechts'],['Links','Links']],t.threadHand||'Rechts'):'')+(turn?field('Einstellwinkel (°)','tool-turnangle',t.turnAngle??95,'number','step="any"'):'')+'</div><h3>Werkzeugaufnahme und Halter</h3><div class="studio-modal-grid">'+field('Aufnahme / Halter frei eingeben','tool-holder',t.holder)+'</div><p>Zuordnung der 3D-CAD-Datei: '+escapeHTML(t.holderCad||'Keine')+'. STEP/STL/IGES-Geometrie kann hier noch nicht dargestellt oder für Kollisionen verwendet werden.</p><div class="studio-modal-actions">'+button('Halterdatei auswählen','choose-holder')+button('Halterdatei lösen','clear-holder')+'</div><h3>Materialspezifische Schnittwerte</h3><div class="studio-modal-grid">'+chooser('Werkstückmaterial','tool-material',project.materials.map(m=>[m.id,m.name]),matProfile)+field('Schnittgeschwindigkeit Vc (m/min)','tool-vc',p.vc||'','number','step="any"')+field(turn?'Vorschub f (mm/U)':'Zahnvorschub fz (mm/Zahn)','tool-feed',p.feed||'','number','step="any"')+field('Schnitttiefe ap (mm)','tool-ap',p.ap||'','number','step="any"')+field('Seitliche Zustellung ae (mm)','tool-ae',p.ae||'','number','step="any"')+chooser('Kühlung','tool-coolant',[['','Nicht festgelegt'],['Trocken','Trocken'],['KSS','Kühlschmierstoff'],['MMS','Minimalmengenschmierung']],p.coolant||'')+'</div><p id="tool-computed"></p><p>Bei Drehwerkzeugen wird die Drehzahl mit dem aktuellen Rohteil-Durchmesser als Beispiel gerechnet. Für echte G96/G97-Steuerung und Maschinenlimits ist weitere Implementierung nötig.</p><div class="studio-modal-actions">'+button('Werkzeug speichern','save-tool','primary')+button('Zur Werkzeugliste','tools')+'</div>');
+ updateToolMath();updateToolSketch();
 }
 function updateToolMath(){
  if(!$('tool-computed'))return;
@@ -281,6 +296,13 @@ function download(name,obj){
 function saveProject(){
  download(project.name+'.fscam.json',{format:'fertigungsstudio-project-v1',project});
  dirty=false;status('Projektdatei zum Download angeboten. Noch keine maschinenfertigen CAM-Daten.');
+}
+function closeStudio(){
+ closeDialog();
+ const end=document.createElement('div');end.className='studio-ended';
+ end.innerHTML='<strong>Fertigungsstudio CAM – Entwurf geschlossen</strong><p>Die Anwendung wurde in der Vorschau beendet.</p><button type="button">Erneut öffnen</button>';
+ end.querySelector('button').onclick=()=>window.location.reload();
+ host.replaceChildren(end);
 }
 function exitDialog(){
  showDialog('Programm beenden','<p>'+(dirty?'Das Projekt enthält ungespeicherte Änderungen.':'Der Bedienentwurf wird geschlossen.')+'</p><div class="studio-modal-actions">'+button('Speichern und beenden','exit-save')+button('Ohne Speichern beenden','exit-discard')+button('Abbrechen','close')+'</div><p>Im Browser wird nur die Bedienoberfläche geschlossen, nicht der Browser selbst.</p>');
@@ -331,6 +353,7 @@ dlg.addEventListener('change',e=>{
 });
 dlg.addEventListener('input',e=>{
  if(['tool-vc','tool-feed','tool-diameter','tool-teeth'].includes(e.target.id))updateToolMath();
+ if(['tool-diameter','tool-cutlength'].includes(e.target.id))updateToolSketch();
 });
 dlg.addEventListener('click',e=>{
  const btn=e.target.closest('[data-studio-action]');if(!btn)return;
@@ -381,8 +404,8 @@ dlg.addEventListener('click',e=>{
   current=1;dirty=false;closeDialog();render();status('Neues Projekt angelegt. Die gemeinsame Werkzeug- und Materialbibliothek bleibt erhalten.');return;
  }
  if(act==='do-saveas'){project.name=val('save-name').trim()||'Neues Projekt';closeDialog();render();saveProject();return}
- if(act==='exit-save'){saveProject();closeDialog();host.hidden=true;status('Bedienoberfläche geschlossen; Browser bleibt offen.');return}
- if(act==='exit-discard'){closeDialog();host.hidden=true;return}
+ if(act==='exit-save'){saveProject();closeStudio();return}
+ if(act==='exit-discard'){closeStudio();return}
 });
 holderPicker.addEventListener('change',e=>{
  const f=e.target.files?.[0];if(f&&toolEdit){collectTool();toolEdit.holderCad=f.name;renderToolForm();status('CAD-Dateiname vorgemerkt. Geometrieimport und Kollisionsmodell noch nicht umgesetzt.')}
