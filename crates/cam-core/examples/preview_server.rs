@@ -1,6 +1,6 @@
 //! Local-only prototype bridge. Run with cargo run --example preview_server.
 //! No filesystem writes, remote binding, arbitrary file serving or machine output.
-use fertigungsstudio_cam_core::{Error, Facing, FlatTool, Motion, Point3, Setup, StockBox};
+use fertigungsstudio_cam_core::{Error, Facing, FacingTurn, FlatTool, Motion, Point3, Setup, StockBox};
 use std::{
     io::{Read, Write},
     net::{TcpListener, TcpStream},
@@ -128,6 +128,9 @@ fn calculate(body: &str, cancelled: impl FnMut() -> bool) -> Result<String, Stri
     if values.len() == 11 {
         values.push(5.0);
     }
+    if values.len() == 12 {
+        values.push(0.0);
+    }
     let [
         width,
         length,
@@ -141,9 +144,15 @@ fn calculate(body: &str, cancelled: impl FnMut() -> bool) -> Result<String, Stri
         cutting_feed,
         plunge_feed,
         clearance_above_stock,
+        turn_mode,
     ] = values.as_slice()
     else {
         return Err("InvalidNumberCount".into());
+    };
+    let turn = match *turn_mode {
+        0.0 => FacingTurn::Lift,
+        1.0 => FacingTurn::Rounded,
+        _ => return Err("InvalidTurnMode".into()),
     };
     if !number.is_finite() || *number < 1.0 || *number > 9999.0 || number.fract() != 0.0 {
         return Err("InvalidToolNumber".into());
@@ -193,7 +202,7 @@ fn calculate(body: &str, cancelled: impl FnMut() -> bool) -> Result<String, Stri
     )
     .map_err(|e| format!("{e:?}"))?;
     let p = selected
-        .face(setup, op, cancelled)
+        .face_with_turn(setup, op, turn, cancelled)
         .map_err(|e| e.to_string())?;
     let mut out = format!(
         "{{\"format\":\"fertigungsstudio-facing-v1\",\"units\":\"mm\",\"stock\":{{\"min\":[0,0,0],\"max\":[{width},{length},{height}]}},\"tool_diameter\":{diameter},\"bottom_z\":{},\"clearance_z\":{},\"start\":[{},{},{}],\"moves\":[",
@@ -217,7 +226,7 @@ fn calculate(body: &str, cancelled: impl FnMut() -> bool) -> Result<String, Stri
         )
         .map_err(|_| "FormatError")?;
     }
-    write!(out,"],\"tool_number\":{number},\"cutting_length\":{cutting_length},\"cutting_feed\":{cutting_feed},\"plunge_feed\":{plunge_feed},\"depth_passes\":{},\"rows_per_pass\":{},\"stepdown\":{stepdown},\"stepover\":{stepover}}}", p.depth_passes, p.rows_per_pass).map_err(|_|"FormatError")?;
+    write!(out,"],\"tool_number\":{number},\"cutting_length\":{cutting_length},\"cutting_feed\":{cutting_feed},\"plunge_feed\":{plunge_feed},\"depth_passes\":{},\"rows_per_pass\":{},\"stepdown\":{stepdown},\"stepover\":{stepover},\"turn_mode\":\"{}\"}}", p.depth_passes, p.rows_per_pass, if turn == FacingTurn::Lift { "lift" } else { "round" }).map_err(|_|"FormatError")?;
     Ok(out)
 }
 
