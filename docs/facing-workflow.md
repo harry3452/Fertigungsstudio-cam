@@ -18,6 +18,9 @@ Rohblock. Keine NC-Ausgabe, keine Kollisions- oder Spannmittelprüfung.
    **Abtragstiefe**, **Tiefenzustellung**, **seitliche Zustellung**,
    **Sicherheitshöhe über Rohteil**, **Schnittvorschub** und
    **Eintauchvorschub** eintragen.
+   Unter **Wenden am Bahnende** zwischen **Halbrunde Wendekurve – ohne Anheben**
+   und **Anheben auf Sicherheitshöhe** wechseln. Die Einstellung wird
+   pro Bearbeitung im Projekt gespeichert.
 5. **Werkzeugbahn berechnen**. Die Bahndaten kommen vom lokalen Rust-Kern,
    werden validiert und sofort als **Bahnen · Draufsicht** in kräftigem Grün (Schnitt),
    gestricheltem Rot (Eilgang) und Gelb (Eintauchen) angezeigt.
@@ -38,8 +41,19 @@ ist separat als Bahn-JSON exportierbar.
 - Bahnzeilen parallel zur X-Achse von X = `-Werkzeugdurchmesser` bis
   `Rohteil-Länge + Werkzeugdurchmesser`, also mit deutlichem seitlichen
   Überlauf. Außerhalb der Rohteilgrenzen ist freier Raum angenommen.
-- Pro Querbahn auf sichere Z-Höhe fahren, mit Vorschub eintauchen,
+- **Anheben:** Pro Querbahn auf sichere Z-Höhe fahren, mit Vorschub eintauchen,
   entlang X bearbeiten, am Ende auf Z-Sicherheitshöhe zurückziehen.
+- **Halbrund:** Nur am Beginn jeder Tiefenlage eintauchen, dann abwechselnd
+  in +X/-X bearbeiten und jede benachbarte Bahn mit einem tangentialen
+  Halbkreis (Radius: halbe Querbahnabstandsbreite) verbinden. Die Kurve
+  bleibt auf Schnitthöhe und wölbt sich außerhalb des Rohteils. Zum Schluss
+  jeder Tiefenlage auf die Sicherheitshöhe zurückziehen; die nächste Lage
+  beginnt wieder mit sicherem Anfahren. Die Kurve ist für den neutralen
+  Rust-Werkzeugweg in kurze Vorschubsegmente mit höchstens 0,02 mm
+  Sehnenabweichung aufgeteilt, also noch kein echter G2/G3-Kreis.
+- Beim halbrunden Wenden ist zusätzlich zum bisherigen Fräserauslauf seitlich
+  ausreichend Platz für den Wendebogen erforderlich. Spannmittel, Maschinen-
+  grenzen und Freiraum bleiben ungeprüft.
 - Das Verfahren braucht einen freien Verfahrweg links/rechts vom Rohteil.
   Spannmittel, Maschinenverfahrwege und Werkzeughalter werden nicht geprüft.
 - Seitliche Zustellung maximal halber Werkzeugdurchmesser; die vollständige

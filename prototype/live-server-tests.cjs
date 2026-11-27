@@ -24,6 +24,20 @@ assert.equal(facingPath.clearance_z,13);
 assert.equal(facingPath.depth_passes,2);
 assert.equal(facingPath.rows_per_pass,5);
 assert.equal(facingPath.moves.length,40);
+const rounded=await request('/api/facing','POST','20 10 5 1 6 0.5 3 7 10 650 90 8 1',headers);
+assert.equal(rounded.status,200);
+const roundedPath=validate(JSON.parse(rounded.text));
+assert.equal(roundedPath.turn_mode,'round');
+assert.equal(roundedPath.depth_passes,2);
+assert.equal(roundedPath.rows_per_pass,5);
+assert.ok(roundedPath.moves.length>facingPath.moves.length);
+assert.equal(roundedPath.moves.filter(m=>m.motion==='rapid').length,4);
+const cuttingHeight=roundedPath.moves[1].to[2];
+const curvedPoints=roundedPath.moves.slice(2,20).filter(m=>m.motion==='feed');
+assert.ok(curvedPoints.every(m=>m.to[2]===cuttingHeight));
+assert.ok(roundedPath.moves.some(m=>m.to[0]>26)); // outward turn at right stock edge
+assert.equal((await request('/api/facing','POST','20 10 5 1 6 0.5 3 7 10 650 90 8 2',headers)).status,422);
+
 for(const height of ['0','-1','NaN','Infinity'])assert.equal((await request('/api/facing','POST','20 10 5 1 6 0.5 3 7 10 650 90 '+height,headers)).status,422);
 assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 3 7 1 650 90',headers)).status,422);
 assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 3 7.5 10 650 90',headers)).status,422);

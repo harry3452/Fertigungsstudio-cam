@@ -23,7 +23,7 @@ function eligibleTools(){return studio.project().tools.filter(model.eligible)}
 function currentOperation(){return studio.currentOperation()}
 function allFields(){
  const value=id=>$(id)?.value??'';
- return {toolId:Number(value('face-tool')),depth:value('face-depth'),stepdown:value('face-stepdown'),
+ return {turnMode:value('face-turn-mode'),toolId:Number(value('face-tool')),depth:value('face-depth'),stepdown:value('face-stepdown'),
    stepover:value('face-stepover'),clearance:value('face-clearance'),
    cuttingFeed:value('face-cutfeed'),plungeFeed:value('face-plunge')};
 }
@@ -55,7 +55,9 @@ function countPreview(){
   // A geometric preview does not require feed values; a real calculation does.
   const planned=model.prepare(p,t,{...fields,cuttingFeed:1,plungeFeed:1});
   $('face-count').textContent='Voraussichtlich '+planned.depthPasses+' Tiefenlagen × '+planned.rows+
-   ' Querbahnen = '+(planned.depthPasses*planned.rows*4)+' Bewegungen. Start: X'+fmt(planned.start.x)+
+   ' Querbahnen · '+planned.estimatedMoves+' Bewegungen'+
+   (planned.settings.turnMode==='round'?' mit halbrunden Wendekurven.':' mit Sicherheitsrückzügen.')+
+   ' Start: X'+fmt(planned.start.x)+
    ' / Y0 / Z'+fmt(planned.start.z)+' mm (rohteilbezogen).';
   const wcs=model.toWork([planned.start.x,0,planned.start.z],model.workFrame(p));
   $('face-count').textContent+=' Start in '+(p.wcs||'G54')+': X'+fmt(wcs[0])+' / Y'+fmt(wcs[1])+' / Z'+fmt(wcs[2])+' mm.';
@@ -77,6 +79,7 @@ function open(){
  const profile=chosen?model.recommendedFeed(chosen,stock.materialId):null;
  const cuttingFeed=saved.cuttingFeed??(profile?round(profile.feed):'');
  const plungeFeed=saved.plungeFeed??'';
+ const turnMode=saved.turnMode??'round';
  const f=(label,id,value,opts='')=>'<label>'+label+'<input id="'+id+'" type="number" step="any" min="0.001" value="'+esc(value)+'" '+opts+'></label>';
  const chooser='<label>Fräswerkzeug aus der Bibliothek<select id="face-tool">'+tools.map(t=>
    '<option value="'+esc(t.id)+'" '+(t.id===chosen?.id?'selected':'')+'>T'+t.id+' · '+esc(t.name)+' · Ø'+fmt(t.diameter)+'</option>').join('')+'</select></label>';
@@ -101,9 +104,12 @@ function open(){
    f('Sicherheitshöhe über Rohteil (mm)','face-clearance',clearance)+
    f('Schnittvorschub (mm/min)','face-cutfeed',cuttingFeed)+
    f('Eintauchvorschub (mm/min)','face-plunge',plungeFeed)+
-  '</div><p id="face-materialfeed"></p>'+
+  '</div><div class="studio-modal-grid"><label>Wenden am Bahnende<select id="face-turn-mode">'+
+  '<option value="round" '+(turnMode==='round'?'selected':'')+'>Halbrunde Wendekurve · ohne Anheben</option>'+
+  '<option value="lift" '+(turnMode==='lift'?'selected':'')+'>Anheben auf Sicherheitshöhe</option>'+
+  '</select></label></div><p id="face-materialfeed"></p>'+
   '<p id="face-count" class="studio-pill"></p>'+
-  '<p>Die Berechnung fährt links und rechts um einen Fräserdurchmesser über den Rohteilrand hinaus; <strong>außerhalb des Rohteils wird freier Raum vorausgesetzt</strong>. Keine Spannmittel-, Kollisions-, Maschinen- oder Materialabtragsprüfung. Vorschübe sind keine Empfehlungen.</p>'+
+  '<p>Bei <strong>halbrunder Wende</strong> verbindet der Fräser die Bahnen auf gleicher Frästiefe und fährt die nächste Bahn gegenläufig. Der Bogen besteht aus kurzen geraden Vorschubsegmenten (Abweichung höchstens 0,02 mm); zwischen Tiefenlagen wird weiterhin auf Sicherheitshöhe zurückgezogen. Die Wendekurve läuft zusätzlich außerhalb der Rohteilkante. <strong>Außerhalb des Rohteils muss Freiraum vorhanden sein.</strong> Keine Spannmittel-, Kollisions-, Maschinen- oder Materialabtragsprüfung.</p>'+
   '<p id="face-message" role="status" aria-live="polite"></p>'+
   '<div class="studio-modal-actions"><button type="button" id="face-save">Parameter speichern</button>'+
   '<button type="button" id="face-calculate" class="primary" '+(!connected()||!tools.length?'disabled':'')+
@@ -116,6 +122,7 @@ function open(){
  }
  $('face-tool').addEventListener('change',()=>{setToolInfo(true);countPreview()});
  for(const id of ['face-depth','face-stepdown','face-stepover','face-clearance'])$(id).addEventListener('input',countPreview);
+ $('face-turn-mode').addEventListener('change',countPreview);
  $('face-save').onclick=save;
  $('face-close').onclick=()=>studio.closeDialog();
  $('face-calculate').onclick=calculate;
@@ -133,6 +140,7 @@ function persist(fields){
   toolId:t.id,
   depth:Number(fields.depth),stepdown:Number(fields.stepdown),
   stepover:Number(fields.stepover),clearance:Number(fields.clearance),
+  turnMode:fields.turnMode,
   cuttingFeed:fields.cuttingFeed===''?'':Number(fields.cuttingFeed),
   plungeFeed:fields.plungeFeed===''?'':Number(fields.plungeFeed),
  };
@@ -174,7 +182,7 @@ async function calculate(){
   studio.enterSimulation();
   activeController=null; // Successful response must not trigger cancellation on dialog close.
   studio.closeDialog();
-  studio.status('Planfräsen berechnet: '+result.moves.length+' Bewegungen, '+
+  studio.status('Planfräsen '+(fields.turnMode==='round'?'mit Wendekurve':'mit Rückzug')+': '+result.moves.length+' Bewegungen, '+
    result.depth_passes+' Tiefenlagen, '+result.rows_per_pass+
    ' Bahnen je Lage · '+(p.wcs||'G54')+'-Koordinaten vorhanden. Nur Simulation – keine Maschine/NC-Ausgabe.');
  }catch(e){

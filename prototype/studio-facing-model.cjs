@@ -50,15 +50,23 @@ function prepare(project,tool,form){
  if(depth>cuttingLength)throw Error('Abtragstiefe überschreitet die Schneidenlänge.');
  if(stepover>diameter/2)throw Error('Seitliche Zustellung darf höchstens der halbe Werkzeugdurchmesser sein.');
  if(height+clearance>1_000_000)throw Error('Sicherheitshöhe liegt außerhalb des Koordinatenbereichs.');
- if(width+diameter>1_000_000)throw Error('Auslauf außerhalb des Koordinatenbereichs.');
+ if(width+diameter+(form.turnMode==='round'?length/Math.ceil(length/stepover)/2:0)>1_000_000)throw Error('Auslauf außerhalb des Koordinatenbereichs.');
+ const turnMode=form.turnMode??'lift';
+ if(!['lift','round'].includes(turnMode))throw Error('Ungültige Bahnwechselstrategie.');
  const depthPasses=Math.ceil(depth/stepdown),rows=Math.ceil(length/stepover)+1;
- if(!Number.isFinite(depthPasses)||!Number.isFinite(rows)||depthPasses*rows*4>100_000)
+ const intervals=rows-1;
+ const radius=length/intervals/2;
+ const turnSegments=turnMode==='round'
+   ?Math.max(16,Math.ceil(Math.PI/(2*Math.acos(1-Math.min(1,0.02/radius))))):0;
+ const estimatedMoves=depthPasses*(turnMode==='round'
+   ?3+rows+intervals*turnSegments:rows*4);
+ if(!Number.isFinite(estimatedMoves)||estimatedMoves>100_000)
    throw Error('Zu viele Bahnbewegungen; Zustellung vergrößern.');
  return {
-   numbers:[width,length,height,depth,diameter,stepdown,stepover,numberTool,cuttingLength,cuttingFeed,plungeFeed,clearance],
-   depthPasses,rows,
+   numbers:[width,length,height,depth,diameter,stepdown,stepover,numberTool,cuttingLength,cuttingFeed,plungeFeed,clearance,...(turnMode==='round'?[1]:[])],
+   depthPasses,rows,turnSegments,estimatedMoves,
    start:{x:-diameter,y:0,z:height+clearance},
-   settings:{toolId:numberTool,depth,stepdown,stepover,clearance,cuttingFeed,plungeFeed},
+   settings:{toolId:numberTool,depth,stepdown,stepover,clearance,cuttingFeed,plungeFeed,turnMode},
  };
 }
 

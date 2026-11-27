@@ -350,3 +350,111 @@ fn tiny_positive_extents_do_not_produce_nonfinite_moves() {
     assert_eq!((path.depth_passes, path.rows_per_pass), (1, 2));
     assert!(path.moves.iter().all(|m| point_valid(m.to)));
 }
+
+#[test]
+fn rounded_facing_stays_at_cutting_depth_and_reverses_tangentially() {
+    let (setup, tool, op) = fixture();
+    let path = face_with_turn(setup, tool, op, FacingTurn::Rounded, || false).unwrap();
+    assert_eq!(
+        (path.depth_passes, path.rows_per_pass, path.moves.len()),
+        (3, 5, 216)
+    );
+    let per_pass = 72;
+    for pass in 0..3 {
+        let start = pass * per_pass;
+        let expected_z = [4.0, 3.0, 2.5][pass];
+        assert_eq!(path.moves[start].motion, Motion::Rapid);
+        assert_eq!(path.moves[start + 1].to.z, expected_z);
+        assert_eq!(
+            path.moves[start + 2].to,
+            Point3 {
+                x: 26.0,
+                y: 0.0,
+                z: expected_z
+            }
+        );
+        // A 16-segment semicircle goes beyond the 6 mm exit offset and
+        // comes back to the same X, now at the next row.
+        assert!(path.moves[start + 3].to.x > 26.0);
+        assert_eq!(
+            path.moves[start + 18].to,
+            Point3 {
+                x: 26.0,
+                y: 2.5,
+                z: expected_z
+            }
+        );
+        assert_eq!(
+            path.moves[start + 19].to,
+            Point3 {
+                x: -6.0,
+                y: 2.5,
+                z: expected_z
+            }
+        );
+        assert!(path.moves[start + 20].to.x < -6.0);
+        // The curve stays entirely at the same depth; no intermediate lift.
+        for move_item in &path.moves[start + 2..start + per_pass - 1] {
+            assert_eq!(move_item.motion, Motion::Feed { mm_per_min: 800.0 });
+            assert_eq!(move_item.to.z, expected_z);
+        }
+        assert_eq!(path.moves[start + per_pass - 1].motion, Motion::Rapid);
+        assert_eq!(path.moves[start + per_pass - 1].to.z, setup.clearance_z);
+    }
+    let mut prev = path.start;
+    for m in &path.moves {
+        if m.motion == Motion::Rapid && (m.to.x != prev.x || m.to.y != prev.y) {
+            assert_eq!(prev.z, setup.clearance_z);
+            assert_eq!(m.to.z, setup.clearance_z);
+        }
+        assert!(point_valid(m.to));
+        prev = m.to;
+    }
+    assert_eq!(prev.z, setup.clearance_z);
+}
+
+#[test]
+fn rounded_turns_respect_depth_count_limits_cancel_and_coordinate_limits() {
+    let (mut setup, tool, mut op) = fixture();
+    assert_eq!(
+        face_with_turn(
+            setup,
+            tool,
+            Facing {
+                stepover: f64::MIN_POSITIVE,
+                ..op
+            },
+            FacingTurn::Rounded,
+            || false
+        )
+        .unwrap_err(),
+        Error::TooManyMoves
+    );
+
+    let mut calls = 0;
+    let expected = face_with_turn(setup, tool, op, FacingTurn::Rounded, || {
+        calls += 1;
+        false
+    })
+    .unwrap();
+    assert!(!expected.moves.is_empty());
+    for at in [1, 2, 5, calls] {
+        let mut n = 0;
+        let res = face_with_turn(setup, tool, op, FacingTurn::Rounded, || {
+            n += 1;
+            n >= at
+        });
+        assert_eq!(res.unwrap_err(), Error::Cancelled);
+    }
+
+    setup.stock.max.x = 999_996.0;
+    assert_eq!(
+        face_with_turn(setup, tool, op, FacingTurn::Rounded, || false).unwrap_err(),
+        Error::CoordinateLimit
+    );
+
+    setup.stock.max.x = 20.0;
+    op.stepover = 2.0;
+    let p = face_with_turn(setup, tool, op, FacingTurn::Rounded, || false).unwrap();
+    assert_eq!(p.rows_per_pass, 6);
+}

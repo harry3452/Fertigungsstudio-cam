@@ -1,5 +1,5 @@
 //! Original milling-tool library. UI/locale/persistence independent.
-use crate::{Error, Facing, FlatTool, Setup, Toolpath, face_with_cancel, positive};
+use crate::{Error, Facing, FacingTurn, FlatTool, Setup, Toolpath, face_with_turn, positive};
 use std::collections::BTreeMap;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -76,7 +76,20 @@ impl MillingTool {
     ) -> Result<Toolpath, Error> {
         operation.cutting_feed = self.cutting_feed;
         operation.plunge_feed = self.plunge_feed;
-        face_with_cancel(setup, self.geometry, operation, cancelled)
+        face_with_turn(setup, self.geometry, operation, FacingTurn::Lift, cancelled)
+    }
+
+    /// An optional smooth-looking U-turn between successive raster rows.
+    pub fn face_with_turn(
+        &self,
+        setup: Setup,
+        mut operation: Facing,
+        turn: FacingTurn,
+        cancelled: impl FnMut() -> bool,
+    ) -> Result<Toolpath, Error> {
+        operation.cutting_feed = self.cutting_feed;
+        operation.plunge_feed = self.plunge_feed;
+        face_with_turn(setup, self.geometry, operation, turn, cancelled)
     }
 }
 
