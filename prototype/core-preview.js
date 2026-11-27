@@ -17,7 +17,7 @@ function loadCore(d){
   coreData=CamPathData.validate(d);playing=false;progress=0;$('play').textContent='▶ Abspielen';
   document.querySelector('.layout').classList.add('inspector-hidden');
   const operationNames={facing:'Planfräsen',contour:'Außenkontur',pocket:'Rechtecktasche',drilling:'Bohren'};
-  const operationName=operationNames[coreData.operation||'facing'];
+  const operationName=coreData.operation==='contour'&&coreData.contour_side==='inside'?'Innenkontur':operationNames[coreData.operation||'facing'];
   $('opTitle').textContent=operationName+' · Rust-Kern';
   $('connectionLabel').textContent='Berechnete Bahn · rechteckiger Rohblock';
   coreBadge.textContent=coreData.moves.length+' Bewegungen';

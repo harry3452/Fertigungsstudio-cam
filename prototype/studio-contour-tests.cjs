@@ -27,6 +27,6 @@ for(const change of [
 ]) assert.throws(()=>model.prepare(project,tool,{...form,...change}),Error,JSON.stringify(change));
 for(const change of [{marginX:0},{marginY:0},{marginX:57},{marginY:37}])
  assert.throws(()=>model.prepare(project,tool,{...input,...change}),Error);
-assert.throws(()=>model.prepare(project,{...tool,diameter:121},form),/außerhalb/);
+assert.throws(()=>model.prepare(project,{...tool,diameter:200},input),/Innenkontur/);
 assert.throws(()=>model.prepare({...project,stock:{...project.stock,x:999999}},tool,form),/außerhalb/);
 console.log('2D contour model: cutter-radius offset, inner/outside selection, M3/M4 windings and limits checked.');

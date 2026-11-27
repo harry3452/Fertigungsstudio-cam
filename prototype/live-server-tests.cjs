@@ -60,6 +60,22 @@ const contour=await request('/api/contour','POST','40 30 10 4 6 2 3 1 12 500 100
 assert.equal(contour.status,200);
 const contourPath=validate(JSON.parse(contour.text));
 assert.equal(contourPath.operation,'contour');assert.equal(contourPath.moves.length,14);
+const contourOutside=await request('/api/contour','POST','40 30 10 4 6 2 3 1 12 500 100 7 0 0 0 0',headers);
+assert.equal(contourOutside.status,200);
+const outsideData=validate(JSON.parse(contourOutside.text));
+assert.deepEqual(outsideData.start,[-3,-3,17]);
+assert.equal(outsideData.contour_side,'outside');
+assert.equal(outsideData.contour_direction,'ccw');
+const contourInside=await request('/api/contour','POST','40 30 10 4 6 2 3 1 12 500 100 7 1 1 6 7',headers);
+assert.equal(contourInside.status,200);
+const insideData=validate(JSON.parse(contourInside.text));
+assert.deepEqual(insideData.start,[9,10,17]);
+assert.equal(insideData.contour_side,'inside');
+assert.equal(insideData.contour_direction,'cw');
+assert.deepEqual(insideData.moves[2].to,[9,20,8]);
+assert.equal((await request('/api/contour','POST','40 30 10 4 6 2 3 1 12 500 100 7 1 1 0 0',headers)).status,422);
+assert.equal((await request('/api/contour','POST','40 30 10 4 6 2 3 1 12 500 100 7 0 0 6 7',headers)).status,422);
+
 const pocket=await request('/api/pocket','POST','40 30 10 4 6 2 3 1 12 500 100 5 5',headers);
 assert.equal(pocket.status,200);
 const pocketPath=validate(JSON.parse(pocket.text));
