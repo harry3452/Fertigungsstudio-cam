@@ -125,6 +125,11 @@ body.studio-ready [hidden]{display:none!important}
 .studio-model-pick-hint span{flex:1;min-width:160px;font-size:12px}
 .studio-model-pick-hint button{padding:6px 10px}
 .studio-model-pick-hint[hidden]{display:none!important}
+
+/* Editable 3D stock envelope preview inside the stock setup dialog. */
+.studio-stock-preview{padding:8px;border:1px solid var(--studio-line);border-radius:8px;background:#142330;min-height:230px}
+.studio-stock-preview canvas{display:block;width:100%;height:260px;max-height:40vh;touch-action:auto}
+#st-stock-info{font-size:12px;line-height:1.55}
 /* Exact neutral Rust path display, separate from the illustrative 3D stock. */
 .studio-view-switch{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:var(--studio-panel);border-bottom:1px solid var(--studio-line);padding:8px 13px;font-size:12px}
 .studio-view-switch>strong{font-size:11px;color:var(--studio-accent);letter-spacing:.6px;margin-right:4px}
@@ -482,9 +487,10 @@ draw=function(){
   const scale=100/Math.max(...d.stock.max.map((v,i)=>v-d.stock.min[i]),d.clearance_z-d.stock.min[2],1);
   const map=p=>point((p[0]-center[0])*scale,(p[1]-center[1])*scale,(p[2]-center[2])*scale);
   const lo=map(d.stock.min),hi=map(d.stock.max);
-  if(!globalThis.FertigungsstudioSTLPicker?.hasModel()||
-     !globalThis.FertigungsstudioSTLPicker.drawMesh(map))
-    box(lo.x,lo.y,lo.z,hi.x,hi.y,hi.z,['#b2c5cf','#6d8797','#839eae']);
+  const stl=globalThis.FertigungsstudioSTLPicker;
+  if(stl?.hasModel()&&stl.drawMesh(map)){
+    stl.drawStock(map,d.stock.max.map((v,i)=>v-d.stock.min[i]));
+  }else box(lo.x,lo.y,lo.z,hi.x,hi.y,hi.z,['#b2c5cf','#6d8797','#839eae']);
   const moves=d.moves,shown=Math.min(moves.length,5000),end=progress*moves.length;
   const studio=globalThis.FertigungsstudioStudio;if($('paths').checked&&(!studio||studio.activeVisible())){for(let i=0;i<shown;i++){const m=moves[i],previous=i?moves[i-1].to:d.start,category=m.motion==='rapid'?'rapid':m.to[2]!==previous[2]?'lead':'cut';if(studio&&!studio.allowMove(category))continue;const color=category==='rapid'?'#ff8383':category==='lead'?'#ffd374':i<end?'#a6ffe0':'#40ffc0';line(map(previous),map(m.to),color,category==='cut'?3.2:2.3,category==='rapid'?[6,6]:[]);}}
   const i=Math.min(moves.length-1,Math.floor(end));const a=i?moves[i-1].to:d.start,b=moves[i].to,t=Math.min(1,end-i);const tip=map(a.map((v,j)=>v+(b[j]-v)*t));
@@ -732,7 +738,85 @@ function showSetup(){
  showDialog('Setup / Aufspannung','<div class="studio-modal-grid">'+field('Bezeichnung','su-name',project.setup)+chooser('Werkstücknullpunkt','su-wcs',['G54','G55','G56','G57','G58','G59'].map(x=>[x,x]),project.wcs)+'</div><p>Aufspannung und Nullpunkt werden im Projekt gespeichert. Maschinentransformationen sind noch nicht implementiert.</p><div class="studio-modal-actions">'+button('Speichern','save-setup','primary')+'</div>');
 }
 function stockDialog(){
- showDialog('Rohteil und Material','<div class="studio-modal-grid">'+field('Länge X (mm)','st-x',project.stock.x,'number','min="0.001" step="any"')+field('Breite Y (mm)','st-y',project.stock.y,'number','min="0.001" step="any"')+field('Höhe Z (mm)','st-z',project.stock.z,'number','min="0.001" step="any"')+chooser('Werkstückmaterial','st-material',project.materials.map(m=>[m.id,m.name]),project.stock.materialId)+'</div><p>Die Rohteilwerte werden für das Projekt und den Rust-Parameterdialog übernommen; die illustrative 3D-Platte ist noch kein importiertes CAD-Teil.</p><div class="studio-modal-actions">'+button('Übernehmen','save-stock','primary')+button('Materialverwaltung','materials')+'</div>');
+ const picker=globalThis.FertigungsstudioSTLPicker;
+ const hasModel=!!picker?.hasModel();
+ const size=hasModel?picker.modelSize():null;
+ const old=project.partPlacement||{x:(project.stock.x-(size?.[0]||0))/2,
+  y:(project.stock.y-(size?.[1]||0))/2,
+  z:project.stock.z-(size?.[2]||0)};
+ showDialog('Rohteil und Material',
+  (hasModel?'<p><strong>STL-Bauteil:</strong> X '+mm(size[0])+' · Y '+mm(size[1])+
+   ' · Z '+mm(size[2])+' mm. Gelb = Rohteilrahmen, Blau = geladenes Bauteil.</p>':
+   '<p>Ohne importiertes STL können die Rohteilmaße frei vorgegeben werden. Bauteil zuerst über Datei → Bauteil laden importieren.</p>')+
+  '<div class="studio-modal-grid">'+
+  field('Rohteil X (mm)','st-x',project.stock.x,'number','min="0.001" max="100000" step="any"')+
+  field('Rohteil Y (mm)','st-y',project.stock.y,'number','min="0.001" max="100000" step="any"')+
+  field('Rohteil Z (mm)','st-z',project.stock.z,'number','min="0.001" max="100000" step="any"')+
+  chooser('Werkstückmaterial','st-material',project.materials.map(m=>[m.id,m.name]),project.stock.materialId)+
+  '</div>'+
+  (hasModel?'<h3>Bauteillage im Rohteil</h3>'+
+   '<p>Abstand vom Rohteilminimum zur Bauteilunterkante in X, Y und Z. Z+ zeigt nach oben.</p>'+
+   '<div class="studio-modal-grid">'+
+   field('Abstand X− (mm)','st-pos-x',old.x,'number','min="0" step="any"')+
+   field('Abstand Y− (mm)','st-pos-y',old.y,'number','min="0" step="any"')+
+   field('Abstand Z− (mm)','st-pos-z',old.z,'number','min="0" step="any"')+'</div>'+
+   '<div class="studio-modal-actions">'+
+   '<button type="button" id="st-fit">Passend umrahmen</button>'+
+   '<button type="button" id="st-center">In XY zentrieren · oben bündig</button></div>'+
+   '<div class="studio-stock-preview"><canvas id="st-preview" width="640" height="340" aria-label="Isometrische Vorschau des STL-Bauteils innerhalb des Rohteils"></canvas></div>'+
+   '<p id="st-stock-info" role="status" aria-live="polite"></p>':'')+
+  '<div class="studio-modal-actions">'+button('Übernehmen','save-stock','primary')+
+  button('Materialverwaltung','materials')+'</div>'+
+  (hasModel?'<p>Rohteil und Lage werden im Projekt gespeichert. Die STL-Datei muss nach einem Neustart erneut geladen werden. Änderungen an der Aufspannung erfordern eine neue Konturauswahl und Bahnberechnung.</p>':''));
+ if(!hasModel)return;
+ const dimensions=()=>['x','y','z'].map(axis=>Number(val('st-'+axis)));
+ const placement=()=>['x','y','z'].map(axis=>Number(val('st-pos-'+axis)));
+ const update=()=>{
+  const v=dimensions(),q=placement(),info=$('st-stock-info'),apply=$('studioDialogBody').querySelector('[data-studio-action="save-stock"]');
+  if(!v.every(n=>Number.isFinite(n)&&n>0&&n<=100000)||
+     !q.every(Number.isFinite)){
+   info.textContent='Bitte gültige positive Rohteilmaße und Bauteilabstände eingeben.';
+   info.classList.add('studio-error');apply.disabled=true;return;
+  }
+  const stock={x:v[0],y:v[1],z:v[2]};
+  const pos={x:q[0],y:q[1],z:q[2]};
+  try{
+   globalThis.FertigungsstudioMeshGeometry.validatePlacement(size,stock,pos);
+   picker.renderStockPreview($('st-preview'),stock,pos);
+   const margins=[q[0],v[0]-q[0]-size[0],q[1],v[1]-q[1]-size[1],
+    q[2],v[2]-q[2]-size[2]];
+   info.textContent='Freiraum X− / X+: '+mm(margins[0])+' / '+mm(margins[1])+
+    ' mm · Y− / Y+: '+mm(margins[2])+' / '+mm(margins[3])+
+    ' mm · Z− / Z+: '+mm(margins[4])+' / '+mm(margins[5])+' mm.';
+   info.classList.remove('studio-error');apply.disabled=false;
+  }catch(err){
+   info.textContent=err.message;
+   info.classList.add('studio-error');apply.disabled=true;
+   const cv=$('st-preview'),ctx=cv.getContext('2d');
+   ctx.clearRect(0,0,cv.width,cv.height);
+  }
+ };
+ const center=()=>{
+  const [x,y,z]=dimensions();
+  $('st-pos-x').value=(x-size[0])/2;
+  $('st-pos-y').value=(y-size[1])/2;
+  $('st-pos-z').value=z-size[2];
+  update();
+ };
+ for(const axis of ['x','y','z']){
+  $('st-'+axis).addEventListener('input',center);
+  $('st-pos-'+axis).addEventListener('input',update);
+ }
+ $('st-fit').onclick=()=>{
+  const fit=picker.fitStock();
+  for(const a of ['x','y','z']){
+   $('st-'+a).value=fit.stock[a];
+   $('st-pos-'+a).value=fit.position[a];
+  }
+  update();
+ };
+ $('st-center').onclick=center;
+ update();
 }
 const svgNS='http://www.w3.org/2000/svg';
 function svgEl(tag,attrs,parent){
@@ -967,9 +1051,26 @@ dlg.addEventListener('click',e=>{
  if(act==='save-stock'){
   const x=num(val('st-x')),y=num(val('st-y')),z=num(val('st-z'));
   if(!(x>0&&y>0&&z>0&&x<=100000&&y<=100000&&z<=100000)){status('Rohteilmaße müssen positiv und begrenzt sein.');return}
+  const picker=globalThis.FertigungsstudioSTLPicker;
+  let place=null;
+  if(picker?.hasModel()){
+   place={x:Number(val('st-pos-x')),y:Number(val('st-pos-y')),z:Number(val('st-pos-z'))};
+   try{
+    globalThis.FertigungsstudioMeshGeometry.validatePlacement(picker.modelSize(),{x,y,z},place);
+   }catch(error){status('Rohteil nicht übernommen: '+error.message);return;}
+  }
+  const old=project.stock;
+  const oldTopOrigin=Math.abs(project.origin.z-old.z)<1e-7;
+  const changedLayout=old.x!==x||old.y!==y||old.z!==z||
+   (place&&['x','y','z'].some(a=>project.partPlacement?.[a]!==place[a]));
   project.stock={x,y,z,materialId:Number(val('st-material'))};
-  project.origin.x=Math.min(project.origin.x,x);project.origin.y=Math.min(project.origin.y,y);project.origin.z=Math.min(project.origin.z,z);
-  changed();closeDialog();status('Rohteil und Material gespeichert.');return;
+  if(place)project.partPlacement=place;
+  project.origin.x=Math.min(project.origin.x,x);project.origin.y=Math.min(project.origin.y,y);
+  project.origin.z=oldTopOrigin?z:Math.min(project.origin.z,z);
+  if(changedLayout&&picker?.hasModel())picker.invalidatePlacement();
+  changed();closeDialog();status('Rohteil X '+mm(x)+' × Y '+mm(y)+' × Z '+mm(z)+
+   ' mm und Bauteillage gespeichert.'+(changedLayout&&place?' Kontur nach Änderungen erneut auswählen.':''));
+  return;
  }
  if(act==='save-origin'){
   const o={x:num(val('origin-x'),NaN),y:num(val('origin-y'),NaN),z:num(val('origin-z'),NaN),rotation:num(val('origin-angle')),reverseZ:val('origin-reverse')==='yes'},s=project.stock;
@@ -979,6 +1080,7 @@ dlg.addEventListener('click',e=>{
  if(act==='do-new'){
   const oldLib={materials:project.materials,tools:project.tools};
   project=defaults();project.materials=oldLib.materials;project.tools=oldLib.tools;project.stock.materialId=project.materials[0].id;
+  globalThis.FertigungsstudioSTLPicker?.clear();
   current=1;dirty=false;closeDialog();render();status('Neues Projekt angelegt. Die gemeinsame Werkzeug- und Materialbibliothek bleibt erhalten.');return;
  }
  if(act==='do-saveas'){project.name=val('save-name').trim()||'Neues Projekt';closeDialog();render();saveProject();return}
@@ -999,10 +1101,31 @@ partPicker.addEventListener('change',async e=>{
   if(!picker)throw Error('STL-Importmodul nicht geladen.');
   if(f.size>8_000_000)throw Error('STL maximal 8 MB.');
   const imported=picker.load(await f.arrayBuffer());
+  const fit=picker.fitStock();
+  const stored=project.stlInfo;
+  const same=stored?.name===f.name&&Array.isArray(stored.size)&&
+   stored.size.length===3&&stored.size.every((n,i)=>Math.abs(n-imported.size[i])<0.00001);
+  let preserved=false;
+  if(same&&project.partPlacement){
+   try{
+    globalThis.FertigungsstudioMeshGeometry.validatePlacement(imported.size,project.stock,project.partPlacement);
+    preserved=true;
+   }catch{}
+  }
+  if(!preserved){
+   const materialId=project.stock.materialId;
+   project.stock={...fit.stock,materialId};
+   project.partPlacement=fit.position;
+   project.origin={...project.origin,x:0,y:0,z:fit.stock.z};
+  }
+  project.stlInfo={name:f.name,size:imported.size};
   project.part=f.name+' (STL-Mesh)';
+  picker.invalidatePlacement();
   changed();render();
   status('STL geladen: '+imported.triangles+' Dreiecke, '+imported.loops+
-   ' geschlossene Konturen der oberen Planfläche. Rohteil bleibt unverändert. Geometrie wird nicht in der Projektdatei eingebettet.');
+   ' geschlossene obere Konturen. '+(preserved?'Gespeicherte Rohteillage wiederhergestellt.':
+    'Rohteil automatisch auf Modellgröße eingestellt.')+
+   ' Setup → Rohteil und Material: Abmessungen und Position mit 3D-Vorschau einstellen.');
  }catch(error){status('STL-Import fehlgeschlagen: '+error.message);}
 });
 projectPicker.addEventListener('change',async e=>{
@@ -1533,20 +1656,36 @@ function findTopLoops(triangles,size){
  loops.sort((a,b)=>Math.abs(b.area)-Math.abs(a.area));
  return loops;
 }
-function locate(mesh,stock){
+// An imported mesh initially defines the rectangular stock envelope exactly.
+function fitStock(mesh){
+ const [x,y,z]=mesh.size;
+ if(![x,y,z].every(v=>Number.isFinite(v)&&v>=0&&v<=100000)||x<=0||y<=0)
+  throw Error('STL-Abmessungen außerhalb des Rohteilbereichs (maximal 100.000 mm).');
+ const height=Math.max(1,z);
+ return {stock:{x,y,z:height},position:{x:0,y:0,z:height-z}};
+}
+// Position is the normalized part minimum measured from the stock minimum.
+// Without an explicit position legacy center-XY/top-Z behavior is retained.
+function validatePlacement(size,stock,position){
  const dims=[Number(stock.x),Number(stock.y),Number(stock.z)];
- if(dims.some(v=>!Number.isFinite(v)||v<=0))throw Error('Rohteilabmessungen ungültig.');
- const margin=dims.map((v,i)=>(v-mesh.size[i])/2);
- if(margin.some(v=>v<-1e-6))throw Error('STL-Modell passt nicht ins Rohteil. Rohteilmaße vergrößern.');
- const shifts=[margin[0],margin[1],dims[2]-mesh.size[2]];
+ if(dims.some(v=>!Number.isFinite(v)||v<=0||v>100000))
+  throw Error('Rohteilabmessungen müssen positiv und höchstens 100.000 mm sein.');
+ const shifts=position?['x','y','z'].map(key=>Number(position[key])):
+  [(dims[0]-size[0])/2,(dims[1]-size[1])/2,dims[2]-size[2]];
+ if(shifts.some((v,i)=>!Number.isFinite(v)||v<0||v+size[i]>dims[i]+1e-6))
+  throw Error('STL-Bauteil liegt außerhalb des Rohteils. Rohteil vergrößern oder Bauteillage ändern.');
+ return {dims,shifts};
+}
+function locate(mesh,stock,position){
+ const {dims,shifts}=validatePlacement(mesh.size,stock,position);
  const translated=p=>p.map((v,i)=>v+shifts[i]);
  return {
   triangles:mesh.triangles.map(t=>t.map(translated)),
   loops:mesh.loops.map(loop=>({...loop,points:loop.points.map(p=>[p[0]+shifts[0],p[1]+shifts[1]])})),
-  size:mesh.size,stock:dims
+  size:mesh.size,stock:dims,position:shifts,partTopZ:shifts[2]+mesh.size[2]
  };
 }
-const api={parse,locate,findTopLoops,area,contains};
+const api={parse,fitStock,locate,validatePlacement,findTopLoops,area,contains};
 root.FertigungsstudioMeshGeometry=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);
@@ -1590,6 +1729,10 @@ function prepare(project,tool,form){
  if(!['climb','conventional'].includes(direction))throw Error('Ungültige Fräsrichtung.');
  if(!['M3','M4'].includes(spindle))throw Error('Ungültige Spindelrichtung.');
  if(form.source==='model'){
+  const size=project.stlInfo?.size;
+  if(Array.isArray(size)&&project.partPlacement&&
+     Math.abs(project.partPlacement.z+size[2]-height)>0.00001)
+   throw Error('Für 2D-Modellkonturen muss die Modelloberkante mit der Rohteiloberseite bündig sein. Im Rohteil-Setup Z-Lage anpassen.');
   const points=form.points;
   if(!Array.isArray(points)||points.length<3||points.length>2048)
    throw Error('Bitte eine geschlossene STL-Kontur im 3D-Modell auswählen.');
@@ -2099,9 +2242,10 @@ overlay.querySelector('button').onclick=()=>end();
 function current(){
  if(!mesh)return null;
  const stock=studio.project().stock;
- const key=[stock.x,stock.y,stock.z].join('/');
+ const pos=studio.project().partPlacement;
+ const key=[stock.x,stock.y,stock.z,pos?.x,pos?.y,pos?.z].join('/');
  if(key!==stockKey){
-  located=geo.locate(mesh,stock);
+  located=geo.locate(mesh,stock,pos);
   stockKey=key;
  }
  return located;
@@ -2109,6 +2253,16 @@ function current(){
 function mapPoint(p,stock){
  const scale=100/Math.max(stock[0],stock[1],stock[2],1);
  return point((p[0]-stock[0]/2)*scale,(p[1]-stock[1]/2)*scale,(p[2]-stock[2]/2)*scale);
+}
+function drawStock(map,stock){
+ const [x,y,z]=stock;
+ const vertices=[
+  [0,0,0],[x,0,0],[x,y,0],[0,y,0],
+  [0,0,z],[x,0,z],[x,y,z],[0,y,z]
+ ];
+ for(const [a,b] of [[0,1],[1,2],[2,3],[3,0],
+  [4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]])
+  line(map(vertices[a]),map(vertices[b]),'#ffd477',1.8,[5,3]);
 }
 function drawMesh(map){
  const loc=current();if(!loc)return false;
@@ -2130,7 +2284,7 @@ function drawMesh(map){
  }
  for(const loop of loc.loops){
   const isSelected=loop.id===selected,active=loop.id===hover;
-  const ps=loop.points.map(p=>map([p[0],p[1],loc.stock[2]]));
+  const ps=loop.points.map(p=>map([p[0],p[1],loc.partTopZ]));
   for(let i=0;i<ps.length;i++){
    const a=ps[i],b=ps[(i+1)%ps.length];
    if(isSelected||active)line(a,b,'#101921',8);
@@ -2155,13 +2309,14 @@ draw=function(){
  ctx.clearRect(0,0,w,h);
  const map=p=>mapPoint(p,loc.stock);
  drawMesh(map);
+ drawStock(p=>mapPoint(p,loc.stock),loc.stock);
  const title=document.getElementById('opTitle');
  if(title)title.textContent='STL-Modell · '+loc.loops.length+' wählbare Top-Konturen';
  document.getElementById('progressText').textContent='Importiertes STL · tatsächliche Dreiecksgeometrie';
 };
 function projectLoop(loop,loc){
  const map=p=>mapPoint(p,loc.stock);
- return loop.points.map(v=>project(map([v[0],v[1],loc.stock[2]])));
+ return loop.points.map(v=>project(map([v[0],v[1],loc.partTopZ])));
 }
 function distance(point,from,to){
  const dx=to.x-from.x,dy=to.y-from.y,len2=dx*dx+dy*dy;
@@ -2222,15 +2377,54 @@ function begin(callback){
 }
 function load(bytes){
  const parsed=geo.parse(bytes);
- // A real part may be smaller than stock; no automatic stock modification.
- geo.locate(parsed,studio.project().stock);
+ // STL is imported independently of any stock size. Stock will be fitted after import.
  end();mesh=parsed;selected=null;stockKey='';located=null;meshVersion++;
  globalThis.FertigungsstudioToolpath?.clear();
  if(typeof resize==='function')resize();
  return {triangles:mesh.triangles.length,loops:mesh.loops.length,size:mesh.size};
 }
+function invalidatePlacement(){
+ end();selected=null;stockKey='';located=null;meshVersion++;
+ globalThis.FertigungsstudioToolpath?.clear();
+ if(typeof resize==='function')resize();
+}
 function clear(){end();mesh=null;selected=null;stockKey='';located=null;meshVersion++;if(typeof resize==='function')resize();}
-globalThis.FertigungsstudioSTLPicker={load,begin,end,clear,hasModel:()=>!!mesh,modelVersion:()=>meshVersion,
- drawMesh,selected:()=>selected,loops:()=>mesh?.loops||[]};
+function renderStockPreview(canvas,stock,position){
+ const ctx=canvas.getContext('2d'),w=canvas.width,h=canvas.height;
+ ctx.clearRect(0,0,w,h);ctx.fillStyle='#142330';ctx.fillRect(0,0,w,h);
+ if(!mesh)return;
+ const loc=geo.locate(mesh,stock,position);
+ const dims=loc.stock,scale=Math.min(w/(Math.max(dims[0],dims[1])*1.7+1),
+  h/(Math.max(...dims)*1.35+1))*1.1;
+ const yaw=-Math.PI/4,pitch=Math.acos(1/Math.sqrt(3));
+ const point=p=>{
+  const a=p[0]-dims[0]/2,b=p[1]-dims[1]/2,c=p[2]-dims[2]/2;
+  const xx=a*Math.cos(yaw)-b*Math.sin(yaw);
+  const yy=a*Math.sin(yaw)+b*Math.cos(yaw);
+  return {x:w/2+xx*scale,y:h/2+(yy*Math.cos(pitch)-c*Math.sin(pitch))*scale,
+   depth:yy*Math.sin(pitch)+c*Math.cos(pitch)};
+ };
+ const faces=loc.triangles.map(tri=>({
+  points:tri.map(point),z:tri.reduce((v,p)=>v+point(p).depth,0)/3
+ }));
+ faces.sort((a,b)=>a.z-b.z);
+ for(const face of faces){
+  ctx.beginPath();face.points.forEach((p,i)=>i?ctx.lineTo(p.x,p.y):ctx.moveTo(p.x,p.y));
+  ctx.closePath();ctx.fillStyle='#688fa4';ctx.fill();
+ }
+ const corners=[
+  [0,0,0],[dims[0],0,0],[dims[0],dims[1],0],[0,dims[1],0],
+  [0,0,dims[2]],[dims[0],0,dims[2]],[dims[0],dims[1],dims[2]],[0,dims[1],dims[2]]
+ ].map(point);
+ ctx.setLineDash([6,4]);ctx.lineWidth=2;ctx.strokeStyle='#ffd477';
+ for(const [a,b] of [[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]]){
+  ctx.beginPath();ctx.moveTo(corners[a].x,corners[a].y);ctx.lineTo(corners[b].x,corners[b].y);ctx.stroke();
+ }
+ ctx.setLineDash([]);
+}
+globalThis.FertigungsstudioSTLPicker={load,begin,end,clear,invalidatePlacement,
+ hasModel:()=>!!mesh,modelVersion:()=>meshVersion,
+ fitStock:()=>mesh?geo.fitStock(mesh):null,modelSize:()=>mesh?.size.slice()||null,
+ drawMesh,drawStock,renderStockPreview,selected:()=>selected,loops:()=>mesh?.loops||[]};
 })();
 </script></html>
