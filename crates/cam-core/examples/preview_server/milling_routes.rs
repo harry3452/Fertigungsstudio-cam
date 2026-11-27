@@ -301,7 +301,9 @@ fn calculate_polygon(args: &[f64], cancelled: impl FnMut() -> bool) -> Result<St
         _ => return Err("InvalidDirection".into()),
     };
     let points: Vec<DrillPoint> = args[14..]
-        .chunks_exact(2)
+        .as_chunks::<2>()
+        .0
+        .iter()
         .map(|v| DrillPoint { x: v[0], y: v[1] })
         .collect();
     let setup = Setup {
