@@ -27,13 +27,14 @@ function loadCore(d){
   sidebar.querySelectorAll('.tree,.tools,.setup').forEach(e=>e.hidden=true);
   summary.hidden=false;summary.textContent=operationName+' · '+(coreData.tool_number?'T'+coreData.tool_number+' · ':'')+'Werkzeug Ø '+coreData.tool_diameter+' mm · Endhöhe '+coreData.bottom_z+' mm'+(coreData.cutting_feed?' · Vorschub '+coreData.cutting_feed+' mm/min':'')+' · Nur numerisch berechnete Bahnen; keine Spannmittel- oder Kollisionsprüfung.';
   $('status').textContent='Rust-Bahndaten · keine Kollisions- oder Maschinenprüfung';
+  globalThis.FertigungsstudioPathView?.onPathLoaded(coreData);
   $('editOperation').disabled=true;returnButton.hidden=false;resize();
 }
 demoButton.onclick=()=>{try{loadCore(JSON.parse(document.getElementById('rust-demo-data').textContent));}catch(e){toast(e.message);}};
 picker.onchange=async()=>{const file=picker.files[0];if(!file)return;try{if(file.size>12000000)throw Error('Datei zu groß (maximal 12 MB).');const d=JSON.parse(await file.text());loadCore(d);}catch(e){toast('Bahn nicht geladen: '+e.message);}picker.value='';};
 function dims(d){return d.stock.max.map((v,i)=>v-d.stock.min[i]).join(' × ');}
 globalThis.FertigungsstudioToolpath={get:()=>coreData,clear:()=>{if(coreData)returnButton.click();}};
-returnButton.onclick=()=>{coreData=null;coreBadge.textContent='';returnButton.hidden=true;$('editOperation').disabled=false;selectOperation(selected);document.querySelector('.panel h2').textContent='Demoteil · Trägerplatte';sidebar.querySelector('p').textContent=originalStockText;sidebar.querySelectorAll('.tree,.tools,.setup').forEach(e=>e.hidden=false);summary.hidden=true;document.querySelector('.legend').firstElementChild.lastChild.textContent='Beispielbahn';$('connectionLabel').textContent='Bedienentwurf · illustrative Bahnen';resize();};
+returnButton.onclick=()=>{coreData=null;globalThis.FertigungsstudioPathView?.onPathCleared();coreBadge.textContent='';returnButton.hidden=true;$('editOperation').disabled=false;selectOperation(selected);document.querySelector('.panel h2').textContent='Demoteil · Trägerplatte';sidebar.querySelector('p').textContent=originalStockText;sidebar.querySelectorAll('.tree,.tools,.setup').forEach(e=>e.hidden=false);summary.hidden=true;document.querySelector('.legend').firstElementChild.lastChild.textContent='Beispielbahn';$('connectionLabel').textContent='Bedienentwurf · illustrative Bahnen';resize();};
 // Operation selection returns explicitly to the old illustrative part.
 document.querySelectorAll('[data-operation],.op').forEach(b=>b.addEventListener('click',()=>{if(coreData)returnButton.click();}));
 const originalMakePath=makePath;makePath=function(){if(!coreData)originalMakePath();};
@@ -46,7 +47,7 @@ draw=function(){
   const lo=map(d.stock.min),hi=map(d.stock.max);
   box(lo.x,lo.y,lo.z,hi.x,hi.y,hi.z,['#b2c5cf','#6d8797','#839eae']);
   const moves=d.moves,shown=Math.min(moves.length,5000),end=progress*moves.length;
-  const studio=globalThis.FertigungsstudioStudio;if($('paths').checked&&(!studio||studio.activeVisible())){for(let i=0;i<shown;i++){const m=moves[i],previous=i?moves[i-1].to:d.start,category=m.motion==='rapid'?'rapid':m.to[2]!==previous[2]?'lead':'cut';if(studio&&!studio.allowMove(category))continue;const color=category==='rapid'?'#f08b8b':category==='lead'?'#e9bf6f':i<end?'#a5ffcf':'#50d7b3';line(map(previous),map(m.to),color,category==='cut'?2.2:1.7,category==='rapid'?[4,5]:[]);}}
+  const studio=globalThis.FertigungsstudioStudio;if($('paths').checked&&(!studio||studio.activeVisible())){for(let i=0;i<shown;i++){const m=moves[i],previous=i?moves[i-1].to:d.start,category=m.motion==='rapid'?'rapid':m.to[2]!==previous[2]?'lead':'cut';if(studio&&!studio.allowMove(category))continue;const color=category==='rapid'?'#ff8383':category==='lead'?'#ffd374':i<end?'#a6ffe0':'#40ffc0';line(map(previous),map(m.to),color,category==='cut'?3.2:2.3,category==='rapid'?[6,6]:[]);}}
   const i=Math.min(moves.length-1,Math.floor(end));const a=i?moves[i-1].to:d.start,b=moves[i].to,t=Math.min(1,end-i);const tip=map(a.map((v,j)=>v+(b[j]-v)*t));
 
   const wcsReadout=document.getElementById('studioWcsReadout');
