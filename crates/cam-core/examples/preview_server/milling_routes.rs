@@ -4,8 +4,7 @@
 use fertigungsstudio_cam_core::milling::{
     ContourDirection, ContourSide, Cut, DrillBit, DrillPoint, Drilling, Pocket, RectangleXY,
     drill_points_with_cancel, outside_contour_with_cancel, polygon_contour_with_cancel,
-    rectangular_contour_with_cancel,
-    rectangular_pocket_with_cancel,
+    rectangular_contour_with_cancel, rectangular_pocket_with_cancel,
 };
 use fertigungsstudio_cam_core::{FlatTool, Motion, Point3, Setup, StockBox, Toolpath};
 use std::fmt::Write as _;
@@ -252,63 +251,114 @@ pub(super) fn calculate(
 }
 
 // Header 14 numbers then 2*N planar coordinates, with N in header slot 13.
-fn calculate_polygon(
-    args: &[f64],
-    cancelled: impl FnMut() -> bool,
-) -> Result<String, String> {
-    if args.len()<20 || args.iter().any(|v| !v.is_finite()) {
+fn calculate_polygon(args: &[f64], cancelled: impl FnMut() -> bool) -> Result<String, String> {
+    if args.len() < 20 || args.iter().any(|v| !v.is_finite()) {
         return Err("InvalidNumbers".into());
     }
-    let count=args[13];
-    if count.fract()!=0.0 || !(3.0..=2048.0).contains(&count)
-        || args.len()!=14+(count as usize)*2 {
+    let count = args[13];
+    if count.fract() != 0.0
+        || !(3.0..=2048.0).contains(&count)
+        || args.len() != 14 + (count as usize) * 2
+    {
         return Err("InvalidNumberCount".into());
     }
-    let [width,length,height,depth,diameter,stepdown,tool_number,
-        flute,feed,plunge,clearance,side_value,direction_value,_]= &args[..14] else {
+    let [
+        width,
+        length,
+        height,
+        depth,
+        diameter,
+        stepdown,
+        tool_number,
+        flute,
+        feed,
+        plunge,
+        clearance,
+        side_value,
+        direction_value,
+        _,
+    ] = &args[..14]
+    else {
         return Err("InvalidNumberCount".into());
     };
-    if tool_number.fract()!=0.0 || !(1.0..=9999.0).contains(tool_number) {
+    if tool_number.fract() != 0.0 || !(1.0..=9999.0).contains(tool_number) {
         return Err("InvalidToolNumber".into());
     }
-    if *clearance<=0.0 || *clearance>1_000_000.0 {
+    if *clearance <= 0.0 || *clearance > 1_000_000.0 {
         return Err("InvalidClearance".into());
     }
-    let side=match *side_value {
-        0.0=>ContourSide::Outside,
-        1.0=>ContourSide::Inside,
-        _=>return Err("InvalidBounds".into()),
+    let side = match *side_value {
+        0.0 => ContourSide::Outside,
+        1.0 => ContourSide::Inside,
+        _ => return Err("InvalidBounds".into()),
     };
-    let direction=match *direction_value {
-        0.0=>ContourDirection::CounterClockwise,
-        1.0=>ContourDirection::Clockwise,
-        _=>return Err("InvalidDirection".into()),
+    let direction = match *direction_value {
+        0.0 => ContourDirection::CounterClockwise,
+        1.0 => ContourDirection::Clockwise,
+        _ => return Err("InvalidDirection".into()),
     };
-    let points:Vec<DrillPoint>=args[14..].chunks_exact(2).map(|v|DrillPoint{x:v[0],y:v[1]}).collect();
-    let setup=Setup{
-        stock:StockBox{
-            min:Point3{x:0.0,y:0.0,z:0.0},
-            max:Point3{x:*width,y:*length,z:*height},
+    let points: Vec<DrillPoint> = args[14..]
+        .chunks_exact(2)
+        .map(|v| DrillPoint { x: v[0], y: v[1] })
+        .collect();
+    let setup = Setup {
+        stock: StockBox {
+            min: Point3 {
+                x: 0.0,
+                y: 0.0,
+                z: 0.0,
+            },
+            max: Point3 {
+                x: *width,
+                y: *length,
+                z: *height,
+            },
         },
-        clearance_z:height+clearance,
+        clearance_z: height + clearance,
     };
-    let cut=Cut{
-        bottom_z:height-depth,
-        stepdown_mm:*stepdown,
-        cutting_feed_mm_min:*feed,
-        plunge_feed_mm_min:*plunge,
+    let cut = Cut {
+        bottom_z: height - depth,
+        stepdown_mm: *stepdown,
+        cutting_feed_mm_min: *feed,
+        plunge_feed_mm_min: *plunge,
     };
-    let path=polygon_contour_with_cancel(
-        setup,FlatTool{diameter:*diameter,cutting_length:*flute},
-        cut,&points,side,direction,cancelled
-    ).map_err(|err|err.to_string())?;
-    let mut json=serialize("contour",setup,&path,ToolMeta{
-        number:*tool_number as u16,diameter:*diameter,cutting_length:*flute,
-        cutting_feed:*feed,plunge_feed:*plunge,
-    },cut.bottom_z)?;
+    let path = polygon_contour_with_cancel(
+        setup,
+        FlatTool {
+            diameter: *diameter,
+            cutting_length: *flute,
+        },
+        cut,
+        &points,
+        side,
+        direction,
+        cancelled,
+    )
+    .map_err(|err| err.to_string())?;
+    let mut json = serialize(
+        "contour",
+        setup,
+        &path,
+        ToolMeta {
+            number: *tool_number as u16,
+            diameter: *diameter,
+            cutting_length: *flute,
+            cutting_feed: *feed,
+            plunge_feed: *plunge,
+        },
+        cut.bottom_z,
+    )?;
     json.pop();
-    let side_name=if side==ContourSide::Inside{"inside"}else{"outside"};
-    let walk=if direction==ContourDirection::Clockwise{"cw"}else{"ccw"};
+    let side_name = if side == ContourSide::Inside {
+        "inside"
+    } else {
+        "outside"
+    };
+    let walk = if direction == ContourDirection::Clockwise {
+        "cw"
+    } else {
+        "ccw"
+    };
     write!(json,",\"contour_side\":\"{side_name}\",\"contour_direction\":\"{walk}\",\"geometry_source\":\"stl-top-face\",\"vertex_count\":{count}}}")
         .map_err(|_|"FormatError")?;
     Ok(json)
@@ -383,17 +433,30 @@ mod tests {
 
     #[test]
     fn selected_stl_polygon_transport_has_real_offsets_and_checks() {
-        let input="40 30 10 4 6 2 1 12 500 100 7 1 1 4 10 10 30 10 30 20 10 20";
-        let json=calculate("/api/poly-contour",input,||false).unwrap();
+        let input = "40 30 10 4 6 2 1 12 500 100 7 1 1 4 10 10 30 10 30 20 10 20";
+        let json = calculate("/api/poly-contour", input, || false).unwrap();
         assert!(json.contains("\"geometry_source\":\"stl-top-face\""));
         assert!(json.contains("\"vertex_count\":4"));
         assert!(json.contains("\"contour_side\":\"inside\""));
         assert!(json.contains("\"contour_direction\":\"cw\""));
         assert!(json.contains("\"start\":[13,13,17]"));
-        assert_eq!(calculate("/api/poly-contour",input,||true),Err("Cancelled".into()));
-        let bow="40 30 10 4 6 2 1 12 500 100 7 1 1 4 10 10 30 20 10 20 30 10";
-        assert_eq!(calculate("/api/poly-contour",bow,||false),Err("InvalidBounds".into()));
-        assert_eq!(calculate("/api/poly-contour","40 30 10 4 6 2 1 12 500 100 7 1 1 5 10 10",||false),Err("InvalidNumberCount".into()));
+        assert_eq!(
+            calculate("/api/poly-contour", input, || true),
+            Err("Cancelled".into())
+        );
+        let bow = "40 30 10 4 6 2 1 12 500 100 7 1 1 4 10 10 30 20 10 20 30 10";
+        assert_eq!(
+            calculate("/api/poly-contour", bow, || false),
+            Err("InvalidBounds".into())
+        );
+        assert_eq!(
+            calculate(
+                "/api/poly-contour",
+                "40 30 10 4 6 2 1 12 500 100 7 1 1 5 10 10",
+                || false
+            ),
+            Err("InvalidNumberCount".into())
+        );
     }
 
     #[test]
