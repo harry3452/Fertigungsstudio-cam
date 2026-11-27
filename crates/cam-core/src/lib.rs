@@ -219,7 +219,11 @@ pub fn face_with_turn(
         return Err(Error::CoordinateLimit);
     }
     let start = Point3 {
-        x: if turn == FacingTurn::ReverseLift { right } else { left },
+        x: if turn == FacingTurn::ReverseLift {
+            right
+        } else {
+            left
+        },
         y: stock.min.y,
         z: setup.clearance_z,
     };
@@ -236,7 +240,11 @@ pub fn face_with_turn(
         match turn {
             FacingTurn::Lift | FacingTurn::ReverseLift => {
                 // Each row retracts before the one direct XY rapid to the next row.
-                let (entry, exit) = if turn == FacingTurn::ReverseLift { (right, left) } else { (left, right) };
+                let (entry, exit) = if turn == FacingTurn::ReverseLift {
+                    (right, left)
+                } else {
+                    (left, right)
+                };
                 for row in 0..=intervals {
                     if cancelled() {
                         return Err(Error::Cancelled);

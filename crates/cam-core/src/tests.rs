@@ -478,9 +478,28 @@ fn reverse_facing_retracts_before_shortest_xy_return() {
             assert_eq!(at[0].to.z, setup.clearance_z);
             assert_eq!(at[1].to.x, right);
             assert!(at[1].to.z < setup.stock.max.z);
-            assert_eq!(at[2].to, Point3 { x: left, y, z: at[1].to.z });
-            assert_eq!(at[2].motion, Motion::Feed { mm_per_min: op.cutting_feed });
-            assert_eq!(at[3].to, Point3 { x: left, y, z: setup.clearance_z });
+            assert_eq!(
+                at[2].to,
+                Point3 {
+                    x: left,
+                    y,
+                    z: at[1].to.z
+                }
+            );
+            assert_eq!(
+                at[2].motion,
+                Motion::Feed {
+                    mm_per_min: op.cutting_feed
+                }
+            );
+            assert_eq!(
+                at[3].to,
+                Point3 {
+                    x: left,
+                    y,
+                    z: setup.clearance_z
+                }
+            );
             if row + 1 < reverse.rows_per_pass {
                 let next = reverse.moves[n + 4].to;
                 assert_eq!(next.x, right);
