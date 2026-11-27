@@ -48,6 +48,8 @@ jobs:
           node prototype/studio-shell-tests.cjs
           node prototype/studio-facing-tests.cjs
           node prototype/studio-contour-tests.cjs
+          node prototype/studio-mesh-geometry-tests.cjs
+          node --check prototype/studio-model-pick.js
           node --check prototype/studio-contour.js
           node prototype/studio-wcs-tests.cjs
           node prototype/studio-path-overview-tests.cjs

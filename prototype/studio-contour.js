@@ -25,6 +25,7 @@ const current=()=>studio.currentOperation();
 const round=n=>Math.round(n*1000)/1000;
 function fields(){
  const v=id=>$(id)?.value??'';
+ if(selectedContour?.meshVersion!==undefined&&selectedContour.meshVersion!==globalThis.FertigungsstudioSTLPicker?.modelVersion())selectedContour=null;
  return {source:v('contour-source'),points:v('contour-source')==='model'?selectedContour?.points:null,
   toolId:Number(v('contour-tool')),side:v('contour-side'),direction:v('contour-direction'),
   spindle:v('contour-spindle'),depth:v('contour-depth'),stepdown:v('contour-stepdown'),
@@ -81,8 +82,9 @@ function open(){
  if(!op||op.kind!=='contour'){studio.status('Bitte Konturfräsen auswählen.');return}
  if(selectedOperationId!==op.id){selectedOperationId=op.id;selectedContour=null;}
  const picker=globalThis.FertigungsstudioSTLPicker;
+ if(selectedContour&&(!picker?.hasModel()||selectedContour.meshVersion!==picker.modelVersion()))selectedContour=null;
  const saved=op.contour||{},t=tools.find(x=>x.id===saved.toolId)||tools.find(x=>x.id===studio.selectedTool()?.id)||tools[0];
- const source=picker?.hasModel()?(selectedContour?'model':saved.source==='model'?'model':'model'):'manual';
+ const source=picker?.hasModel()?'model':'manual';
  const side=selectedContour?.side??saved.side??(op.name==='Innenkontur'?'inside':'outside');
  const direction=saved.direction??'climb',spindle=saved.spindle??'M3';
  const depth=saved.depth??Math.min(1,Number(p.stock.z));

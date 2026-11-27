@@ -8,7 +8,7 @@ const studio=globalThis.FertigungsstudioStudio;
 const scene=document.getElementById('scene');
 const view=scene?.closest('.view');
 if(!geo||!studio||!scene||!view)return;
-let mesh=null,selected=null,hover=null,onSelect=null,picking=false,located=null,stockKey='';
+let mesh=null,selected=null,hover=null,onSelect=null,picking=false,located=null,stockKey='',meshVersion=0;
 const overlay=document.createElement('div');
 overlay.id='studioModelPickHint';
 overlay.hidden=true;
@@ -122,7 +122,7 @@ scene.addEventListener('pointerup',e=>{
   return;
  }
  selected=loop.id;
- const detail={id:loop.id,side:loop.side,points:loop.points.map(p=>p.slice()),size:current().size};
+ const detail={id:loop.id,side:loop.side,points:loop.points.map(p=>p.slice()),size:current().size,meshVersion};
  const callback=onSelect;
  end();
  if(typeof callback==='function')callback(detail);
@@ -145,12 +145,12 @@ function load(bytes){
  const parsed=geo.parse(bytes);
  // A real part may be smaller than stock; no automatic stock modification.
  geo.locate(parsed,studio.project().stock);
- end();mesh=parsed;selected=null;stockKey='';located=null;
+ end();mesh=parsed;selected=null;stockKey='';located=null;meshVersion++;
  globalThis.FertigungsstudioToolpath?.clear();
  if(typeof resize==='function')resize();
  return {triangles:mesh.triangles.length,loops:mesh.loops.length,size:mesh.size};
 }
-function clear(){end();mesh=null;selected=null;stockKey='';located=null;if(typeof resize==='function')resize();}
-globalThis.FertigungsstudioSTLPicker={load,begin,end,clear,hasModel:()=>!!mesh,
+function clear(){end();mesh=null;selected=null;stockKey='';located=null;meshVersion++;if(typeof resize==='function')resize();}
+globalThis.FertigungsstudioSTLPicker={load,begin,end,clear,hasModel:()=>!!mesh,modelVersion:()=>meshVersion,
  drawMesh,selected:()=>selected,loops:()=>mesh?.loops||[]};
 })();
