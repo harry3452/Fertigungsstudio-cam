@@ -68,7 +68,7 @@ function storeLibrary(){
 const pop=document.createElement('div');pop.className='studio-menu-popup';pop.id='studioMenuPopup';pop.hidden=true;document.body.appendChild(pop);
 const dlg=document.createElement('dialog');dlg.className='studio-modal';dlg.id='studioDialog';dlg.innerHTML='<div class="studio-modal-head"><h2 id="studioDialogTitle"></h2><button id="studioDialogClose" type="button" aria-label="Schließen">✕</button></div><div id="studioDialogBody"></div>';document.body.appendChild(dlg);
 const projectPicker=document.createElement('input');projectPicker.type='file';projectPicker.accept='.json,.fscam';projectPicker.hidden=true;document.body.appendChild(projectPicker);
-const partPicker=document.createElement('input');partPicker.type='file';partPicker.accept='.step,.stp,.stl,.igs,.iges';partPicker.hidden=true;document.body.appendChild(partPicker);
+const partPicker=document.createElement('input');partPicker.type='file';partPicker.accept='.stl,.step,.stp,.igs,.iges';partPicker.hidden=true;document.body.appendChild(partPicker);
 const holderPicker=document.createElement('input');holderPicker.type='file';holderPicker.accept='.step,.stp,.stl,.igs,.iges';holderPicker.hidden=true;document.body.appendChild(holderPicker);
 function status(message){$('studioInfo').textContent=message}
 function changed(){dirty=true}
@@ -426,9 +426,21 @@ holderPicker.addEventListener('change',e=>{
  const f=e.target.files?.[0];if(f&&toolEdit){collectTool();toolEdit.holderCad=f.name;renderToolForm();status('CAD-Dateiname vorgemerkt. Geometrieimport und Kollisionsmodell noch nicht umgesetzt.')}
  e.target.value='';
 });
-partPicker.addEventListener('change',e=>{
- const f=e.target.files?.[0];if(f){project.part=f.name+' (Geometrieimport ausstehend)';changed();render();status('Bauteildatei vorgemerkt; noch keine CAD-Geometrie importiert.')}
- e.target.value='';
+partPicker.addEventListener('change',async e=>{
+ const f=e.target.files?.[0];e.target.value='';
+ if(!f)return;
+ try{
+  if(!f.name.toLowerCase().endsWith('.stl'))
+   throw Error('Direkter STEP-/IGES-Geometrieimport noch nicht unterstützt. Für diesen Test ein STL-Modell verwenden.');
+  const picker=globalThis.FertigungsstudioSTLPicker;
+  if(!picker)throw Error('STL-Importmodul nicht geladen.');
+  if(f.size>8_000_000)throw Error('STL maximal 8 MB.');
+  const imported=picker.load(await f.arrayBuffer());
+  project.part=f.name+' (STL-Mesh)';
+  changed();render();
+  status('STL geladen: '+imported.triangles+' Dreiecke, '+imported.loops+
+   ' geschlossene Konturen der oberen Planfläche. Rohteil bleibt unverändert. Geometrie wird nicht in der Projektdatei eingebettet.');
+ }catch(error){status('STL-Import fehlgeschlagen: '+error.message);}
 });
 projectPicker.addEventListener('change',async e=>{
  const f=e.target.files?.[0];if(!f)return;
@@ -440,6 +452,7 @@ projectPicker.addEventListener('change',async e=>{
   for(const m of value.project.materials)if(!m||!Number.isInteger(m.id)||typeof m.name!=='string')throw Error('Ungültiges Material');
   for(const t of value.project.tools)if(!t||!Number.isInteger(t.id)||typeof t.name!=='string')throw Error('Ungültiges Werkzeug');
   if(!value.project.stock||![value.project.stock.x,value.project.stock.y,value.project.stock.z].every(x=>Number.isFinite(x)&&x>0))throw Error('Ungültiges Rohteil');
+  globalThis.FertigungsstudioSTLPicker?.clear();
   project=value.project;current=project.operations[0].id;dirty=false;storeLibrary();render();status('Projektdatei geöffnet. Werkzeugwege müssen separat berechnet werden.');
  }catch(err){status('Projekt nicht geöffnet: '+err.message)}
  e.target.value='';
@@ -467,6 +480,7 @@ $('studioMenus').onscroll=closeMenu;
 globalThis.FertigungsstudioStudio={
  setFacingLauncher(fn){if(typeof fn!=='function')throw Error('Ungültiger Planfräs-Dialog');facingLauncher=fn;},
  setContourLauncher(fn){if(typeof fn!=='function')throw Error('Ungültiger Kontur-Dialog');contourLauncher=fn;},
+ requestPartImport(){partPicker.click();},
  currentOperation:selectedOp,
  selectedTool:()=>project.tools.find(t=>t.id===selectedTool)||null,
  selectTool(id){if(project.tools.some(t=>t.id===id)){selectedTool=id;render();}},

@@ -82,3 +82,9 @@ body.studio-ready.light .studio-modal input,body.studio-ready.light .studio-moda
 .studio-ended strong{font-size:20px}
 .studio-ended button{padding:10px 16px}
 body.studio-ready [hidden]{display:none!important}
+
+/* Click-to-select actual STL top-face contours (no toolbar overlay during idle). */
+.studio-model-pick-hint{position:absolute;z-index:15;top:68px;left:18px;right:18px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:12px;background:rgba(14,28,38,.95);border:1px solid #79ccaf;border-radius:8px;color:#e5f4ee;box-shadow:0 10px 30px #0008}
+.studio-model-pick-hint span{flex:1;min-width:160px;font-size:12px}
+.studio-model-pick-hint button{padding:6px 10px}
+.studio-model-pick-hint[hidden]{display:none!important}

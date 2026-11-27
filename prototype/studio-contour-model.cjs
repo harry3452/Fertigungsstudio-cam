@@ -37,6 +37,33 @@ function prepare(project,tool,form){
  if(!['inside','outside'].includes(side))throw Error('Ungültige Konturseite.');
  if(!['climb','conventional'].includes(direction))throw Error('Ungültige Fräsrichtung.');
  if(!['M3','M4'].includes(spindle))throw Error('Ungültige Spindelrichtung.');
+ if(form.source==='model'){
+  const points=form.points;
+  if(!Array.isArray(points)||points.length<3||points.length>2048)
+   throw Error('Bitte eine geschlossene STL-Kontur im 3D-Modell auswählen.');
+  const vertices=points.map(p=>{
+   if(!Array.isArray(p)||p.length!==2)throw Error('Ungültige Modellkontur.');
+   return p.map((v,i)=>{
+    const n=number(v,'Konturkoordinate');
+    if(n<0||n>(i===0?width:length))throw Error('Modellkontur liegt außerhalb des Rohteils.');
+    return n;
+   });
+  });
+  const depthPasses=Math.ceil(depth/stepdown);
+  if(!Number.isFinite(depthPasses)||depthPasses*(vertices.length+3)>100000)
+   throw Error('Zu viele Werkzeugbewegungen.');
+  const clockwise=(spindle==='M3')===(side==='inside')
+    ?direction==='climb':direction!=='climb';
+  return {
+   numbers:[width,length,height,depth,diameter,stepdown,id,cuttingLength,
+    cuttingFeed,plungeFeed,clearance,side==='inside'?1:0,clockwise?1:0,
+    vertices.length,...vertices.flat()],
+   source:'model',depthPasses,estimatedMoves:depthPasses*(vertices.length+3),
+   start:null,
+   settings:{toolId:id,depth,stepdown,clearance,cuttingFeed,plungeFeed,
+    source:'model',side,direction,spindle,clockwise,vertexCount:vertices.length}
+  };
+ }
  const marginX=number(form.marginX??0,'Randabstand X'),
  marginY=number(form.marginY??0,'Randabstand Y');
  if(marginX<0||marginY<0||marginX>1_000_000||marginY>1_000_000)

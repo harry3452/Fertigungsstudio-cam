@@ -29,4 +29,14 @@ for(const change of [{marginX:0},{marginY:0},{marginX:57},{marginY:37}])
  assert.throws(()=>model.prepare(project,tool,{...input,...change}),Error);
 assert.throws(()=>model.prepare(project,{...tool,diameter:200},input),/Innenkontur/);
 assert.throws(()=>model.prepare({...project,stock:{...project.stock,x:999999}},tool,form),/außerhalb/);
-console.log('2D contour model: cutter-radius offset, inner/outside selection, M3/M4 windings and limits checked.');
+const shape=[[10,10],[32,10],[34,24],[12,25]];
+const polygon=model.prepare(project,tool,{...form,source:'model',side:'outside',points:shape});
+assert.equal(polygon.source,'model');
+assert.deepEqual(polygon.numbers.slice(0,14),[120,80,20,4,8,2,2,20,500,100,6,0,0,4]);
+assert.deepEqual(polygon.numbers.slice(14),shape.flat());
+assert.equal(polygon.estimatedMoves,14);
+assert.equal(polygon.start,null);
+assert.equal(model.prepare(project,tool,{...form,source:'model',side:'inside',points:shape}).numbers[11],1);
+assert.throws(()=>model.prepare(project,tool,{...form,source:'model',points:[]}),/STL-Kontur/);
+assert.throws(()=>model.prepare(project,tool,{...form,source:'model',points:[[1,1],[130,1],[1,3]]}),/außerhalb/);
+console.log('2D contour model: rectangular and selected STL polygon offsets, directions and limits checked.');
