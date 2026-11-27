@@ -45,7 +45,9 @@ draw=function(){
   const scale=100/Math.max(...d.stock.max.map((v,i)=>v-d.stock.min[i]),d.clearance_z-d.stock.min[2],1);
   const map=p=>point((p[0]-center[0])*scale,(p[1]-center[1])*scale,(p[2]-center[2])*scale);
   const lo=map(d.stock.min),hi=map(d.stock.max);
-  box(lo.x,lo.y,lo.z,hi.x,hi.y,hi.z,['#b2c5cf','#6d8797','#839eae']);
+  if(!globalThis.FertigungsstudioSTLPicker?.hasModel()||
+     !globalThis.FertigungsstudioSTLPicker.drawMesh(map))
+    box(lo.x,lo.y,lo.z,hi.x,hi.y,hi.z,['#b2c5cf','#6d8797','#839eae']);
   const moves=d.moves,shown=Math.min(moves.length,5000),end=progress*moves.length;
   const studio=globalThis.FertigungsstudioStudio;if($('paths').checked&&(!studio||studio.activeVisible())){for(let i=0;i<shown;i++){const m=moves[i],previous=i?moves[i-1].to:d.start,category=m.motion==='rapid'?'rapid':m.to[2]!==previous[2]?'lead':'cut';if(studio&&!studio.allowMove(category))continue;const color=category==='rapid'?'#ff8383':category==='lead'?'#ffd374':i<end?'#a6ffe0':'#40ffc0';line(map(previous),map(m.to),color,category==='cut'?3.2:2.3,category==='rapid'?[6,6]:[]);}}
   const i=Math.min(moves.length-1,Math.floor(end));const a=i?moves[i-1].to:d.start,b=moves[i].to,t=Math.min(1,end-i);const tip=map(a.map((v,j)=>v+(b[j]-v)*t));
