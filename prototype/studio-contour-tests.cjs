@@ -32,6 +32,8 @@ assert.throws(()=>model.prepare({...project,stock:{...project.stock,x:999999}},t
 const shape=[[10,10],[32,10],[34,24],[12,25]];
 const polygon=model.prepare(project,tool,{...form,source:'model',side:'outside',points:shape});
 assert.equal(polygon.source,'model');
+const recessed={...project,partPlacement:{x:0,y:0,z:1},stlInfo:{size:[80,60,12]}};
+assert.throws(()=>model.prepare(recessed,tool,{...form,source:'model',points:shape}),/Modelloberkante/);
 assert.deepEqual(polygon.numbers.slice(0,14),[120,80,20,4,8,2,2,20,500,100,6,0,0,4]);
 assert.deepEqual(polygon.numbers.slice(14),shape.flat());
 assert.equal(polygon.estimatedMoves,14);

@@ -121,20 +121,36 @@ function findTopLoops(triangles,size){
  loops.sort((a,b)=>Math.abs(b.area)-Math.abs(a.area));
  return loops;
 }
-function locate(mesh,stock){
+// An imported mesh initially defines the rectangular stock envelope exactly.
+function fitStock(mesh){
+ const [x,y,z]=mesh.size;
+ if(![x,y,z].every(v=>Number.isFinite(v)&&v>=0&&v<=100000)||x<=0||y<=0)
+  throw Error('STL-Abmessungen außerhalb des Rohteilbereichs (maximal 100.000 mm).');
+ const height=Math.max(1,z);
+ return {stock:{x,y,z:height},position:{x:0,y:0,z:height-z}};
+}
+// Position is the normalized part minimum measured from the stock minimum.
+// Without an explicit position legacy center-XY/top-Z behavior is retained.
+function validatePlacement(size,stock,position){
  const dims=[Number(stock.x),Number(stock.y),Number(stock.z)];
- if(dims.some(v=>!Number.isFinite(v)||v<=0))throw Error('Rohteilabmessungen ungültig.');
- const margin=dims.map((v,i)=>(v-mesh.size[i])/2);
- if(margin.some(v=>v<-1e-6))throw Error('STL-Modell passt nicht ins Rohteil. Rohteilmaße vergrößern.');
- const shifts=[margin[0],margin[1],dims[2]-mesh.size[2]];
+ if(dims.some(v=>!Number.isFinite(v)||v<=0||v>100000))
+  throw Error('Rohteilabmessungen müssen positiv und höchstens 100.000 mm sein.');
+ const shifts=position?['x','y','z'].map(key=>Number(position[key])):
+  [(dims[0]-size[0])/2,(dims[1]-size[1])/2,dims[2]-size[2]];
+ if(shifts.some((v,i)=>!Number.isFinite(v)||v<0||v+size[i]>dims[i]+1e-6))
+  throw Error('STL-Bauteil liegt außerhalb des Rohteils. Rohteil vergrößern oder Bauteillage ändern.');
+ return {dims,shifts};
+}
+function locate(mesh,stock,position){
+ const {dims,shifts}=validatePlacement(mesh.size,stock,position);
  const translated=p=>p.map((v,i)=>v+shifts[i]);
  return {
   triangles:mesh.triangles.map(t=>t.map(translated)),
   loops:mesh.loops.map(loop=>({...loop,points:loop.points.map(p=>[p[0]+shifts[0],p[1]+shifts[1]])})),
-  size:mesh.size,stock:dims
+  size:mesh.size,stock:dims,position:shifts,partTopZ:shifts[2]+mesh.size[2]
  };
 }
-const api={parse,locate,findTopLoops,area,contains};
+const api={parse,fitStock,locate,validatePlacement,findTopLoops,area,contains};
 root.FertigungsstudioMeshGeometry=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);
