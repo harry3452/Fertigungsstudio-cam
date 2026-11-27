@@ -453,8 +453,7 @@ pub fn polygon_contour_with_cancel(
             for i in 0..n {
                 let a = vertices[i];
                 let b = vertices[(i + 1) % n];
-                if (a.y > p.y) != (b.y > p.y)
-                    && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x
+                if (a.y > p.y) != (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x
                 {
                     hit = !hit;
                 }
