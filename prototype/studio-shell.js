@@ -29,11 +29,11 @@ const iconPaths={
 'Sim':'M16 4a12 12 0 1 0 0 24a12 12 0 1 0 0-24 M12 9l11 7-11 7z',
 'Post':'M7 3h12l7 7v19H7z M19 3v8h7 M11 17h11 M11 22h11 M11 26h7'
 };
-const opKinds={Planfräsen:'facing',Außenkontur:'contour',Taschenfräsen:'pocket',Bohren:'drilling','2D Kontur':'contour','2D Tasche':'pocket'};
+const opKinds={Planfräsen:'facing',Außenkontur:'contour',Innenkontur:'contour',Taschenfräsen:'pocket',Bohren:'drilling','2D Kontur':'contour','2D Tasche':'pocket'};
 const options={
  'Datei':[['Neues Projekt','new'],['Projekt öffnen','open'],['Bauteil laden','part'],['–','divider'],['Speichern','save'],['Speichern unter…','saveas'],['–','divider'],['Programm beenden','exit']],
  'Setup':[['Aufspannung','setup'],['Rohteil und Material','stock'],['Nullpunkt und Achsausrichtung','origin'],['–','divider'],['Materialverwaltung','materials']],
- 'Fräsen':[['Planfräsen','facing'],['Außenkontur','contour'],['Taschenfräsen','pocket'],['Bohren','drilling'],['Gewindefräsen','future']],
+ 'Fräsen':[['Planfräsen','facing'],['Außenkontur','contour'],['Innenkontur','contour'],['Taschenfräsen','pocket'],['Bohren','drilling'],['Gewindefräsen','future']],
  '3D Fräsen':[['3D Schruppen','future'],['3D Schlichten','future'],['Parallelfräsen','future'],['Restmaterial','future']],
  'Drehen':[['Plandrehen','future'],['Längsdrehen','future'],['Innendrehen','future'],['Einstechen','future'],['Gewindedrehen','future']],
  'Laser':[['Konturschnitt','future'],['Gravieren','future'],['Markieren','future']]
@@ -56,7 +56,7 @@ const defaults=()=>({
 });
 const libraryKey='fertigungsstudio-studio-library-v1';
 let project=defaults(),current=1,dirty=false,simulation=false,toolEdit=null,matEdit=null,matProfile=1,selectedTool=1;
-let facingLauncher=null;
+let facingLauncher=null,contourLauncher=null;
 try{
  const lib=JSON.parse(localStorage.getItem(libraryKey)||'null');
  if(lib&&Array.isArray(lib.materials)&&Array.isArray(lib.tools)&&lib.materials.length&&lib.tools.length){project.materials=lib.materials;project.tools=lib.tools;project.stock.materialId=project.materials[0].id;}
@@ -128,6 +128,7 @@ for(const name of ['Datei','Setup','Werkzeugliste','Fräsen','3D Fräsen','Drehe
 }
 function launch(kind){
  if(kind==='facing'&&typeof facingLauncher==='function'){facingLauncher();return;}
+ if(kind==='contour'&&typeof contourLauncher==='function'){contourLauncher();return;}
  const index={facing:0,pocket:1,contour:2,drilling:3}[kind];
  if(index==null)return;
  const card=document.querySelector('[data-cam-operation="'+kind+'"]');
@@ -465,6 +466,7 @@ document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu()});
 $('studioMenus').onscroll=closeMenu;
 globalThis.FertigungsstudioStudio={
  setFacingLauncher(fn){if(typeof fn!=='function')throw Error('Ungültiger Planfräs-Dialog');facingLauncher=fn;},
+ setContourLauncher(fn){if(typeof fn!=='function')throw Error('Ungültiger Kontur-Dialog');contourLauncher=fn;},
  currentOperation:selectedOp,
  selectedTool:()=>project.tools.find(t=>t.id===selectedTool)||null,
  selectTool(id){if(project.tools.some(t=>t.id===id)){selectedTool=id;render();}},

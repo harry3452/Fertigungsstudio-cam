@@ -2,8 +2,9 @@
 //! These are not verified NC programs. The server remains loopback-only.
 
 use fertigungsstudio_cam_core::milling::{
-    Cut, DrillBit, DrillPoint, Drilling, Pocket, RectangleXY, drill_points_with_cancel,
-    outside_contour_with_cancel, rectangular_pocket_with_cancel,
+    ContourDirection, ContourSide, Cut, DrillBit, DrillPoint, Drilling, Pocket, RectangleXY,
+    drill_points_with_cancel, outside_contour_with_cancel, rectangular_contour_with_cancel,
+    rectangular_pocket_with_cancel,
 };
 use fertigungsstudio_cam_core::{FlatTool, Motion, Point3, Setup, StockBox, Toolpath};
 use std::fmt::Write as _;
@@ -30,8 +31,12 @@ pub(super) fn calculate(
         .map(str::parse::<f64>)
         .collect::<Result<Vec<_>, _>>()
         .map_err(|_| "InvalidNumbers")?;
-    let expected = if route == "/api/contour" { 11 } else { 13 };
-    if args.len() != expected {
+    let valid_len = if route == "/api/contour" {
+        args.len() == 11 || args.len() == 16
+    } else {
+        args.len() == 13
+    };
+    if !valid_len {
         return Err("InvalidNumberCount".into());
     }
     if args.iter().any(|n| !n.is_finite()) {
@@ -59,6 +64,36 @@ pub(super) fn calculate(
     if *depth <= 0.0 {
         return Err("InvalidDepth".into());
     }
+    let (clearance, side, direction, mx, my) = if route == "/api/contour" && args.len() == 16 {
+        let [clearance, side, direction, mx, my] = &args[11..] else {
+            return Err("InvalidNumberCount".into());
+        };
+        if *clearance <= 0.0 || *clearance > 1_000_000.0 {
+            return Err("InvalidClearance".into());
+        }
+        if *mx < 0.0 || *my < 0.0 {
+            return Err("InvalidBounds".into());
+        }
+        let side = match *side {
+            0.0 => ContourSide::Outside,
+            1.0 => ContourSide::Inside,
+            _ => return Err("InvalidBounds".into()),
+        };
+        let direction = match *direction {
+            0.0 => ContourDirection::CounterClockwise,
+            1.0 => ContourDirection::Clockwise,
+            _ => return Err("InvalidDirection".into()),
+        };
+        (*clearance, side, direction, *mx, *my)
+    } else {
+        (
+            5.0,
+            ContourSide::Outside,
+            ContourDirection::CounterClockwise,
+            0.0,
+            0.0,
+        )
+    };
     let setup = Setup {
         stock: StockBox {
             min: Point3 {
@@ -72,7 +107,7 @@ pub(super) fn calculate(
                 z: *height,
             },
         },
-        clearance_z: height + 5.0,
+        clearance_z: height + clearance,
     };
     let cut = Cut {
         bottom_z: height - depth,
@@ -81,18 +116,31 @@ pub(super) fn calculate(
         plunge_feed_mm_min: *plunge_feed,
     };
     let (operation, path) = match route {
-        "/api/contour" => (
-            "contour",
-            outside_contour_with_cancel(
-                setup,
-                FlatTool {
-                    diameter: *diameter,
-                    cutting_length: *cutting_length,
-                },
-                cut,
-                cancelled,
-            ),
-        ),
+        "/api/contour" => {
+            let tool = FlatTool {
+                diameter: *diameter,
+                cutting_length: *cutting_length,
+            };
+            let path = if args.len() == 11 {
+                outside_contour_with_cancel(setup, tool, cut, cancelled)
+            } else {
+                rectangular_contour_with_cancel(
+                    setup,
+                    tool,
+                    cut,
+                    RectangleXY {
+                        min_x: mx,
+                        min_y: my,
+                        max_x: width - mx,
+                        max_y: length - my,
+                    },
+                    side,
+                    direction,
+                    cancelled,
+                )
+            };
+            ("contour", path)
+        }
         "/api/pocket" => {
             let [margin_x, margin_y] = &args[11..] else {
                 return Err("InvalidNumberCount".into());
@@ -168,7 +216,7 @@ pub(super) fn calculate(
         _ => return Err("UnknownOperation".into()),
     };
     let path = path.map_err(|e| e.to_string())?;
-    serialize(
+    let mut json = serialize(
         operation,
         setup,
         &path,
@@ -180,7 +228,23 @@ pub(super) fn calculate(
             plunge_feed: *plunge_feed,
         },
         cut.bottom_z,
-    )
+    )?;
+    if route == "/api/contour" && args.len() == 16 {
+        json.pop();
+        let side_name = if side == ContourSide::Inside {
+            "inside"
+        } else {
+            "outside"
+        };
+        let walk = if direction == ContourDirection::Clockwise {
+            "cw"
+        } else {
+            "ccw"
+        };
+        write!(json,",\"contour_side\":\"{side_name}\",\"contour_direction\":\"{walk}\",\"contour_margin_x\":{mx},\"contour_margin_y\":{my}}}")
+            .map_err(|_|"FormatError")?;
+    }
+    Ok(json)
 }
 
 fn serialize(
@@ -275,6 +339,54 @@ mod tests {
         assert_eq!(
             calculate("/api/contour", "40 30 10 4 6 2 3 1.5 12 500 100", || false),
             Err("InvalidToolNumber".into()),
+        );
+    }
+
+    #[test]
+    fn modern_contour_route_supports_interior_and_both_directions() {
+        let outside = calculate(
+            "/api/contour",
+            "40 30 10 4 6 2 3 1 12 500 100 7 0 0 0 0",
+            || false,
+        )
+        .unwrap();
+        assert!(outside.contains("\"contour_side\":\"outside\""));
+        assert!(outside.contains("\"contour_direction\":\"ccw\""));
+        assert!(outside.contains("\"clearance_z\":17"));
+        assert!(outside.contains("\"start\":[-3,-3,17]"));
+        let inner = calculate(
+            "/api/contour",
+            "40 30 10 4 6 2 3 1 12 500 100 7 1 1 6 7",
+            || false,
+        )
+        .unwrap();
+        assert!(inner.contains("\"contour_side\":\"inside\""));
+        assert!(inner.contains("\"contour_direction\":\"cw\""));
+        assert!(inner.contains("\"start\":[9,10,17]"));
+        assert!(inner.contains("\"to\":[9,20,8]"));
+        assert_eq!(
+            calculate(
+                "/api/contour",
+                "40 30 10 4 6 2 3 1 12 500 100 7 1 1 0 0",
+                || false
+            ),
+            Err("InvalidBounds".into())
+        );
+        assert_eq!(
+            calculate(
+                "/api/contour",
+                "40 30 10 4 6 2 3 1 12 500 100 7 0 0 6 7",
+                || false
+            ),
+            Err("InvalidBounds".into())
+        );
+        assert_eq!(
+            calculate(
+                "/api/contour",
+                "40 30 10 4 6 2 3 1 12 500 100 7 0 9 0 0",
+                || false
+            ),
+            Err("InvalidDirection".into())
         );
     }
 }
