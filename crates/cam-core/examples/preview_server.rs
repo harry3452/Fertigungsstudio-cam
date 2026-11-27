@@ -259,7 +259,7 @@ fn handle(stream: &mut TcpStream, host: &str, generation: &AtomicU64) -> std::io
     }
     if !matches!(
         req.path.as_str(),
-        "/api/facing" | "/api/contour" | "/api/pocket" | "/api/drilling"
+        "/api/facing" | "/api/contour" | "/api/poly-contour" | "/api/pocket" | "/api/drilling"
     ) {
         return respond(stream, "404 Not Found", "text/plain", "NotFound");
     }
