@@ -38,7 +38,7 @@ returnButton.onclick=()=>{coreData=null;coreBadge.textContent='';returnButton.hi
 document.querySelectorAll('[data-operation],.op').forEach(b=>b.addEventListener('click',()=>{if(coreData)returnButton.click();}));
 const originalMakePath=makePath;makePath=function(){if(!coreData)originalMakePath();};
 draw=function(){
-  if(!coreData){originalDraw();const studioProgress=document.getElementById('studioProgress');if(studioProgress)studioProgress.value=Math.round(progress*1000);return;}
+  if(!coreData){const wcsReadout=document.getElementById('studioWcsReadout');if(wcsReadout)wcsReadout.textContent='WCS: Noch keine berechnete Bahn';originalDraw();const studioProgress=document.getElementById('studioProgress');if(studioProgress)studioProgress.value=Math.round(progress*1000);return;}
   const d=coreData,w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);
   const center=d.stock.min.map((v,i)=>(v+d.stock.max[i])/2);
   const scale=100/Math.max(...d.stock.max.map((v,i)=>v-d.stock.min[i]),d.clearance_z-d.stock.min[2],1);
@@ -48,6 +48,17 @@ draw=function(){
   const moves=d.moves,shown=Math.min(moves.length,5000),end=progress*moves.length;
   const studio=globalThis.FertigungsstudioStudio;if($('paths').checked&&(!studio||studio.activeVisible())){for(let i=0;i<shown;i++){const m=moves[i],previous=i?moves[i-1].to:d.start,category=m.motion==='rapid'?'rapid':m.to[2]!==previous[2]?'lead':'cut';if(studio&&!studio.allowMove(category))continue;const color=category==='rapid'?'#f08b8b':category==='lead'?'#e9bf6f':i<end?'#a5ffcf':'#50d7b3';line(map(previous),map(m.to),color,category==='cut'?2.2:1.7,category==='rapid'?[4,5]:[]);}}
   const i=Math.min(moves.length-1,Math.floor(end));const a=i?moves[i-1].to:d.start,b=moves[i].to,t=Math.min(1,end-i);const tip=map(a.map((v,j)=>v+(b[j]-v)*t));
+
+  const wcsReadout=document.getElementById('studioWcsReadout');
+  if(wcsReadout){
+   const w=d.work_coordinates;
+   if(w&&Array.isArray(w.moves)&&w.moves.length===moves.length){
+    const v0=i?w.moves[i-1].to:w.start,v1=w.moves[i].to;
+    const xyz=v0.map((v,j)=>v+(v1[j]-v)*t);
+    wcsReadout.textContent=w.system+' · X '+xyz[0].toFixed(3)+'  Y '+xyz[1].toFixed(3)+'  Z '+xyz[2].toFixed(3)+' mm';
+   }else wcsReadout.textContent='WCS: Nur rohe Bahnkoordinaten';
+  }
+
   const toolMode=studio?.toolVisibility()||'full';if(toolMode!=='off'){const tool=studio?.selectedTool()||null;const total=Math.min(140,Math.max(d.tool_diameter,Number(tool?.totalLength)||35)*scale),cut=Math.min(total,Math.max(d.tool_diameter,Number(tool?.cutLength)||d.tool_diameter)*scale);const diameter=Math.max(2,d.tool_diameter*scale);line(tip,point(tip.x,tip.y,tip.z+cut),'#68dcb6',diameter);if(toolMode==='full'){line(point(tip.x,tip.y,tip.z+cut),point(tip.x,tip.y,tip.z+total),'#c4d5e1',diameter);if(!studio||studio.showHolder()){const holderWidth=diameter*1.7;line(point(tip.x,tip.y,tip.z+total),point(tip.x,tip.y,tip.z+total+Math.max(10,12*scale)),'#6f8b9a',holderWidth);}}}
   $('progressText').textContent=Math.round(progress*100)+' % · Rust-Bahn';
   const studioProgress=document.getElementById('studioProgress');if(studioProgress)studioProgress.value=Math.round(progress*1000);
