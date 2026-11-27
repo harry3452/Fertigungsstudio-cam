@@ -50,9 +50,18 @@ function prepare(project,tool,form){
  if(depth>cuttingLength)throw Error('Abtragstiefe überschreitet die Schneidenlänge.');
  if(stepover>diameter/2)throw Error('Seitliche Zustellung darf höchstens der halbe Werkzeugdurchmesser sein.');
  if(height+clearance>1_000_000)throw Error('Sicherheitshöhe liegt außerhalb des Koordinatenbereichs.');
- if(width+diameter+(form.turnMode==='round'?length/Math.ceil(length/stepover)/2:0)>1_000_000)throw Error('Auslauf außerhalb des Koordinatenbereichs.');
- const turnMode=form.turnMode??'lift';
- if(!['lift','round'].includes(turnMode))throw Error('Ungültige Bahnwechselstrategie.');
+ if(width+diameter+((form.strategy==='zigzag'||(form.strategy===undefined&&form.turnMode==='round'))?length/Math.ceil(length/stepover)/2:0)>1_000_000)throw Error('Auslauf außerhalb des Koordinatenbereichs.');
+ const strategy=form.strategy;
+ const spindle=form.spindle??'M3';
+ if(!['M3','M4'].includes(spindle))throw Error('Ungültige Spindelrichtung.');
+ if(strategy!==undefined&&!['climb','conventional','zigzag'].includes(strategy))
+   throw Error('Ungültige Fräsrichtung.');
+ const legacyTurn=form.turnMode??'lift';
+ if(!['lift','round'].includes(legacyTurn))throw Error('Ungültige Bahnwechselstrategie.');
+ // +Y raster progression; assumes material engagement on +Y side of tool.
+ // M3 seen clockwise from above: +Y tooth tangential motion toward +X.
+ const turnMode=strategy===undefined?legacyTurn:strategy==='zigzag'?'round'
+   :((strategy==='climb')===(spindle==='M3')?'reverse_lift':'lift');
  const depthPasses=Math.ceil(depth/stepdown),rows=Math.ceil(length/stepover)+1;
  const intervals=rows-1;
  const radius=length/intervals/2;
@@ -63,10 +72,10 @@ function prepare(project,tool,form){
  if(!Number.isFinite(estimatedMoves)||estimatedMoves>100_000)
    throw Error('Zu viele Bahnbewegungen; Zustellung vergrößern.');
  return {
-   numbers:[width,length,height,depth,diameter,stepdown,stepover,numberTool,cuttingLength,cuttingFeed,plungeFeed,clearance,...(turnMode==='round'?[1]:[])],
+   numbers:[width,length,height,depth,diameter,stepdown,stepover,numberTool,cuttingLength,cuttingFeed,plungeFeed,clearance,...(turnMode==='round'?[1]:turnMode==='reverse_lift'?[2]:[])],
    depthPasses,rows,turnSegments,estimatedMoves,
-   start:{x:-diameter,y:0,z:height+clearance},
-   settings:{toolId:numberTool,depth,stepdown,stepover,clearance,cuttingFeed,plungeFeed,turnMode},
+   start:{x:turnMode==='reverse_lift'?width+diameter:-diameter,y:0,z:height+clearance},
+   settings:{toolId:numberTool,depth,stepdown,stepover,clearance,cuttingFeed,plungeFeed,turnMode,strategy:strategy??(turnMode==='round'?'zigzag':'conventional'),spindle},
  };
 }
 

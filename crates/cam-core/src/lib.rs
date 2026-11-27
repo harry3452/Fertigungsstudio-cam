@@ -53,6 +53,8 @@ pub struct Facing {
 pub enum FacingTurn {
     /// Retract to safe height and rapid to the next row.
     Lift,
+    /// Retract at each row; cut from +X to -X instead of -X to +X.
+    ReverseLift,
     /// Serpentine rows linked by segmented semicircular feed moves.
     Rounded,
 }
@@ -196,7 +198,7 @@ pub fn face_with_turn(
     // Lift: four moves per row, rounded: 2 initial + 1 cut per row +
     // one segmented turn per interval + 1 retract per depth pass.
     let per_pass = match turn {
-        FacingTurn::Lift => (intervals + 1.0) * 4.0,
+        FacingTurn::Lift | FacingTurn::ReverseLift => (intervals + 1.0) * 4.0,
         FacingTurn::Rounded => 3.0 + (intervals + 1.0) + intervals * arc_segments,
     };
     let count = passes * per_pass;
@@ -217,7 +219,11 @@ pub fn face_with_turn(
         return Err(Error::CoordinateLimit);
     }
     let start = Point3 {
-        x: left,
+        x: if turn == FacingTurn::ReverseLift {
+            right
+        } else {
+            left
+        },
         y: stock.min.y,
         z: setup.clearance_z,
     };
@@ -232,8 +238,13 @@ pub fn face_with_turn(
             (stock.max.z - pass as f64 * op.stepdown).max(op.bottom_z)
         };
         match turn {
-            FacingTurn::Lift => {
-                // Preserve legacy one-way behavior and cancellation points.
+            FacingTurn::Lift | FacingTurn::ReverseLift => {
+                // Each row retracts before the one direct XY rapid to the next row.
+                let (entry, exit) = if turn == FacingTurn::ReverseLift {
+                    (right, left)
+                } else {
+                    (left, right)
+                };
                 for row in 0..=intervals {
                     if cancelled() {
                         return Err(Error::Cancelled);
@@ -241,7 +252,7 @@ pub fn face_with_turn(
                     let y =
                         stock.min.y + (stock.max.y - stock.min.y) * row as f64 / intervals as f64;
                     let at = Point3 {
-                        x: left,
+                        x: entry,
                         y,
                         z: setup.clearance_z,
                     };
@@ -256,14 +267,14 @@ pub fn face_with_turn(
                         },
                     });
                     moves.push(Move {
-                        to: Point3 { x: right, y, z },
+                        to: Point3 { x: exit, y, z },
                         motion: Motion::Feed {
                             mm_per_min: op.cutting_feed,
                         },
                     });
                     moves.push(Move {
                         to: Point3 {
-                            x: right,
+                            x: exit,
                             y,
                             z: setup.clearance_z,
                         },

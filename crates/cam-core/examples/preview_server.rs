@@ -154,6 +154,7 @@ fn calculate(body: &str, cancelled: impl FnMut() -> bool) -> Result<String, Stri
     let turn = match *turn_mode {
         0.0 => FacingTurn::Lift,
         1.0 => FacingTurn::Rounded,
+        2.0 => FacingTurn::ReverseLift,
         _ => return Err("InvalidTurnMode".into()),
     };
     if !number.is_finite() || *number < 1.0 || *number > 9999.0 || number.fract() != 0.0 {
@@ -228,7 +229,7 @@ fn calculate(body: &str, cancelled: impl FnMut() -> bool) -> Result<String, Stri
         )
         .map_err(|_| "FormatError")?;
     }
-    write!(out,"],\"tool_number\":{number},\"cutting_length\":{cutting_length},\"cutting_feed\":{cutting_feed},\"plunge_feed\":{plunge_feed},\"depth_passes\":{},\"rows_per_pass\":{},\"stepdown\":{stepdown},\"stepover\":{stepover},\"turn_mode\":\"{}\"}}", p.depth_passes, p.rows_per_pass, if turn == FacingTurn::Lift { "lift" } else { "round" }).map_err(|_|"FormatError")?;
+    write!(out,"],\"tool_number\":{number},\"cutting_length\":{cutting_length},\"cutting_feed\":{cutting_feed},\"plunge_feed\":{plunge_feed},\"depth_passes\":{},\"rows_per_pass\":{},\"stepdown\":{stepdown},\"stepover\":{stepover},\"turn_mode\":\"{}\"}}", p.depth_passes, p.rows_per_pass, match turn { FacingTurn::Lift => "lift", FacingTurn::ReverseLift => "reverse_lift", FacingTurn::Rounded => "round" }).map_err(|_|"FormatError")?;
     Ok(out)
 }
 

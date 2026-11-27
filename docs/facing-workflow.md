@@ -18,9 +18,15 @@ Rohblock. Keine NC-Ausgabe, keine Kollisions- oder Spannmittelprüfung.
    **Abtragstiefe**, **Tiefenzustellung**, **seitliche Zustellung**,
    **Sicherheitshöhe über Rohteil**, **Schnittvorschub** und
    **Eintauchvorschub** eintragen.
-   Unter **Wenden am Bahnende** zwischen **Halbrunde Wendekurve – ohne Anheben**
-   und **Anheben auf Sicherheitshöhe** wechseln. Die Einstellung wird
-   pro Bearbeitung im Projekt gespeichert.
+   Unter **Fräsrichtung** zwischen **Gleichlauf**, **Gegenlauf** und
+   **Zickzack** wechseln. Die Spindelrichtung M3/M4 wird separat eingestellt.
+   Bei Gleich-/Gegenlauf wird nach jeder Bahn auf die Sicherheitshöhe gefahren
+   und im Eilgang direkt zum nächsten Startpunkt verfahren; bei Zickzack
+   verbindet ein halbrunder Wendebogen die Bahnen auf Frästiefe. Die Auswahl
+   wird pro Bearbeitung im Projekt gespeichert. Für die Zuordnung zu
+   Gleich-/Gegenlauf wird Materialeingriff an der +Y-Werkzeugseite angenommen.
+   Bei vollflächigem Eingriff ist die Bezeichnung nicht überall physikalisch
+   eindeutig; eine CAM-Kollisionsprüfung existiert nicht.
 5. **Werkzeugbahn berechnen**. Die Bahndaten kommen vom lokalen Rust-Kern,
    werden validiert und sofort als **Bahnen · Draufsicht** in kräftigem Grün (Schnitt),
    gestricheltem Rot (Eilgang) und Gelb (Eintauchen) angezeigt.
