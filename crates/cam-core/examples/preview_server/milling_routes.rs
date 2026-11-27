@@ -129,8 +129,8 @@ pub(super) fn calculate(
                     tool,
                     cut,
                     RectangleXY {
-                        min_x: *mx,
-                        min_y: *my,
+                        min_x: mx,
+                        min_y: my,
                         max_x: width - mx,
                         max_y: length - my,
                     },
