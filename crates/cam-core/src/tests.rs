@@ -458,3 +458,38 @@ fn rounded_turns_respect_depth_count_limits_cancel_and_coordinate_limits() {
     let p = face_with_turn(setup, tool, op, FacingTurn::Rounded, || false).unwrap();
     assert_eq!(p.rows_per_pass, 6);
 }
+
+// One-direction facing may cut +X or -X, with direct safe XY returns.
+#[test]
+fn reverse_facing_retracts_before_shortest_xy_return() {
+    let (setup, tool, op) = fixture();
+    let forward = face_with_turn(setup, tool, op, FacingTurn::Lift, || false).unwrap();
+    let reverse = face_with_turn(setup, tool, op, FacingTurn::ReverseLift, || false).unwrap();
+    assert_eq!(forward.moves.len(), reverse.moves.len());
+    assert_eq!(reverse.start.x, setup.stock.max.x + tool.diameter);
+    let right = setup.stock.max.x + tool.diameter;
+    let left = setup.stock.min.x - tool.diameter;
+    for pass in 0..reverse.depth_passes {
+        for row in 0..reverse.rows_per_pass {
+            let n = pass * reverse.rows_per_pass * 4 + row * 4;
+            let at = &reverse.moves[n..n + 4];
+            let y = at[0].to.y;
+            assert_eq!(at[0].to.x, right);
+            assert_eq!(at[0].to.z, setup.clearance_z);
+            assert_eq!(at[1].to.x, right);
+            assert!(at[1].to.z < setup.stock.max.z);
+            assert_eq!(at[2].to, Point3 { x: left, y, z: at[1].to.z });
+            assert_eq!(at[2].motion, Motion::Feed { mm_per_min: op.cutting_feed });
+            assert_eq!(at[3].to, Point3 { x: left, y, z: setup.clearance_z });
+            if row + 1 < reverse.rows_per_pass {
+                let next = reverse.moves[n + 4].to;
+                assert_eq!(next.x, right);
+                assert!(next.y > y);
+                assert_eq!(next.z, setup.clearance_z);
+                // One diagonal rapid move after retract, no detour.
+            }
+            assert_eq!(forward.moves[n + 2].to.x, right);
+        }
+    }
+    assert_eq!(reverse.moves.last().unwrap().to.z, setup.clearance_z);
+}

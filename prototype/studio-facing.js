@@ -23,7 +23,7 @@ function eligibleTools(){return studio.project().tools.filter(model.eligible)}
 function currentOperation(){return studio.currentOperation()}
 function allFields(){
  const value=id=>$(id)?.value??'';
- return {turnMode:value('face-turn-mode'),toolId:Number(value('face-tool')),depth:value('face-depth'),stepdown:value('face-stepdown'),
+ return {strategy:value('face-strategy'),spindle:value('face-spindle'),toolId:Number(value('face-tool')),depth:value('face-depth'),stepdown:value('face-stepdown'),
    stepover:value('face-stepover'),clearance:value('face-clearance'),
    cuttingFeed:value('face-cutfeed'),plungeFeed:value('face-plunge')};
 }
@@ -56,8 +56,9 @@ function countPreview(){
   const planned=model.prepare(p,t,{...fields,cuttingFeed:1,plungeFeed:1});
   $('face-count').textContent='Voraussichtlich '+planned.depthPasses+' Tiefenlagen × '+planned.rows+
    ' Querbahnen · '+planned.estimatedMoves+' Bewegungen'+
-   (planned.settings.turnMode==='round'?' mit halbrunden Wendekurven.':' mit Sicherheitsrückzügen.')+
-   ' Start: X'+fmt(planned.start.x)+
+   (planned.settings.turnMode==='round'?' mit halbrunden Wendekurven.':' mit Anheben und direkter XY-Rückfahrt.')+
+   ' Schnittfahrtrichtung: '+(planned.settings.turnMode==='reverse_lift'?'X−':'X+')+
+   ' · Start X'+fmt(planned.start.x)+
    ' / Y0 / Z'+fmt(planned.start.z)+' mm (rohteilbezogen).';
   const wcs=model.toWork([planned.start.x,0,planned.start.z],model.workFrame(p));
   $('face-count').textContent+=' Start in '+(p.wcs||'G54')+': X'+fmt(wcs[0])+' / Y'+fmt(wcs[1])+' / Z'+fmt(wcs[2])+' mm.';
@@ -79,7 +80,8 @@ function open(){
  const profile=chosen?model.recommendedFeed(chosen,stock.materialId):null;
  const cuttingFeed=saved.cuttingFeed??(profile?round(profile.feed):'');
  const plungeFeed=saved.plungeFeed??'';
- const turnMode=saved.turnMode??'round';
+ const strategy=saved.strategy??(saved.turnMode==='lift'?'conventional':'zigzag');
+ const spindle=saved.spindle??'M3';
  const f=(label,id,value,opts='')=>'<label>'+label+'<input id="'+id+'" type="number" step="any" min="0.001" value="'+esc(value)+'" '+opts+'></label>';
  const chooser='<label>Fräswerkzeug aus der Bibliothek<select id="face-tool">'+tools.map(t=>
    '<option value="'+esc(t.id)+'" '+(t.id===chosen?.id?'selected':'')+'>T'+t.id+' · '+esc(t.name)+' · Ø'+fmt(t.diameter)+'</option>').join('')+'</select></label>';
@@ -104,12 +106,16 @@ function open(){
    f('Sicherheitshöhe über Rohteil (mm)','face-clearance',clearance)+
    f('Schnittvorschub (mm/min)','face-cutfeed',cuttingFeed)+
    f('Eintauchvorschub (mm/min)','face-plunge',plungeFeed)+
-  '</div><div class="studio-modal-grid"><label>Wenden am Bahnende<select id="face-turn-mode">'+
-  '<option value="round" '+(turnMode==='round'?'selected':'')+'>Halbrunde Wendekurve · ohne Anheben</option>'+
-  '<option value="lift" '+(turnMode==='lift'?'selected':'')+'>Anheben auf Sicherheitshöhe</option>'+
+  '</div><div class="studio-modal-grid"><label>Fräsrichtung<select id="face-strategy">'+
+  '<option value="climb" '+(strategy==='climb'?'selected':'')+'>Gleichlauf · einseitige Bahnen</option>'+
+  '<option value="conventional" '+(strategy==='conventional'?'selected':'')+'>Gegenlauf · einseitige Bahnen</option>'+
+  '<option value="zigzag" '+(strategy==='zigzag'?'selected':'')+'>Zickzack · halbrunde Wendekurve</option>'+
+  '</select></label><label>Spindeldrehrichtung<select id="face-spindle">'+
+  '<option value="M3" '+(spindle==='M3'?'selected':'')+'>M3 · rechtsdrehend</option>'+
+  '<option value="M4" '+(spindle==='M4'?'selected':'')+'>M4 · linksdrehend</option>'+
   '</select></label></div><p id="face-materialfeed"></p>'+
   '<p id="face-count" class="studio-pill"></p>'+
-  '<p>Bei <strong>halbrunder Wende</strong> verbindet der Fräser die Bahnen auf gleicher Frästiefe und fährt die nächste Bahn gegenläufig. Der Bogen besteht aus kurzen geraden Vorschubsegmenten (Abweichung höchstens 0,02 mm); zwischen Tiefenlagen wird weiterhin auf Sicherheitshöhe zurückgezogen. Die Wendekurve läuft zusätzlich außerhalb der Rohteilkante. <strong>Außerhalb des Rohteils muss Freiraum vorhanden sein.</strong> Keine Spannmittel-, Kollisions-, Maschinen- oder Materialabtragsprüfung.</p>'+
+  '<p><strong>Einseitig:</strong> nach jeder Schnittbahn Z auf Sicherheitshöhe, dann direkte XY-Rückfahrt zum nächsten Startpunkt. <strong>Zickzack:</strong> Wendebogen auf Frästiefe; Rückzug erst zwischen Tiefenlagen. Gleich-/Gegenlauf-Zuordnung setzt M3/M4 und Materialeingriff an der +Y-Werkzeugseite voraus; bei Vollschnitt/wechselndem Eingriff nicht allgemein gültig. Außerhalb des Rohteils muss Freiraum vorhanden sein. Keine Spannmittel-, Kollisions- oder Maschinenprüfung.</p>'+
   '<p id="face-message" role="status" aria-live="polite"></p>'+
   '<div class="studio-modal-actions"><button type="button" id="face-save">Parameter speichern</button>'+
   '<button type="button" id="face-calculate" class="primary" '+(!connected()||!tools.length?'disabled':'')+
@@ -122,7 +128,8 @@ function open(){
  }
  $('face-tool').addEventListener('change',()=>{setToolInfo(true);countPreview()});
  for(const id of ['face-depth','face-stepdown','face-stepover','face-clearance'])$(id).addEventListener('input',countPreview);
- $('face-turn-mode').addEventListener('change',countPreview);
+ $('face-strategy').addEventListener('change',countPreview);
+ $('face-spindle').addEventListener('change',countPreview);
  $('face-save').onclick=save;
  $('face-close').onclick=()=>studio.closeDialog();
  $('face-calculate').onclick=calculate;
@@ -140,7 +147,7 @@ function persist(fields){
   toolId:t.id,
   depth:Number(fields.depth),stepdown:Number(fields.stepdown),
   stepover:Number(fields.stepover),clearance:Number(fields.clearance),
-  turnMode:fields.turnMode,
+  strategy:fields.strategy,spindle:fields.spindle,turnMode:fields.strategy==='zigzag'?'round':'lift',
   cuttingFeed:fields.cuttingFeed===''?'':Number(fields.cuttingFeed),
   plungeFeed:fields.plungeFeed===''?'':Number(fields.plungeFeed),
  };
@@ -182,7 +189,7 @@ async function calculate(){
   studio.enterSimulation();
   activeController=null; // Successful response must not trigger cancellation on dialog close.
   studio.closeDialog();
-  studio.status('Planfräsen '+(fields.turnMode==='round'?'mit Wendekurve':'mit Rückzug')+': '+result.moves.length+' Bewegungen, '+
+  studio.status('Planfräsen '+({climb:'Gleichlauf',conventional:'Gegenlauf',zigzag:'Zickzack'}[fields.strategy])+' · '+fields.spindle+': '+result.moves.length+' Bewegungen, '+
    result.depth_passes+' Tiefenlagen, '+result.rows_per_pass+
    ' Bahnen je Lage · '+(p.wcs||'G54')+'-Koordinaten vorhanden. Nur Simulation – keine Maschine/NC-Ausgabe.');
  }catch(e){
