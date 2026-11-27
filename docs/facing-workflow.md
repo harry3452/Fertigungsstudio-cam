@@ -5,8 +5,11 @@ Rohblock. Keine NC-Ausgabe, keine Kollisions- oder Spannmittelprüfung.
 
 ## Start unter Windows
 
-1. Projekt mit Rust installiert öffnen, `Start-Fertigungsstudio.cmd` starten
-   und die angezeigte lokale Browseradresse öffnen. Die reine HTML-Datei
+1. **Ohne Rust:** In den GitHub Actions den erfolgreichen Windows-Lauf öffnen,
+   das Artefakt **Fertigungsstudio-CAM-Windows-Test** herunterladen,
+   vollständig entpacken und `Start-Fertigungsstudio-Test.cmd` doppelt anklicken.
+   **Mit Rust:** Stattdessen im Quellcode `Start-Fertigungsstudio.cmd` starten.
+   Die reine HTML-Datei
    kann Parameter speichern, aber **keine** Werkzeugbahn berechnen.
 2. Über **Setup → Rohteil und Material** Länge X, Breite Y und Höhe Z in mm eintragen.
 3. In **Werkzeugliste** einen Schaft- oder Planfräser mit gültigem Durchmesser
@@ -42,8 +45,11 @@ ist separat als Bahn-JSON exportierbar.
   Tiefenlagen durch `ceil(Abtragstiefe/Tiefenzustellung)`, wobei die
   letzte Lage exakt die Endhöhe erreicht.
 - Ausgangsposition und berechnete Koordinaten sind rohteilbezogen.
-  **Ein im Setup gewählter Nullpunkt, gedrehte Achsen oder Z-Umkehr
-  sind noch nicht in die Werkzeugbahnen transformiert.**
+  Ein gewählter Nullpunkt, XY-Achsendrehung (0/90/180/270 Grad) und
+  Z-Umkehr werden in G54–G59-Werkstückkoordinaten umgerechnet,
+  numerisch in der Simulation angezeigt und im neutralen Bahn-JSON mitgespeichert.
+  Die 3D-Ansicht zeigt weiterhin die rohe Geometrie; Maschinenachsen und
+  Spannmittel werden nicht überprüft.
 - Drehzahl/Vorschub aus dem Materialprofil werden ausschließlich
   mathematisch berechnet. Maschine, Werkzeug und zulässige Schnittwerte
   müssen später gesondert validiert werden.

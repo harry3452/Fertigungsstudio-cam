@@ -25,7 +25,7 @@ try {
     $previewUrl = $Matches[1]
     Start-Process $previewUrl
     Write-Host "Vorschau: $previewUrl"
-    Write-Host 'Im Browser auf Live-Planfraesen oder Berechnen klicken.'
+    Write-Host 'Im Browser: Setup > Rohteil, Werkzeugliste, Fraesen > Planfraesen > Werkzeugbahn berechnen.'
     Write-Host 'Dieses Fenster offen lassen. Enter druecken beendet diesen Vorschaudienst.'
     [void][Console]::ReadLine()
 } catch {
