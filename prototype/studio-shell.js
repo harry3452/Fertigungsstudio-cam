@@ -169,7 +169,87 @@ function showSetup(){
  showDialog('Setup / Aufspannung','<div class="studio-modal-grid">'+field('Bezeichnung','su-name',project.setup)+chooser('Werkstücknullpunkt','su-wcs',['G54','G55','G56','G57','G58','G59'].map(x=>[x,x]),project.wcs)+'</div><p>Aufspannung und Nullpunkt werden im Projekt gespeichert. Maschinentransformationen sind noch nicht implementiert.</p><div class="studio-modal-actions">'+button('Speichern','save-setup','primary')+'</div>');
 }
 function stockDialog(){
- showDialog('Rohteil und Material','<div class="studio-modal-grid">'+field('Länge X (mm)','st-x',project.stock.x,'number','min="0.001" step="any"')+field('Breite Y (mm)','st-y',project.stock.y,'number','min="0.001" step="any"')+field('Höhe Z (mm)','st-z',project.stock.z,'number','min="0.001" step="any"')+chooser('Werkstückmaterial','st-material',project.materials.map(m=>[m.id,m.name]),project.stock.materialId)+'</div><p>Die Rohteilwerte werden für das Projekt und den Rust-Parameterdialog übernommen; die illustrative 3D-Platte ist noch kein importiertes CAD-Teil.</p><div class="studio-modal-actions">'+button('Übernehmen','save-stock','primary')+button('Materialverwaltung','materials')+'</div>');
+ const picker=globalThis.FertigungsstudioSTLPicker;
+ const hasModel=!!picker?.hasModel();
+ const size=hasModel?picker.modelSize():null;
+ const old=project.partPlacement||{x:(project.stock.x-(size?.[0]||0))/2,
+  y:(project.stock.y-(size?.[1]||0))/2,
+  z:project.stock.z-(size?.[2]||0)};
+ showDialog('Rohteil und Material',
+  (hasModel?'<p><strong>STL-Bauteil:</strong> X '+mm(size[0])+' · Y '+mm(size[1])+
+   ' · Z '+mm(size[2])+' mm. Gelb = Rohteilrahmen, Blau = geladenes Bauteil.</p>':
+   '<p>Ohne importiertes STL können die Rohteilmaße frei vorgegeben werden. Bauteil zuerst über Datei → Bauteil laden importieren.</p>')+
+  '<div class="studio-modal-grid">'+
+  field('Rohteil X (mm)','st-x',project.stock.x,'number','min="0.001" max="100000" step="any"')+
+  field('Rohteil Y (mm)','st-y',project.stock.y,'number','min="0.001" max="100000" step="any"')+
+  field('Rohteil Z (mm)','st-z',project.stock.z,'number','min="0.001" max="100000" step="any"')+
+  chooser('Werkstückmaterial','st-material',project.materials.map(m=>[m.id,m.name]),project.stock.materialId)+
+  '</div>'+
+  (hasModel?'<h3>Bauteillage im Rohteil</h3>'+
+   '<p>Abstand vom Rohteilminimum zur Bauteilunterkante in X, Y und Z. Z+ zeigt nach oben.</p>'+
+   '<div class="studio-modal-grid">'+
+   field('Abstand X− (mm)','st-pos-x',old.x,'number','min="0" step="any"')+
+   field('Abstand Y− (mm)','st-pos-y',old.y,'number','min="0" step="any"')+
+   field('Abstand Z− (mm)','st-pos-z',old.z,'number','min="0" step="any"')+'</div>'+
+   '<div class="studio-modal-actions">'+
+   '<button type="button" id="st-fit">Passend umrahmen</button>'+
+   '<button type="button" id="st-center">In XY zentrieren · oben bündig</button></div>'+
+   '<div class="studio-stock-preview"><canvas id="st-preview" width="640" height="340" aria-label="Isometrische Vorschau des STL-Bauteils innerhalb des Rohteils"></canvas></div>'+
+   '<p id="st-stock-info" role="status" aria-live="polite"></p>':'')+
+  '<div class="studio-modal-actions">'+button('Übernehmen','save-stock','primary')+
+  button('Materialverwaltung','materials')+'</div>'+
+  (hasModel?'<p>Rohteil und Lage werden im Projekt gespeichert. Die STL-Datei muss nach einem Neustart erneut geladen werden. Änderungen an der Aufspannung erfordern eine neue Konturauswahl und Bahnberechnung.</p>':''));
+ if(!hasModel)return;
+ const dimensions=()=>['x','y','z'].map(axis=>Number(val('st-'+axis)));
+ const placement=()=>['x','y','z'].map(axis=>Number(val('st-pos-'+axis)));
+ const update=()=>{
+  const v=dimensions(),q=placement(),info=$('st-stock-info'),apply=$('studioDialogBody').querySelector('[data-studio-action="save-stock"]');
+  if(!v.every(n=>Number.isFinite(n)&&n>0&&n<=100000)||
+     !q.every(Number.isFinite)){
+   info.textContent='Bitte gültige positive Rohteilmaße und Bauteilabstände eingeben.';
+   info.classList.add('studio-error');apply.disabled=true;return;
+  }
+  const stock={x:v[0],y:v[1],z:v[2]};
+  const pos={x:q[0],y:q[1],z:q[2]};
+  try{
+   globalThis.FertigungsstudioMeshGeometry.locate(
+    {size},stock,pos
+   );
+   picker.renderStockPreview($('st-preview'),stock,pos);
+   const margins=[q[0],v[0]-q[0]-size[0],q[1],v[1]-q[1]-size[1],
+    q[2],v[2]-q[2]-size[2]];
+   info.textContent='Freiraum X− / X+: '+mm(margins[0])+' / '+mm(margins[1])+
+    ' mm · Y− / Y+: '+mm(margins[2])+' / '+mm(margins[3])+
+    ' mm · Z− / Z+: '+mm(margins[4])+' / '+mm(margins[5])+' mm.';
+   info.classList.remove('studio-error');apply.disabled=false;
+  }catch(err){
+   info.textContent=err.message;
+   info.classList.add('studio-error');apply.disabled=true;
+   const cv=$('st-preview'),ctx=cv.getContext('2d');
+   ctx.clearRect(0,0,cv.width,cv.height);
+  }
+ };
+ const center=()=>{
+  const [x,y,z]=dimensions();
+  $('st-pos-x').value=(x-size[0])/2;
+  $('st-pos-y').value=(y-size[1])/2;
+  $('st-pos-z').value=z-size[2];
+  update();
+ };
+ for(const axis of ['x','y','z']){
+  $('st-'+axis).addEventListener('input',center);
+  $('st-pos-'+axis).addEventListener('input',update);
+ }
+ $('st-fit').onclick=()=>{
+  const fit=picker.fitStock();
+  for(const a of ['x','y','z']){
+   $('st-'+a).value=fit.stock[a];
+   $('st-pos-'+a).value=fit.position[a];
+  }
+  update();
+ };
+ $('st-center').onclick=center;
+ update();
 }
 const svgNS='http://www.w3.org/2000/svg';
 function svgEl(tag,attrs,parent){
@@ -404,9 +484,26 @@ dlg.addEventListener('click',e=>{
  if(act==='save-stock'){
   const x=num(val('st-x')),y=num(val('st-y')),z=num(val('st-z'));
   if(!(x>0&&y>0&&z>0&&x<=100000&&y<=100000&&z<=100000)){status('Rohteilmaße müssen positiv und begrenzt sein.');return}
+  const picker=globalThis.FertigungsstudioSTLPicker;
+  let place=null;
+  if(picker?.hasModel()){
+   place={x:Number(val('st-pos-x')),y:Number(val('st-pos-y')),z:Number(val('st-pos-z'))};
+   try{
+    globalThis.FertigungsstudioMeshGeometry.locate({size:picker.modelSize()},{x,y,z},place);
+   }catch(error){status('Rohteil nicht übernommen: '+error.message);return;}
+  }
+  const old=project.stock;
+  const oldTopOrigin=Math.abs(project.origin.z-old.z)<1e-7;
+  const changedLayout=old.x!==x||old.y!==y||old.z!==z||
+   (place&&['x','y','z'].some(a=>project.partPlacement?.[a]!==place[a]));
   project.stock={x,y,z,materialId:Number(val('st-material'))};
-  project.origin.x=Math.min(project.origin.x,x);project.origin.y=Math.min(project.origin.y,y);project.origin.z=Math.min(project.origin.z,z);
-  changed();closeDialog();status('Rohteil und Material gespeichert.');return;
+  if(place)project.partPlacement=place;
+  project.origin.x=Math.min(project.origin.x,x);project.origin.y=Math.min(project.origin.y,y);
+  project.origin.z=oldTopOrigin?z:Math.min(project.origin.z,z);
+  if(changedLayout&&picker?.hasModel())picker.invalidatePlacement();
+  changed();closeDialog();status('Rohteil X '+mm(x)+' × Y '+mm(y)+' × Z '+mm(z)+
+   ' mm und Bauteillage gespeichert.'+(changedLayout&&place?' Kontur nach Änderungen erneut auswählen.':''));
+  return;
  }
  if(act==='save-origin'){
   const o={x:num(val('origin-x'),NaN),y:num(val('origin-y'),NaN),z:num(val('origin-z'),NaN),rotation:num(val('origin-angle')),reverseZ:val('origin-reverse')==='yes'},s=project.stock;
@@ -416,6 +513,7 @@ dlg.addEventListener('click',e=>{
  if(act==='do-new'){
   const oldLib={materials:project.materials,tools:project.tools};
   project=defaults();project.materials=oldLib.materials;project.tools=oldLib.tools;project.stock.materialId=project.materials[0].id;
+  globalThis.FertigungsstudioSTLPicker?.clear();
   current=1;dirty=false;closeDialog();render();status('Neues Projekt angelegt. Die gemeinsame Werkzeug- und Materialbibliothek bleibt erhalten.');return;
  }
  if(act==='do-saveas'){project.name=val('save-name').trim()||'Neues Projekt';closeDialog();render();saveProject();return}
@@ -436,10 +534,32 @@ partPicker.addEventListener('change',async e=>{
   if(!picker)throw Error('STL-Importmodul nicht geladen.');
   if(f.size>8_000_000)throw Error('STL maximal 8 MB.');
   const imported=picker.load(await f.arrayBuffer());
+  const fit=picker.fitStock();
+  const stored=project.stlInfo;
+  const same=stored?.name===f.name&&Array.isArray(stored.size)&&
+   stored.size.length===3&&stored.size.every((n,i)=>Math.abs(n-imported.size[i])<0.00001);
+  let preserved=false;
+  if(same&&project.partPlacement){
+   try{
+    globalThis.FertigungsstudioMeshGeometry.locate(
+     {size:imported.size},project.stock,project.partPlacement);
+    preserved=true;
+   }catch{}
+  }
+  if(!preserved){
+   const materialId=project.stock.materialId;
+   project.stock={...fit.stock,materialId};
+   project.partPlacement=fit.position;
+   project.origin={...project.origin,x:0,y:0,z:fit.stock.z};
+  }
+  project.stlInfo={name:f.name,size:imported.size};
   project.part=f.name+' (STL-Mesh)';
+  picker.invalidatePlacement();
   changed();render();
   status('STL geladen: '+imported.triangles+' Dreiecke, '+imported.loops+
-   ' geschlossene Konturen der oberen Planfläche. Rohteil bleibt unverändert. Geometrie wird nicht in der Projektdatei eingebettet.');
+   ' geschlossene obere Konturen. '+(preserved?'Gespeicherte Rohteillage wiederhergestellt.':
+    'Rohteil automatisch auf Modellgröße eingestellt.')+
+   ' Setup → Rohteil und Material: Abmessungen und Position mit 3D-Vorschau einstellen.');
  }catch(error){status('STL-Import fehlgeschlagen: '+error.message);}
 });
 projectPicker.addEventListener('change',async e=>{
