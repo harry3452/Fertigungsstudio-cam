@@ -17,6 +17,14 @@ for(const match of page.text.matchAll(/<script>([\s\S]*?)<\/script>/g))new(requi
 const headers={Origin:base.origin,'Content-Type':'application/x-fertigungsstudio'};
 const good=await request('/api/facing','POST','20 10 5 2.5 6 1 3',headers);assert.equal(good.status,200);assert.equal(validate(JSON.parse(good.text)).moves.length,60);
 const configured=await request('/api/facing','POST','20 10 5 2.5 6 1 3 7 10 650 90',headers);assert.equal(configured.status,200);const toolData=validate(JSON.parse(configured.text));assert.equal(toolData.tool_number,7);assert.equal(toolData.cutting_feed,650);assert.equal(toolData.plunge_feed,90);
+const parameterized=await request('/api/facing','POST','20 10 5 1 6 0.5 3 7 10 650 90 8',headers);
+assert.equal(parameterized.status,200);
+const facingPath=validate(JSON.parse(parameterized.text));
+assert.equal(facingPath.clearance_z,13);
+assert.equal(facingPath.depth_passes,2);
+assert.equal(facingPath.rows_per_pass,5);
+assert.equal(facingPath.moves.length,40);
+for(const height of ['0','-1','NaN','Infinity'])assert.equal((await request('/api/facing','POST','20 10 5 1 6 0.5 3 7 10 650 90 '+height,headers)).status,422);
 assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 3 7 1 650 90',headers)).status,422);
 assert.equal((await request('/api/facing','POST','20 10 5 2.5 6 1 3 7.5 10 650 90',headers)).status,422);
 assert.equal((await request('/api/facing','POST','20 10 5 -1 6 1 3',headers)).status,422);

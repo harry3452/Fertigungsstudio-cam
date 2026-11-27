@@ -123,7 +123,10 @@ fn calculate(body: &str, cancelled: impl FnMut() -> bool) -> Result<String, Stri
         .collect::<Result<Vec<_>, _>>()
         .map_err(|_| "InvalidNumbers")?;
     if values.len() == 7 {
-        values.extend([1.0, 20.0, 800.0, 200.0]);
+        values.extend([1.0, 20.0, 800.0, 200.0, 5.0]);
+    }
+    if values.len() == 11 {
+        values.push(5.0);
     }
     let [
         width,
@@ -137,15 +140,24 @@ fn calculate(body: &str, cancelled: impl FnMut() -> bool) -> Result<String, Stri
         cutting_length,
         cutting_feed,
         plunge_feed,
+        clearance_above_stock,
     ] = values.as_slice()
     else {
-        return Err("ExpectedElevenNumbers".into());
+        return Err("InvalidNumberCount".into());
     };
     if !number.is_finite() || *number < 1.0 || *number > 9999.0 || number.fract() != 0.0 {
         return Err("InvalidToolNumber".into());
     }
     if !depth.is_finite() || *depth <= 0.0 {
         return Err("InvalidDepth".into());
+    }
+    // Absolute height is still stock-local (+Z up). Never silently accept
+    // a zero or negative clearance, or a non-finite offset.
+    if !clearance_above_stock.is_finite()
+        || *clearance_above_stock <= 0.0
+        || *clearance_above_stock > 1_000_000.0
+    {
+        return Err("InvalidClearance".into());
     }
     let setup = Setup {
         stock: StockBox {
@@ -160,7 +172,7 @@ fn calculate(body: &str, cancelled: impl FnMut() -> bool) -> Result<String, Stri
                 z: *height,
             },
         },
-        clearance_z: height + 5.0,
+        clearance_z: height + clearance_above_stock,
     };
     let op = Facing {
         bottom_z: height - depth,
@@ -205,7 +217,7 @@ fn calculate(body: &str, cancelled: impl FnMut() -> bool) -> Result<String, Stri
         )
         .map_err(|_| "FormatError")?;
     }
-    write!(out,"],\"tool_number\":{number},\"cutting_length\":{cutting_length},\"cutting_feed\":{cutting_feed},\"plunge_feed\":{plunge_feed}}}").map_err(|_|"FormatError")?;
+    write!(out,"],\"tool_number\":{number},\"cutting_length\":{cutting_length},\"cutting_feed\":{cutting_feed},\"plunge_feed\":{plunge_feed},\"depth_passes\":{},\"rows_per_pass\":{},\"stepdown\":{stepdown},\"stepover\":{stepover}}}", p.depth_passes, p.rows_per_pass).map_err(|_|"FormatError")?;
     Ok(out)
 }
 
@@ -314,6 +326,16 @@ mod tests {
         let json = calculate("20 10 5 2.5 6 1 3", || false).unwrap_or_default();
         assert!(json.contains("fertigungsstudio-facing-v1"));
         assert_eq!(json.matches("\"motion\"").count(), 60);
+        assert!(json.contains("\"depth_passes\":3"));
+        assert!(json.contains("\"rows_per_pass\":5"));
+        let custom = calculate("20 10 5 1 6 0.5 3 7 10 650 90 8", || false).unwrap();
+        assert!(custom.contains("\"clearance_z\":13"));
+        assert!(custom.contains("\"depth_passes\":2"));
+        assert_eq!(custom.matches("\"motion\"").count(), 40);
+        for bad in ["0", "-1", "NaN", "Infinity"] {
+            let input = format!("20 10 5 1 6 0.5 3 7 10 650 90 {bad}");
+            assert_eq!(calculate(&input, || false), Err("InvalidClearance".into()));
+        }
         assert!(calculate("bad", || false).is_err());
         assert!(calculate("20 10 5 -1 6 1 3", || false).is_err());
         assert_eq!(
