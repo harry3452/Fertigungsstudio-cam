@@ -84,9 +84,15 @@ pub(super) fn calculate(
             1.0 => ContourDirection::Clockwise,
             _ => return Err("InvalidDirection".into()),
         };
-        (*clearance,side,direction,*mx,*my)
+        (*clearance, side, direction, *mx, *my)
     } else {
-        (5.0,ContourSide::Outside,ContourDirection::CounterClockwise,0.0,0.0)
+        (
+            5.0,
+            ContourSide::Outside,
+            ContourDirection::CounterClockwise,
+            0.0,
+            0.0,
+        )
     };
     let setup = Setup {
         stock: StockBox {
@@ -116,21 +122,25 @@ pub(super) fn calculate(
                 cutting_length: *cutting_length,
             };
             let path = if args.len() == 11 {
-                outside_contour_with_cancel(setup,tool,cut,cancelled)
+                outside_contour_with_cancel(setup, tool, cut, cancelled)
             } else {
                 rectangular_contour_with_cancel(
-                    setup,tool,cut,
+                    setup,
+                    tool,
+                    cut,
                     RectangleXY {
                         min_x: *mx,
                         min_y: *my,
                         max_x: width - mx,
                         max_y: length - my,
                     },
-                    side,direction,cancelled
+                    side,
+                    direction,
+                    cancelled,
                 )
             };
-            ("contour",path)
-        },
+            ("contour", path)
+        }
         "/api/pocket" => {
             let [margin_x, margin_y] = &args[11..] else {
                 return Err("InvalidNumberCount".into());
@@ -221,8 +231,16 @@ pub(super) fn calculate(
     )?;
     if route == "/api/contour" && args.len() == 16 {
         json.pop();
-        let side_name=if side==ContourSide::Inside {"inside"} else {"outside"};
-        let walk=if direction==ContourDirection::Clockwise {"cw"} else {"ccw"};
+        let side_name = if side == ContourSide::Inside {
+            "inside"
+        } else {
+            "outside"
+        };
+        let walk = if direction == ContourDirection::Clockwise {
+            "cw"
+        } else {
+            "ccw"
+        };
         write!(json,",\"contour_side\":\"{side_name}\",\"contour_direction\":\"{walk}\",\"contour_margin_x\":{mx},\"contour_margin_y\":{my}}}")
             .map_err(|_|"FormatError")?;
     }
@@ -326,18 +344,49 @@ mod tests {
 
     #[test]
     fn modern_contour_route_supports_interior_and_both_directions() {
-        let outside=calculate("/api/contour","40 30 10 4 6 2 3 1 12 500 100 7 0 0 0 0",||false).unwrap();
+        let outside = calculate(
+            "/api/contour",
+            "40 30 10 4 6 2 3 1 12 500 100 7 0 0 0 0",
+            || false,
+        )
+        .unwrap();
         assert!(outside.contains("\"contour_side\":\"outside\""));
         assert!(outside.contains("\"contour_direction\":\"ccw\""));
         assert!(outside.contains("\"clearance_z\":17"));
         assert!(outside.contains("\"start\":[-3,-3,17]"));
-        let inner=calculate("/api/contour","40 30 10 4 6 2 3 1 12 500 100 7 1 1 6 7",||false).unwrap();
+        let inner = calculate(
+            "/api/contour",
+            "40 30 10 4 6 2 3 1 12 500 100 7 1 1 6 7",
+            || false,
+        )
+        .unwrap();
         assert!(inner.contains("\"contour_side\":\"inside\""));
         assert!(inner.contains("\"contour_direction\":\"cw\""));
         assert!(inner.contains("\"start\":[9,10,17]"));
         assert!(inner.contains("\"to\":[9,20,8]"));
-        assert_eq!(calculate("/api/contour","40 30 10 4 6 2 3 1 12 500 100 7 1 1 0 0",||false),Err("InvalidBounds".into()));
-        assert_eq!(calculate("/api/contour","40 30 10 4 6 2 3 1 12 500 100 7 0 0 6 7",||false),Err("InvalidBounds".into()));
-        assert_eq!(calculate("/api/contour","40 30 10 4 6 2 3 1 12 500 100 7 0 9 0 0",||false),Err("InvalidDirection".into()));
+        assert_eq!(
+            calculate(
+                "/api/contour",
+                "40 30 10 4 6 2 3 1 12 500 100 7 1 1 0 0",
+                || false
+            ),
+            Err("InvalidBounds".into())
+        );
+        assert_eq!(
+            calculate(
+                "/api/contour",
+                "40 30 10 4 6 2 3 1 12 500 100 7 0 0 6 7",
+                || false
+            ),
+            Err("InvalidBounds".into())
+        );
+        assert_eq!(
+            calculate(
+                "/api/contour",
+                "40 30 10 4 6 2 3 1 12 500 100 7 0 9 0 0",
+                || false
+            ),
+            Err("InvalidDirection".into())
+        );
     }
 }

@@ -239,50 +239,78 @@ pub fn rectangular_contour_with_cancel(
     let (x0, x1, y0, y1) = match side {
         ContourSide::Outside => {
             // A different outer rectangle may traverse uncut material, so reject it.
-            if rectangle.min_x != stock.min.x || rectangle.min_y != stock.min.y
-                || rectangle.max_x != stock.max.x || rectangle.max_y != stock.max.y {
+            if rectangle.min_x != stock.min.x
+                || rectangle.min_y != stock.min.y
+                || rectangle.max_x != stock.max.x
+                || rectangle.max_y != stock.max.y
+            {
                 return Err(Error::InvalidBounds);
             }
-            (rectangle.min_x-r, rectangle.max_x+r, rectangle.min_y-r, rectangle.max_y+r)
+            (
+                rectangle.min_x - r,
+                rectangle.max_x + r,
+                rectangle.min_y - r,
+                rectangle.max_y + r,
+            )
         }
         ContourSide::Inside => {
-            if rectangle.min_x <= stock.min.x || rectangle.min_y <= stock.min.y
-                || rectangle.max_x >= stock.max.x || rectangle.max_y >= stock.max.y
-                || rectangle.max_x-rectangle.min_x <= tool.diameter
-                || rectangle.max_y-rectangle.min_y <= tool.diameter {
+            if rectangle.min_x <= stock.min.x
+                || rectangle.min_y <= stock.min.y
+                || rectangle.max_x >= stock.max.x
+                || rectangle.max_y >= stock.max.y
+                || rectangle.max_x - rectangle.min_x <= tool.diameter
+                || rectangle.max_y - rectangle.min_y <= tool.diameter
+            {
                 return Err(Error::InvalidBounds);
             }
-            (rectangle.min_x+r, rectangle.max_x-r, rectangle.min_y+r, rectangle.max_y-r)
+            (
+                rectangle.min_x + r,
+                rectangle.max_x - r,
+                rectangle.min_y + r,
+                rectangle.max_y - r,
+            )
         }
     };
-    if ![x0,x1,y0,y1].iter().all(|x| coordinate(*x)) {
+    if ![x0, x1, y0, y1].iter().all(|x| coordinate(*x)) {
         return Err(Error::CoordinateLimit);
     }
     let capacity = bound_moves(pass_count * 7.0)?;
-    if cancelled() { return Err(Error::Cancelled); }
-    let passes=pass_count as usize;
-    let mut moves=Vec::with_capacity(capacity);
+    if cancelled() {
+        return Err(Error::Cancelled);
+    }
+    let passes = pass_count as usize;
+    let mut moves = Vec::with_capacity(capacity);
     let sequence = match direction {
-        ContourDirection::CounterClockwise => [(x1,y0),(x1,y1),(x0,y1),(x0,y0)],
-        ContourDirection::Clockwise => [(x0,y1),(x1,y1),(x1,y0),(x0,y0)],
+        ContourDirection::CounterClockwise => [(x1, y0), (x1, y1), (x0, y1), (x0, y0)],
+        ContourDirection::Clockwise => [(x0, y1), (x1, y1), (x1, y0), (x0, y0)],
     };
     for pass in 1..=passes {
-        if cancelled() {return Err(Error::Cancelled);}
-        let z=depth_at(stock.max.z,cut,pass,passes);
-        moves.push(rapid(x0,y0,setup.clearance_z));
-        moves.push(feed(x0,y0,z,cut.plunge_feed_mm_min));
-        for (x,y) in sequence {
-            if cancelled() {return Err(Error::Cancelled);}
-            moves.push(feed(x,y,z,cut.cutting_feed_mm_min));
+        if cancelled() {
+            return Err(Error::Cancelled);
         }
-        moves.push(rapid(x0,y0,setup.clearance_z));
+        let z = depth_at(stock.max.z, cut, pass, passes);
+        moves.push(rapid(x0, y0, setup.clearance_z));
+        moves.push(feed(x0, y0, z, cut.plunge_feed_mm_min));
+        for (x, y) in sequence {
+            if cancelled() {
+                return Err(Error::Cancelled);
+            }
+            moves.push(feed(x, y, z, cut.cutting_feed_mm_min));
+        }
+        moves.push(rapid(x0, y0, setup.clearance_z));
     }
-    if cancelled() {return Err(Error::Cancelled);}
+    if cancelled() {
+        return Err(Error::Cancelled);
+    }
     Ok(Toolpath {
-        start: Point3{x:x0,y:y0,z:setup.clearance_z},
+        start: Point3 {
+            x: x0,
+            y: y0,
+            z: setup.clearance_z,
+        },
         moves,
-        depth_passes:passes,
-        rows_per_pass:1,
+        depth_passes: passes,
+        rows_per_pass: 1,
     })
 }
 
@@ -748,39 +776,178 @@ mod tests {
     }
     #[test]
     fn rectangular_contour_outside_and_inside_keep_tool_on_correct_side() {
-        let (setup, tool, cut)=fixture();
-        let outside=rectangular_contour_with_cancel(
-            setup,tool,cut,RectangleXY{min_x:0.0,min_y:0.0,max_x:40.0,max_y:30.0},
-            ContourSide::Outside,ContourDirection::CounterClockwise,||false
-        ).unwrap();
-        assert_eq!(outside.start,Point3{x:-3.0,y:-3.0,z:15.0});
-        assert_eq!(outside.moves.len(),14);
-        assert_eq!(outside.moves[2].to,Point3{x:43.0,y:-3.0,z:8.0});
-        assert_eq!(outside.moves[6].to.z,15.0);
-        let inside=rectangular_contour_with_cancel(
-            setup,tool,cut,RectangleXY{min_x:6.0,min_y:7.0,max_x:34.0,max_y:23.0},
-            ContourSide::Inside,ContourDirection::Clockwise,||false
-        ).unwrap();
-        assert_eq!(inside.start,Point3{x:9.0,y:10.0,z:15.0});
-        assert_eq!(inside.moves[2].to,Point3{x:9.0,y:20.0,z:8.0});
-        assert_eq!(inside.moves[3].to,Point3{x:31.0,y:20.0,z:8.0});
-        assert_eq!(inside.moves[5].to,Point3{x:9.0,y:10.0,z:8.0});
-        assert_eq!(inside.moves[12].to.z,6.0);
-        lateral_rapids_at_clearance(&outside,setup.clearance_z);
-        lateral_rapids_at_clearance(&inside,setup.clearance_z);
+        let (setup, tool, cut) = fixture();
+        let outside = rectangular_contour_with_cancel(
+            setup,
+            tool,
+            cut,
+            RectangleXY {
+                min_x: 0.0,
+                min_y: 0.0,
+                max_x: 40.0,
+                max_y: 30.0,
+            },
+            ContourSide::Outside,
+            ContourDirection::CounterClockwise,
+            || false,
+        )
+        .unwrap();
+        assert_eq!(
+            outside.start,
+            Point3 {
+                x: -3.0,
+                y: -3.0,
+                z: 15.0
+            }
+        );
+        assert_eq!(outside.moves.len(), 14);
+        assert_eq!(
+            outside.moves[2].to,
+            Point3 {
+                x: 43.0,
+                y: -3.0,
+                z: 8.0
+            }
+        );
+        assert_eq!(outside.moves[6].to.z, 15.0);
+        let inside = rectangular_contour_with_cancel(
+            setup,
+            tool,
+            cut,
+            RectangleXY {
+                min_x: 6.0,
+                min_y: 7.0,
+                max_x: 34.0,
+                max_y: 23.0,
+            },
+            ContourSide::Inside,
+            ContourDirection::Clockwise,
+            || false,
+        )
+        .unwrap();
+        assert_eq!(
+            inside.start,
+            Point3 {
+                x: 9.0,
+                y: 10.0,
+                z: 15.0
+            }
+        );
+        assert_eq!(
+            inside.moves[2].to,
+            Point3 {
+                x: 9.0,
+                y: 20.0,
+                z: 8.0
+            }
+        );
+        assert_eq!(
+            inside.moves[3].to,
+            Point3 {
+                x: 31.0,
+                y: 20.0,
+                z: 8.0
+            }
+        );
+        assert_eq!(
+            inside.moves[5].to,
+            Point3 {
+                x: 9.0,
+                y: 10.0,
+                z: 8.0
+            }
+        );
+        assert_eq!(inside.moves[12].to.z, 6.0);
+        lateral_rapids_at_clearance(&outside, setup.clearance_z);
+        lateral_rapids_at_clearance(&inside, setup.clearance_z);
     }
     #[test]
     fn rectangular_contour_rejects_unsafe_geometry_and_cancel() {
-        let (setup,tool,cut)=fixture();
-        let stock_rect=RectangleXY{min_x:0.0,min_y:0.0,max_x:40.0,max_y:30.0};
-        let inner=RectangleXY{min_x:2.0,min_y:3.0,max_x:38.0,max_y:27.0};
-        assert_eq!(rectangular_contour_with_cancel(setup,tool,cut,stock_rect,ContourSide::Inside,ContourDirection::Clockwise,||false).unwrap_err(),Error::InvalidBounds);
-        assert_eq!(rectangular_contour_with_cancel(setup,tool,cut,inner,ContourSide::Outside,ContourDirection::Clockwise,||false).unwrap_err(),Error::InvalidBounds);
-        let small=RectangleXY{min_x:9.0,min_y:9.0,max_x:14.0,max_y:14.0};
-        assert_eq!(rectangular_contour_with_cancel(setup,tool,cut,small,ContourSide::Inside,ContourDirection::Clockwise,||false).unwrap_err(),Error::InvalidBounds);
-        assert_eq!(rectangular_contour_with_cancel(setup,tool,cut,inner,ContourSide::Inside,ContourDirection::Clockwise,||true).unwrap_err(),Error::Cancelled);
-        let mut tiny_cut=cut;tiny_cut.stepdown_mm=f64::MIN_POSITIVE;
-        assert_eq!(rectangular_contour_with_cancel(setup,tool,tiny_cut,inner,ContourSide::Inside,ContourDirection::Clockwise,||false).unwrap_err(),Error::TooManyMoves);
+        let (setup, tool, cut) = fixture();
+        let stock_rect = RectangleXY {
+            min_x: 0.0,
+            min_y: 0.0,
+            max_x: 40.0,
+            max_y: 30.0,
+        };
+        let inner = RectangleXY {
+            min_x: 2.0,
+            min_y: 3.0,
+            max_x: 38.0,
+            max_y: 27.0,
+        };
+        assert_eq!(
+            rectangular_contour_with_cancel(
+                setup,
+                tool,
+                cut,
+                stock_rect,
+                ContourSide::Inside,
+                ContourDirection::Clockwise,
+                || false
+            )
+            .unwrap_err(),
+            Error::InvalidBounds
+        );
+        assert_eq!(
+            rectangular_contour_with_cancel(
+                setup,
+                tool,
+                cut,
+                inner,
+                ContourSide::Outside,
+                ContourDirection::Clockwise,
+                || false
+            )
+            .unwrap_err(),
+            Error::InvalidBounds
+        );
+        let small = RectangleXY {
+            min_x: 9.0,
+            min_y: 9.0,
+            max_x: 14.0,
+            max_y: 14.0,
+        };
+        assert_eq!(
+            rectangular_contour_with_cancel(
+                setup,
+                tool,
+                cut,
+                small,
+                ContourSide::Inside,
+                ContourDirection::Clockwise,
+                || false
+            )
+            .unwrap_err(),
+            Error::InvalidBounds
+        );
+        assert_eq!(
+            rectangular_contour_with_cancel(
+                setup,
+                tool,
+                cut,
+                inner,
+                ContourSide::Inside,
+                ContourDirection::Clockwise,
+                || true
+            )
+            .unwrap_err(),
+            Error::Cancelled
+        );
+        let mut tiny_cut = cut;
+        tiny_cut.stepdown_mm = f64::MIN_POSITIVE;
+        assert_eq!(
+            rectangular_contour_with_cancel(
+                setup,
+                tool,
+                tiny_cut,
+                inner,
+                ContourSide::Inside,
+                ContourDirection::Clockwise,
+                || false
+            )
+            .unwrap_err(),
+            Error::TooManyMoves
+        );
     }
-
 }
