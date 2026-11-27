@@ -57,6 +57,8 @@ function countPreview(){
   $('face-count').textContent='Voraussichtlich '+planned.depthPasses+' Tiefenlagen × '+planned.rows+
    ' Querbahnen = '+(planned.depthPasses*planned.rows*4)+' Bewegungen. Start: X'+fmt(planned.start.x)+
    ' / Y0 / Z'+fmt(planned.start.z)+' mm (rohteilbezogen).';
+  const wcs=model.toWork([planned.start.x,0,planned.start.z],model.workFrame(p));
+  $('face-count').textContent+=' Start in '+(p.wcs||'G54')+': X'+fmt(wcs[0])+' / Y'+fmt(wcs[1])+' / Z'+fmt(wcs[2])+' mm.';
  }catch(e){
   $('face-count').textContent=e.message;
  }
@@ -78,12 +80,18 @@ function open(){
  const f=(label,id,value,opts='')=>'<label>'+label+'<input id="'+id+'" type="number" step="any" min="0.001" value="'+esc(value)+'" '+opts+'></label>';
  const chooser='<label>Fräswerkzeug aus der Bibliothek<select id="face-tool">'+tools.map(t=>
    '<option value="'+esc(t.id)+'" '+(t.id===chosen?.id?'selected':'')+'>T'+t.id+' · '+esc(t.name)+' · Ø'+fmt(t.diameter)+'</option>').join('')+'</select></label>';
- const warning=(p.origin?.rotation||p.origin?.reverseZ||p.origin?.x||p.origin?.y||p.origin?.z!==stock.z)
-  ?'<p class="studio-error">Achtung: Der im Setup gespeicherte Nullpunkt / die Achsausrichtung wird noch NICHT auf die berechnete Werkzeugbahn transformiert.</p>':'';
+ let wcsText='';
+ try{
+  const frame=model.workFrame(p);
+  wcsText='<p><strong>Werkstücknullpunkt:</strong> '+frame.system+' · X '+fmt(frame.origin_local[0])+
+   ' / Y '+fmt(frame.origin_local[1])+' / Z '+fmt(frame.origin_local[2])+
+   ' mm · XY-Drehung '+frame.rotation_degrees+'° · Z+ '+(frame.reverse_z?'nach unten':'nach oben')+'.</p>';
+ }catch(error){wcsText='<p class="studio-error">Nullpunktfehler: '+esc(error.message)+'</p>';}
+
  studio.showDialog('Planfräsen · echte Rust-Berechnung',
   '<p><strong>Rohteil aus Setup:</strong> '+fmt(stock.x)+' × '+fmt(stock.y)+' × '+fmt(stock.z)+
   ' mm · Material: '+esc(mat?.name||'nicht gefunden')+'. Bearbeitungsrichtung entlang X.</p>'+
-  warning+
+  wcsText+
   '<div class="studio-modal-grid">'+chooser+'</div>'+
   '<p id="face-toolinfo"></p>'+
   '<div class="studio-modal-grid">'+
@@ -159,15 +167,16 @@ async function calculate(){
   }
   const result=await response.json();
   if(controller.signal.aborted||sequence!==mine)return;
+  const framed=model.attachWorkCoordinates(result,p);
   // Use the existing strict neutral-toolpath validator; never draw unchecked data.
   if(typeof loadCore!=='function')throw Error('Rust-Werkzeugbahnansicht nicht geladen.');
-  loadCore(result);
+  loadCore(framed);
   studio.enterSimulation();
   activeController=null; // Successful response must not trigger cancellation on dialog close.
   studio.closeDialog();
   studio.status('Planfräsen berechnet: '+result.moves.length+' Bewegungen, '+
    result.depth_passes+' Tiefenlagen, '+result.rows_per_pass+
-   ' Bahnen je Lage. Nur Simulation – keine Maschine/NC-Ausgabe.');
+   ' Bahnen je Lage · '+(p.wcs||'G54')+'-Koordinaten vorhanden. Nur Simulation – keine Maschine/NC-Ausgabe.');
  }catch(e){
   if(controller.signal.aborted){return}
   message(e.name==='AbortError'?'Berechnung abgebrochen.':e.message,true);
