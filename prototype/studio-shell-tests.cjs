@@ -17,4 +17,7 @@ assert.ok(html.includes('studioWcsReadout'));
 assert.ok(html.includes('attachWorkCoordinates'));
 assert.ok(html.includes('Ungültige Werkstückkoordinaten'));
 
+assert.ok(html.includes('FertigungsstudioPathView'));
+assert.ok(html.includes('studioView2D'));
+assert.ok(html.includes('studioView3D'));
 console.log('Studio shell integration checks passed.');

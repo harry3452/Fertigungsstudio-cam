@@ -48,6 +48,8 @@ jobs:
           node prototype/studio-shell-tests.cjs
           node prototype/studio-facing-tests.cjs
           node prototype/studio-wcs-tests.cjs
+          node prototype/studio-path-overview-tests.cjs
+          node --check prototype/studio-path-view.js
           node --check prototype/studio-facing.js
           node --check prototype/studio-shell.js
           node --check prototype/workbench.js

@@ -119,6 +119,20 @@ body.studio-ready.light .studio-modal input,body.studio-ready.light .studio-moda
 .studio-ended strong{font-size:20px}
 .studio-ended button{padding:10px 16px}
 body.studio-ready [hidden]{display:none!important}
+/* Exact neutral Rust path display, separate from the illustrative 3D stock. */
+.studio-view-switch{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:var(--studio-panel);border-bottom:1px solid var(--studio-line);padding:8px 13px;font-size:12px}
+.studio-view-switch>strong{font-size:11px;color:var(--studio-accent);letter-spacing:.6px;margin-right:4px}
+.studio-view-switch button{font-size:12px;padding:7px 11px}
+.studio-view-switch button[aria-pressed=true]{border:1px solid var(--studio-accent);color:var(--studio-accent);background:color-mix(in srgb,var(--studio-accent) 15%,var(--studio-panel))}
+.studio-view-switch label{display:flex;align-items:center;gap:7px}
+.studio-view-switch select{width:auto;max-width:190px;padding:6px 8px}
+.studio-view-switch span{color:var(--studio-muted);font-size:11px;flex:1;min-width:180px}
+.studio-path-panel{flex:1;min-height:270px;position:relative;overflow:hidden;background:radial-gradient(ellipse at center,#223746,#0d1924 78%);border-left:1px solid var(--studio-line)}
+.studio-path-panel canvas{display:block;height:100%;width:100%;touch-action:none}
+.studio-path-axis-note{position:absolute;top:14px;left:15px;pointer-events:none;font-weight:600;color:#bcd2de;font-size:12px;background:#091720ce;padding:5px 9px;border-radius:5px}
+.studio-path-cursor{position:absolute;bottom:15px;left:15px;pointer-events:none;color:#d7ecf4;font-size:12px;background:#091720de;padding:6px 9px;border-radius:5px}
+body.studio-ready .studio-scene>.view[hidden],body.studio-ready .studio-scene>.studio-path-panel[hidden],body.studio-ready .studio-view-switch[hidden]{display:none!important}
+@media(max-width:700px){.studio-view-switch{gap:5px;padding:6px}.studio-view-switch strong{width:100%}.studio-view-switch select{max-width:140px}.studio-path-cursor{font-size:10px}}
 </style>
 <header><div class="brand">Fertigungs<span>studio</span></div><span class="document-name">Trägerplatte · CAM</span><div class="header-right"><label for="hostMode">Betrieb</label><select id="hostMode"><option>Eigenständig</option><option>In SolidCraft integriert</option></select><span class="pill">Bedienentwurf</span></div></header><div class="workspace-tabs"><button>Projekt</button><button class="active">Fertigung</button><button id="tabSimulation">Simulation</button><span id="connectionLabel">Importiertes Bauteil</span></div>
 <nav class="ribbon" aria-label="CAM-Werkzeugleiste"><section class="ribbon-group" aria-label="Einrichten"><div class="tiles"><button id="setupButton" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M5 8h22v17H5zM9 8V4h14v4M10 13h12M10 18h8"/></svg><span>Aufspannung</span></button><button id="stockTile" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="m4 10 12-6 12 6v14l-12 6-12-6zM4 10l12 6 12-6M16 16v14"/></svg><span>Rohteil</span></button><button id="originTile" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M7 25h20M7 25V5M7 25l14-14M23 21l4 4-4 4M3 9l4-4 4 4"/><circle cx="7" cy="25" r="2"/></svg><span>Nullpunkt</span></button><button id="toolButton" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M11 3h10v13l-3 4v8l-2 3-2-3v-8l-3-4zM11 12h10M14 23l4 3"/></svg><span>Werkzeuge</span></button></div><span class="group-label">Einrichten</span></section><section class="ribbon-group" aria-label="Fräsen"><div class="tiles"><button  class="tile" data-operation="0"><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M3 24h26v5H3zM5 18h22M5 14h22M5 10h22M11 3h10v4H11z"/></svg><span>Planen</span></button><button  class="tile" data-operation="1"><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M3 9h26v20H3zM8 14h16v10H8zM12 18h8v3h-8"/></svg><span>Tasche</span></button><button  class="tile" data-operation="2"><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M7 8h18v18H7zM3 4h26v26H3z"/><path d="m12 4 4-3 4 3"/></svg><span>Kontur</span></button></div><span class="group-label">Fräsen</span></section><section class="ribbon-group" aria-label="Bohren"><div class="tiles"><button  class="tile" data-operation="3"><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M12 2h8v16l-4 6-4-6zM12 7l8 4M12 13l8 4M3 27h26M7 23v8M25 23v8"/></svg><span>Bohren</span></button></div><span class="group-label">Bohren</span></section><section class="ribbon-group" aria-label="Prüfen"><div class="tiles"><button id="calculateTile" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="m5 18 7 7L28 7"/><path d="M5 8V4h9M28 24v5h-9"/></svg><span>Berechnen</span></button><button id="simulationTile" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="m11 6 16 11-16 10z"/></svg><span>Simulation</span></button></div><span class="group-label">Prüfen</span></section><section class="ribbon-group" aria-label="Ausgeben"><div class="tiles"><button id="postTile" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h12l6 6v21H8zM20 3v7h6M12 16h10M12 21h10M12 26h6"/></svg><span>Postprozessor</span></button><button id="export" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="M8 3h12l6 6v21H8zM20 3v7h6M12 16h10M12 21h10M12 26h6"/></svg><span>Konzept speichern</span></button></div><span class="group-label">Ausgeben</span></section><section class="ribbon-group" aria-label="Ansicht"><div class="tiles"><button id="reset" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><path d="m4 11 12-7 12 7-12 7zM4 11v13l12 7 12-7V11M16 18v13"/></svg><span>Einpassen</span></button><button id="preferencesTile" class="tile" ><svg viewBox="0 0 32 34" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round" stroke-linecap="round"><circle cx="16" cy="16" r="6"/><path d="M16 2v6M16 24v6M2 16h6M24 16h6M6 6l4 4M22 22l4 4M6 26l4-4M22 10l4-4"/></svg><span>Einstellungen</span></button></div><span class="group-label">Ansicht</span></section></nav>
@@ -443,13 +457,14 @@ function loadCore(d){
   sidebar.querySelectorAll('.tree,.tools,.setup').forEach(e=>e.hidden=true);
   summary.hidden=false;summary.textContent=operationName+' · '+(coreData.tool_number?'T'+coreData.tool_number+' · ':'')+'Werkzeug Ø '+coreData.tool_diameter+' mm · Endhöhe '+coreData.bottom_z+' mm'+(coreData.cutting_feed?' · Vorschub '+coreData.cutting_feed+' mm/min':'')+' · Nur numerisch berechnete Bahnen; keine Spannmittel- oder Kollisionsprüfung.';
   $('status').textContent='Rust-Bahndaten · keine Kollisions- oder Maschinenprüfung';
+  globalThis.FertigungsstudioPathView?.onPathLoaded(coreData);
   $('editOperation').disabled=true;returnButton.hidden=false;resize();
 }
 demoButton.onclick=()=>{try{loadCore(JSON.parse(document.getElementById('rust-demo-data').textContent));}catch(e){toast(e.message);}};
 picker.onchange=async()=>{const file=picker.files[0];if(!file)return;try{if(file.size>12000000)throw Error('Datei zu groß (maximal 12 MB).');const d=JSON.parse(await file.text());loadCore(d);}catch(e){toast('Bahn nicht geladen: '+e.message);}picker.value='';};
 function dims(d){return d.stock.max.map((v,i)=>v-d.stock.min[i]).join(' × ');}
 globalThis.FertigungsstudioToolpath={get:()=>coreData,clear:()=>{if(coreData)returnButton.click();}};
-returnButton.onclick=()=>{coreData=null;coreBadge.textContent='';returnButton.hidden=true;$('editOperation').disabled=false;selectOperation(selected);document.querySelector('.panel h2').textContent='Demoteil · Trägerplatte';sidebar.querySelector('p').textContent=originalStockText;sidebar.querySelectorAll('.tree,.tools,.setup').forEach(e=>e.hidden=false);summary.hidden=true;document.querySelector('.legend').firstElementChild.lastChild.textContent='Beispielbahn';$('connectionLabel').textContent='Bedienentwurf · illustrative Bahnen';resize();};
+returnButton.onclick=()=>{coreData=null;globalThis.FertigungsstudioPathView?.onPathCleared();coreBadge.textContent='';returnButton.hidden=true;$('editOperation').disabled=false;selectOperation(selected);document.querySelector('.panel h2').textContent='Demoteil · Trägerplatte';sidebar.querySelector('p').textContent=originalStockText;sidebar.querySelectorAll('.tree,.tools,.setup').forEach(e=>e.hidden=false);summary.hidden=true;document.querySelector('.legend').firstElementChild.lastChild.textContent='Beispielbahn';$('connectionLabel').textContent='Bedienentwurf · illustrative Bahnen';resize();};
 // Operation selection returns explicitly to the old illustrative part.
 document.querySelectorAll('[data-operation],.op').forEach(b=>b.addEventListener('click',()=>{if(coreData)returnButton.click();}));
 const originalMakePath=makePath;makePath=function(){if(!coreData)originalMakePath();};
@@ -462,7 +477,7 @@ draw=function(){
   const lo=map(d.stock.min),hi=map(d.stock.max);
   box(lo.x,lo.y,lo.z,hi.x,hi.y,hi.z,['#b2c5cf','#6d8797','#839eae']);
   const moves=d.moves,shown=Math.min(moves.length,5000),end=progress*moves.length;
-  const studio=globalThis.FertigungsstudioStudio;if($('paths').checked&&(!studio||studio.activeVisible())){for(let i=0;i<shown;i++){const m=moves[i],previous=i?moves[i-1].to:d.start,category=m.motion==='rapid'?'rapid':m.to[2]!==previous[2]?'lead':'cut';if(studio&&!studio.allowMove(category))continue;const color=category==='rapid'?'#f08b8b':category==='lead'?'#e9bf6f':i<end?'#a5ffcf':'#50d7b3';line(map(previous),map(m.to),color,category==='cut'?2.2:1.7,category==='rapid'?[4,5]:[]);}}
+  const studio=globalThis.FertigungsstudioStudio;if($('paths').checked&&(!studio||studio.activeVisible())){for(let i=0;i<shown;i++){const m=moves[i],previous=i?moves[i-1].to:d.start,category=m.motion==='rapid'?'rapid':m.to[2]!==previous[2]?'lead':'cut';if(studio&&!studio.allowMove(category))continue;const color=category==='rapid'?'#ff8383':category==='lead'?'#ffd374':i<end?'#a6ffe0':'#40ffc0';line(map(previous),map(m.to),color,category==='cut'?3.2:2.3,category==='rapid'?[6,6]:[]);}}
   const i=Math.min(moves.length-1,Math.floor(end));const a=i?moves[i-1].to:d.start,b=moves[i].to,t=Math.min(1,end-i);const tip=map(a.map((v,j)=>v+(b[j]-v)*t));
 
   const wcsReadout=document.getElementById('studioWcsReadout');
@@ -1330,5 +1345,187 @@ $('studioDialog').addEventListener('close',()=>{
  if(activeDialog){activeDialog=false;cancel()}
 });
 studio.setFacingLauncher(open);
+})();
+</script><script>// Pure 2D inspection model for validated neutral Rust toolpaths.
+// This module never generates toolpaths, NC instructions or machine commands.
+(function(root){
+'use strict';
+function finite(n){return typeof n==='number'&&Number.isFinite(n)&&Math.abs(n)<=1e6}
+function point(p){return Array.isArray(p)&&p.length===3&&p.every(finite)}
+function check(d){
+ if(!d||!d.stock||!point(d.stock.min)||!point(d.stock.max)||!point(d.start)
+  ||!Array.isArray(d.moves)||!d.moves.length||d.moves.length>100000)throw Error('Keine gültige berechnete Werkzeugbahn.');
+ if(!d.stock.min.every((v,i)=>v<d.stock.max[i]))throw Error('Ungültiger Rohblock.');
+}
+function category(from,m){
+ if(m.motion==='rapid')return 'rapid';
+ return Math.abs(m.to[2]-from[2])>1e-9?'lead':'cut';
+}
+function depths(data){
+ check(data);
+ const found=new Set();let from=data.start;
+ for(const move of data.moves){
+  if(!move||!point(move.to)||!['rapid','feed'].includes(move.motion))throw Error('Ungültige Bahnbewegung.');
+  if(category(from,move)==='cut')found.add(move.to[2]);
+  from=move.to;
+ }
+ return [...found].sort((a,b)=>b-a);
+}
+function plot(data,depth=null){
+ check(data);
+ if(depth!==null&&!finite(depth))throw Error('Ungültige Tiefenlage.');
+ let minX=data.stock.min[0],maxX=data.stock.max[0],minY=data.stock.min[1],maxY=data.stock.max[1];
+ for(const p of [data.start,...data.moves.map(m=>m.to)]){
+  if(!point(p))throw Error('Ungültiger Bahnpunkt.');
+  minX=Math.min(minX,p[0]);maxX=Math.max(maxX,p[0]);
+  minY=Math.min(minY,p[1]);maxY=Math.max(maxY,p[1]);
+ }
+ const segments=[],counts={rapid:0,lead:0,cut:0},zTol=1e-7;
+ let from=data.start;
+ for(let i=0;i<data.moves.length;i++){
+  const move=data.moves[i],kind=category(from,move),isDepth=depth===null||
+    (kind==='cut'&&Math.abs(move.to[2]-depth)<zTol)||
+    (kind==='lead'&&Math.abs(move.to[2]-depth)<zTol);
+  if(isDepth&&(depth===null||kind!=='rapid')){
+   segments.push({from,to:move.to,kind,index:i});
+   counts[kind]++;
+  }
+  from=move.to;
+ }
+ return {stock:{min:data.stock.min,max:data.stock.max},bounds:{minX,maxX,minY,maxY},segments,counts,total:data.moves.length,depth};
+}
+function fit(bounds,width,height,pad=36){
+ if(!finite(width)||!finite(height)||width<80||height<80||!finite(pad)||pad<0)throw Error('Ungültige Anzeigefläche.');
+ const spanX=bounds.maxX-bounds.minX,spanY=bounds.maxY-bounds.minY;
+ if(!(spanX>0&&spanY>0))throw Error('Keine Ausdehnung der Werkzeugbahn.');
+ const scale=Math.min((width-2*pad)/spanX,(height-2*pad)/spanY);
+ if(!(scale>0))throw Error('Anzeigefläche zu klein.');
+ const x0=(width-spanX*scale)/2,y0=(height-spanY*scale)/2;
+ return (p)=>({x:x0+(p[0]-bounds.minX)*scale,y:height-y0-(p[1]-bounds.minY)*scale});
+}
+const api={category,depths,plot,fit};
+root.FertigungsstudioPathOverview=api;
+if(typeof module!=='undefined'&&module.exports)module.exports=api;
+})(globalThis);
+</script><script>// Visible exact XY inspection of the validated Rust path, without browser-side CAM.
+(()=>{
+'use strict';
+const model=globalThis.FertigungsstudioPathOverview;
+const studio=globalThis.FertigungsstudioStudio;
+const originalView=document.querySelector('#studioScene>.view');
+const target=document.getElementById('studioScene');
+if(!model||!studio||!originalView||!target)return;
+const $=id=>document.getElementById(id);
+const bar=document.createElement('div');
+bar.id='studioViewSwitch';
+bar.className='studio-view-switch';
+bar.hidden=true;
+bar.innerHTML='<strong>RUST-WERKZEUGBAHN</strong><button type="button" id="studioView2D">Bahnen · Draufsicht</button><button type="button" id="studioView3D">3D-Werkstück</button><label>Tiefenlage <select id="studioDepthFilter" aria-label="Tiefenlage der Werkzeugbahn"><option value="all">Alle Lagen</option></select></label><span id="studioPathSummary"></span>';
+target.insertBefore(bar,originalView);
+const panel=document.createElement('section');
+panel.id='studioPathPanel';
+panel.className='studio-path-panel';
+panel.setAttribute('aria-label','Berechneter Werkzeugbahnverlauf in der Rohteil-Draufsicht');
+panel.hidden=true;
+panel.innerHTML='<canvas id="studioPathCanvas" aria-label="Exakte XY-Bahnen aus dem Rust-Werkzeugweg"></canvas><div class="studio-path-axis-note">Rohteil-Koordinaten XY in mm · kein G-Code</div><div id="studioPathCursor" class="studio-path-cursor">Schnitt: grün · Eilgang: rot gestrichelt · Eintauchen: gelb</div>';
+target.insertBefore(panel,$('studioSim'));
+const canvas=$('studioPathCanvas'),ctx=canvas.getContext('2d');
+let data=null,mode='2d';
+function label(value){return Number(value).toLocaleString('de-DE',{maximumFractionDigits:3})}
+function redraw(){
+ if(panel.hidden||!data)return;
+ const w=panel.clientWidth,h=panel.clientHeight;
+ if(w<80||h<80)return;
+ const ratio=Math.min(2,Math.max(1,window.devicePixelRatio||1));
+ canvas.width=Math.round(w*ratio);canvas.height=Math.round(h*ratio);
+ ctx.setTransform(ratio,0,0,ratio,0,0);
+ ctx.clearRect(0,0,w,h);
+ const depth=$('studioDepthFilter').value==='all'?null:Number($('studioDepthFilter').value);
+ let chart,project;
+ try{chart=model.plot(data,depth);project=model.fit(chart.bounds,w,h,42)}
+ catch(e){$('studioPathSummary').textContent=e.message;return;}
+ // The shaded rectangle is the actual rectangular stock bounding box.
+ const a=project(chart.stock.min),b=project(chart.stock.max);
+ const x=Math.min(a.x,b.x),y=Math.min(a.y,b.y),rw=Math.abs(a.x-b.x),rh=Math.abs(a.y-b.y);
+ ctx.fillStyle='rgba(104,144,158,.24)';ctx.fillRect(x,y,rw,rh);
+ ctx.strokeStyle='#bdd6df';ctx.lineWidth=1.8;ctx.strokeRect(x,y,rw,rh);
+ ctx.font='12px Segoe UI,sans-serif';ctx.fillStyle='#c7dde3';
+ ctx.textAlign='center';ctx.fillText('X '+label(chart.stock.max[0]-chart.stock.min[0])+' mm',x+rw/2,Math.min(h-12,y+rh+25));
+ ctx.save();ctx.translate(Math.max(16,x-24),y+rh/2);ctx.rotate(-Math.PI/2);
+ ctx.fillText('Y '+label(chart.stock.max[1]-chart.stock.min[1])+' mm',0,0);ctx.restore();
+ // Draw rapid first, then plunges, then the cutting segments on top.
+ // These segments are the numeric Rust coordinates, not illustrative artwork.
+ const layers=[
+  ['rapid','#f59090',2.5,[9,7]],
+  ['lead','#ffd476',4.5,[]],
+  ['cut','#63ffb6',4.5,[]]
+ ];
+ for(const [kind,color,width,dash] of layers){
+  ctx.beginPath();let count=0;
+  for(const segment of chart.segments){
+   if(segment.kind!==kind)continue;
+   const p=project(segment.from),q=project(segment.to);
+   ctx.moveTo(p.x,p.y);ctx.lineTo(q.x,q.y);count++;
+  }
+  if(count){
+   ctx.setLineDash(dash);ctx.lineCap='round';ctx.lineJoin='round';
+   ctx.strokeStyle='rgba(3,11,19,.88)';ctx.lineWidth=width+3.5;ctx.stroke();
+   ctx.strokeStyle=color;ctx.lineWidth=width;ctx.stroke();ctx.setLineDash([]);
+  }
+ }
+ const start=project(data.start);
+ ctx.beginPath();ctx.arc(start.x,start.y,6,0,Math.PI*2);ctx.fillStyle='#f6f8fb';ctx.fill();
+ ctx.strokeStyle='#162c35';ctx.lineWidth=2;ctx.stroke();
+ ctx.font='bold 12px Segoe UI,sans-serif';ctx.textAlign='left';ctx.fillStyle='#fafcff';
+ ctx.fillText('Start',Math.min(w-53,start.x+10),Math.max(12,start.y-10));
+ $('studioPathSummary').textContent='Schnitt '+chart.counts.cut+' · Eintauchen '+chart.counts.lead+
+  ' · Eilgang '+chart.counts.rapid+' · gesamt '+data.moves.length+' Bewegungen';
+}
+function switchMode(next){
+ if(!data)return;
+ mode=next;
+ panel.hidden=next!=='2d';
+ originalView.hidden=next!=='3d';
+ $('studioView2D').setAttribute('aria-pressed',String(next==='2d'));
+ $('studioView3D').setAttribute('aria-pressed',String(next==='3d'));
+ $('studioDepthFilter').disabled=next!=='2d';
+ if(next==='2d')requestAnimationFrame(redraw);
+ else requestAnimationFrame(()=>{if(typeof resize==='function')resize();});
+}
+function onPathLoaded(path){
+ data=path;
+ $('studioViewSwitch').hidden=false;
+ const levels=model.depths(path);
+ const options=$('studioDepthFilter');options.replaceChildren(new Option('Alle Lagen','all'));
+ levels.forEach((z,i)=>options.add(new Option('Lage '+(i+1)+' · Z '+label(z)+' mm',String(z))));
+ options.value='all';
+ $('studioPathCursor').textContent='Schnitt: grün · Eilgang: rot gestrichelt · Eintauchen: gelb';
+ switchMode('2d'); // Show the real path immediately after a successful calculation.
+}
+function onPathCleared(){
+ data=null;bar.hidden=true;panel.hidden=true;originalView.hidden=false;mode='3d';
+ $('studioPathSummary').textContent='';
+ if(typeof resize==='function')requestAnimationFrame(resize);
+}
+$('studioView2D').onclick=()=>switchMode('2d');
+$('studioView3D').onclick=()=>switchMode('3d');
+$('studioDepthFilter').onchange=redraw;
+new ResizeObserver(()=>{if(mode==='2d'&&data)redraw()}).observe(panel);
+canvas.addEventListener('pointermove',e=>{
+ if(!data||panel.hidden)return;
+ const rect=canvas.getBoundingClientRect();
+ const w=rect.width,h=rect.height;
+ if(w<80||h<80)return;
+ try{
+  const chart=model.plot(data,null),b=chart.bounds,spanX=b.maxX-b.minX,spanY=b.maxY-b.minY;
+  const scale=Math.min((w-84)/spanX,(h-84)/spanY);
+  const x0=(w-spanX*scale)/2,y0=(h-spanY*scale)/2;
+  const px=e.clientX-rect.left,py=e.clientY-rect.top;
+  const x=b.minX+(px-x0)/scale,y=b.minY+(h-y0-py)/scale;
+  $('studioPathCursor').textContent='Mausposition Rohteil: X '+label(x)+' mm · Y '+label(y)+' mm';
+ }catch{}
+});
+canvas.addEventListener('pointerleave',()=>{$('studioPathCursor').textContent='Schnitt: grün · Eilgang: rot gestrichelt · Eintauchen: gelb'});
+globalThis.FertigungsstudioPathView={onPathLoaded,onPathCleared,open:()=>switchMode('2d'),view3D:()=>switchMode('3d')};
 })();
 </script></html>
