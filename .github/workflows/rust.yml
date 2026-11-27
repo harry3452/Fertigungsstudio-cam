@@ -45,9 +45,12 @@ jobs:
           node prototype/core-path-tests.cjs
           node prototype/tool-storage-tests.cjs
           node prototype/workbench-tests.cjs
+          node prototype/studio-shell-tests.cjs
+          node --check prototype/studio-shell.js
           node --check prototype/workbench.js
           node --check prototype/tool-library-ui.js
           node prototype/build-ribbon.cjs
+          git diff --exit-code -- prototype/fertigungsstudio-kacheln.html
           node --check prototype/live-preview.js
           node --check prototype/live-server-tests.cjs
       - name: Build and test local Rust preview connection

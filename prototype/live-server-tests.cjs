@@ -10,7 +10,7 @@ const req=http.request(new URL(path,base),{method,headers:{'Content-Length':Buff
 });}
 const page=await request('/');assert.equal(page.status,200);assert.ok(page.text.includes('Live-Bearbeitung'));assert.ok(page.text.includes('live-operation'));
 assert.ok(page.text.includes('Werkzeugwege berechnen'));
-assert.equal((page.text.match(/data-cam-operation=/g)||[]).length,4);
+assert.equal((page.text.match(/<button[^>]+data-cam-operation=/g)||[]).length,4);
 assert.ok(page.text.includes('Rust-Livebetrieb · Berechnung bereit'));
 assert.ok(page.text.includes('Eigene Werkzeugbibliothek'));
 for(const match of page.text.matchAll(/<script>([\s\S]*?)<\/script>/g))new(require('node:vm').Script)(match[1]);

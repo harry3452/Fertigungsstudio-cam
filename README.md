@@ -11,24 +11,22 @@ Fertigungsstudio ist ein Arbeitsname und kein offizielles SolidCraft-Projekt.
 
 ![Fertigungsstudio CAM: deutsche Symbolkacheln, Bearbeitungsbaum und schematische Werkstückvorschau](docs/images/fertigungsstudio-preview.jpg)
 
-*Das Bild zeigt den ersten Bedienentwurf vom 24. November 2026. Die aktuelle
-Oberfläche enthält zusätzlich vier große Bearbeitungsschaltflächen; die
-Abbildung wurde noch nicht aktualisiert.*
+*Das Bild zeigt den früheren Bedienentwurf vom 24. November 2026. Die aktuelle Oberfläche mit einreihiger Symbolleiste, Bearbeitungsbaum links und erweiterbarem Setup ist noch nicht abgebildet.*
 
 ## Vorschau starten
 
 `prototype/fertigungsstudio-kacheln.html` im Browser öffnen. Keine Installation,
 kein Server und keine zusätzlichen Pakete nötig. Die Anzeige ist derzeit deutsch.
 
-**Neu:** Über der 3D-Ansicht stehen vier große Bearbeitungsschaltflächen:
-Planfräsen, Außenkontur, Taschenfräsen und Bohren. Beim direkten Öffnen
-als HTML-Datei ist das ausdrücklich **nur ein Bedienentwurf**.
-Ein sichtbarer Status zeigt: »Demomodus · Rust-Server nicht verbunden«.
+**Neue Bedienoberfläche:** Ganz oben eine Symbolkachelreihe **Datei, Setup, Werkzeugliste, Fräsen, 3D Fräsen, Drehen, Laser, Sim, Post** sowie Hell/Dunkel. Links steht nur der Bearbeitungsbaum; rechts daneben die 3D-Werkstückansicht.
 
-Ausprobierbar sind gruppierte Symbolkacheln, Bearbeitungsauswahl, eine drehbare
-Beispielplatte, schematische Werkzeugbewegungen und Dialoge für Aufspannung,
-Darstellung und Ausgabe. Die Ansicht kann zwischen integriertem und
-eigenständigem Betrieb umgeschaltet werden; das ist nur eine Darstellung.
+Im **Datei-Menü** lassen sich Demo-Projekte als JSON exportieren/importieren und »Programm beenden« auswählen (nur die Browseroberfläche wird geschlossen). **Setup** enthält Rohteilabmessungen, eigene Materialien, Aufspannung und einen interaktiven Nullpunktdialog: Ecken, Kantenmitten, freie XYZ-Werte, vertikale Z-Kanten, XY-Achsdrehung und Z-Umkehr. Alle Angaben sind Projekt-Einstellungen; die Achsentransformation wird noch nicht auf Werkzeugbahnen angewendet.
+
+Die **Werkzeugliste** verwaltet Fräs- und Drehwerkzeugformen, Geometriedaten, frei benannte Halter und Materialprofile mit Schnittgeschwindigkeit, Vorschub und Zustellung. Die Drehzahl- und Vorschubberechnung ist informativ, nicht als Bearbeitungsempfehlung geprüft. Eine ausgewählte STEP/STL/IGES-Halter- oder Bauteildatei wird bisher **nur dem Namen nach vorgemerkt**; ein echter 3D-CAD-Import fehlt. Die Werkzeug-/Materialbibliothek wird – wenn Browser-Speicherung erlaubt ist – im Browser lokal gehalten und gehört auch zu exportierten Demo-Projekten.
+
+**Sim** schaltet bei Rust-Bahndaten Schnitt-, Eilgang- und Z-An-/Abfahrbewegungen sowie Werkzeug-/Halterdarstellung ein und aus. Geometrie und Halter sind dabei nur schematisch; es gibt keinen geprüften Materialabtrag oder Kollisionsnachweis. Die ältere Bedienoberfläche bleibt intern als Fallback vorhanden.
+
+Für eine reale Rust-Berechnung der vier unterstützten rechteckigen Verfahren die lokale Vorschau starten und oben **Fräsen → Planfräsen / Außenkontur / Taschenfräsen / Bohren** wählen. Beim Öffnen der HTML-Datei allein bleiben die Bahnen illustrativ.
 
 Der erste Rust-Kern berechnet eingeschränkte Planfräsbahnen für rechteckige
 Rohblöcke. Über „Rust-Demo“ zeigt die Vorschau einen berechneten Datensatz;
