@@ -314,6 +314,136 @@ pub fn rectangular_contour_with_cancel(
     })
 }
 
+/// Geometric XY contour offsets for a simple, non-self-intersecting polygon.
+/// STL tessellation is approximated by straight segments; all units mm.
+///
+/// The caller is responsible for verifying that the entry position is clear.
+/// No fixture, part-solid, holder, tool load or machine travel checks occur.
+pub fn polygon_contour_with_cancel(
+    setup: Setup,
+    tool: FlatTool,
+    cut: Cut,
+    vertices: &[DrillPoint],
+    side: ContourSide,
+    direction: ContourDirection,
+    mut cancelled: impl FnMut() -> bool,
+) -> Result<Toolpath, Error> {
+    let (_, pass_count) = validate_cut(setup, tool, cut)?;
+    if vertices.len() < 3 || vertices.len() > 2048 {
+        return Err(Error::InvalidBounds);
+    }
+    let stock = setup.stock;
+    if vertices.iter().any(|v| {
+        !coordinate(v.x) || !coordinate(v.y)
+            || v.x < stock.min.x || v.x > stock.max.x
+            || v.y < stock.min.y || v.y > stock.max.y
+    }) {
+        return Err(Error::InvalidBounds);
+    }
+    let n = vertices.len();
+    let cross = |a: DrillPoint, b: DrillPoint| a.x * b.y - a.y * b.x;
+    let minus = |a: DrillPoint, b: DrillPoint| DrillPoint {
+        x: a.x - b.x, y: a.y - b.y,
+    };
+    let area2: f64 = (0..n).map(|i| cross(vertices[i], vertices[(i + 1) % n])).sum();
+    if !area2.is_finite() || area2.abs() < 1e-8 {
+        return Err(Error::InvalidBounds);
+    }
+    let intersect = |a: DrillPoint, b: DrillPoint, c: DrillPoint, d: DrillPoint| {
+        let u = minus(b, a);
+        let v = minus(d, c);
+        let w = minus(c, a);
+        let det = cross(u, v);
+        if det.abs() < 1e-10 { return false; }
+        let t = cross(w, v) / det;
+        let q = cross(w, u) / det;
+        t > 1e-8 && t < 1.0 - 1e-8 && q > 1e-8 && q < 1.0 - 1e-8
+    };
+    // Reject zero-length edges, doubled-back edges and crossing geometry.
+    for i in 0..n {
+        if cancelled() { return Err(Error::Cancelled); }
+        let a=vertices[i];let b=vertices[(i+1)%n];
+        let v=minus(b,a);
+        if !v.x.is_finite() || !v.y.is_finite() || v.x.hypot(v.y)<1e-5 {
+            return Err(Error::InvalidBounds);
+        }
+        for j in i+1..n {
+            if j==i+1 || (i==0 && j==n-1) { continue; }
+            if intersect(a,b,vertices[j],vertices[(j+1)%n]) {
+                return Err(Error::InvalidBounds);
+            }
+        }
+    }
+    let sign = if area2 > 0.0 { 1.0 } else { -1.0 };
+    let left_offset = if side == ContourSide::Inside { sign } else { -sign };
+    let radius=tool.diameter/2.0;
+    let mut offset=Vec::with_capacity(n);
+    for i in 0..n {
+        if cancelled() {return Err(Error::Cancelled);}
+        let a=vertices[(i+n-1)%n];let b=vertices[i];let c=vertices[(i+1)%n];
+        let v=minus(b,a);let w=minus(c,b);
+        let len_v=v.x.hypot(v.y);let len_w=w.x.hypot(w.y);
+        let u=DrillPoint{x:v.x/len_v,y:v.y/len_v};
+        let t=DrillPoint{x:w.x/len_w,y:w.y/len_w};
+        let delta=radius*left_offset;
+        let p=DrillPoint{x:b.x-delta*u.y,y:b.y+delta*u.x};
+        let q=DrillPoint{x:b.x-delta*t.y,y:b.y+delta*t.x};
+        let det=cross(u,t);
+        let hit=if det.abs()<1e-10 {
+            if u.x*t.x+u.y*t.y<0.0 {return Err(Error::InvalidBounds);}
+            p
+        } else {
+            let k=cross(minus(q,p),t)/det;
+            DrillPoint{x:p.x+u.x*k,y:p.y+u.y*k}
+        };
+        if !coordinate(hit.x) || !coordinate(hit.y)
+            || (hit.x-b.x).hypot(hit.y-b.y)>radius*12.0 {
+            return Err(Error::InvalidBounds);
+        }
+        offset.push(hit);
+    }
+    let offset_area2: f64 = (0..n).map(|i| cross(offset[i],offset[(i+1)%n])).sum();
+    if !offset_area2.is_finite() || offset_area2*area2<=0.0 {
+        return Err(Error::InvalidBounds);
+    }
+    for i in 0..n {
+        let a=offset[i];let b=offset[(i+1)%n];
+        if minus(b,a).x.hypot(minus(b,a).y)<1e-6 {return Err(Error::InvalidBounds);}
+        for j in i+1..n {
+            if j==i+1 || (i==0&&j==n-1) {continue;}
+            if intersect(a,b,offset[j],offset[(j+1)%n]){
+                return Err(Error::InvalidBounds);
+            }
+        }
+    }
+    let moves_per_pass=n+3;
+    let cap=bound_moves(pass_count*(moves_per_pass as f64))?;
+    if cancelled(){return Err(Error::Cancelled);}
+    let passes=pass_count as usize;
+    let origin=offset[0];
+    let ccw=offset_area2>0.0;
+    let forward=(direction==ContourDirection::CounterClockwise)==ccw;
+    let mut moves=Vec::with_capacity(cap);
+    for layer in 1..=passes {
+        if cancelled() {return Err(Error::Cancelled);}
+        let z=depth_at(stock.max.z,cut,layer,passes);
+        moves.push(rapid(origin.x,origin.y,setup.clearance_z));
+        moves.push(feed(origin.x,origin.y,z,cut.plunge_feed_mm_min));
+        for step in 1..=n {
+            if cancelled() {return Err(Error::Cancelled);}
+            let index=if forward {step%n} else {(n-step)%n};
+            let v=offset[index];
+            moves.push(feed(v.x,v.y,z,cut.cutting_feed_mm_min));
+        }
+        moves.push(rapid(origin.x,origin.y,setup.clearance_z));
+    }
+    if cancelled(){return Err(Error::Cancelled);}
+    Ok(Toolpath {
+        start: Point3{x:origin.x,y:origin.y,z:setup.clearance_z},
+        moves,depth_passes:passes,rows_per_pass:1,
+    })
+}
+
 /// Zigzag pocket of a bounded rectangle using a centre-cutting flat tool.
 ///
 /// The raster spans cutter-center bounds. Sharp internal corners are not
@@ -592,6 +722,51 @@ mod tests {
             }
         );
         lateral_rapids_at_clearance(&path, setup.clearance_z);
+    }
+
+    #[test]
+    fn polygon_profile_offsets_and_reverses_non_rectangular_contours() {
+        let (setup,tool,cut)=fixture();
+        let shape=[
+            DrillPoint{x:10.0,y:10.0},
+            DrillPoint{x:30.0,y:10.0},
+            DrillPoint{x:33.0,y:20.0},
+            DrillPoint{x:12.0,y:23.0},
+        ];
+        let outside=polygon_contour_with_cancel(setup,tool,cut,&shape,ContourSide::Outside,ContourDirection::CounterClockwise,||false).unwrap();
+        let inside=polygon_contour_with_cancel(setup,tool,cut,&shape,ContourSide::Inside,ContourDirection::Clockwise,||false).unwrap();
+        assert_eq!(outside.moves.len(),14);
+        assert_eq!(inside.moves.len(),14);
+        assert!(outside.start.x<shape[0].x);
+        assert!(outside.start.y<shape[0].y);
+        assert!(inside.start.x>shape[0].x);
+        assert!(inside.start.y>shape[0].y);
+        assert_eq!(outside.moves[5].to.x,outside.start.x);
+        assert_eq!(inside.moves[5].to.y,inside.start.y);
+        assert_ne!(outside.moves[2].to.x,inside.moves[2].to.x);
+        lateral_rapids_at_clearance(&outside,setup.clearance_z);
+        lateral_rapids_at_clearance(&inside,setup.clearance_z);
+    }
+    #[test]
+    fn polygon_profile_rejects_crossings_invalid_offsets_and_cancellation() {
+        let (setup,tool,cut)=fixture();
+        let bow=[
+            DrillPoint{x:10.0,y:10.0},DrillPoint{x:30.0,y:20.0},
+            DrillPoint{x:10.0,y:20.0},DrillPoint{x:30.0,y:10.0},
+        ];
+        assert_eq!(polygon_contour_with_cancel(setup,tool,cut,&bow,ContourSide::Outside,ContourDirection::Clockwise,||false).unwrap_err(),Error::InvalidBounds);
+        let bad=[
+            DrillPoint{x:-1.0,y:5.0},DrillPoint{x:20.0,y:5.0},
+            DrillPoint{x:20.0,y:20.0},
+        ];
+        assert_eq!(polygon_contour_with_cancel(setup,tool,cut,&bad,ContourSide::Outside,ContourDirection::Clockwise,||false).unwrap_err(),Error::InvalidBounds);
+        let valid=[
+            DrillPoint{x:10.0,y:10.0},DrillPoint{x:30.0,y:10.0},
+            DrillPoint{x:30.0,y:20.0},DrillPoint{x:10.0,y:20.0},
+        ];
+        assert_eq!(polygon_contour_with_cancel(setup,tool,cut,&valid,ContourSide::Inside,ContourDirection::Clockwise,||true).unwrap_err(),Error::Cancelled);
+        let large=FlatTool{diameter:40.0,..tool};
+        assert_eq!(polygon_contour_with_cancel(setup,large,cut,&valid,ContourSide::Inside,ContourDirection::Clockwise,||false).unwrap_err(),Error::InvalidBounds);
     }
 
     #[test]
