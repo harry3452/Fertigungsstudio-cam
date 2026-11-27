@@ -252,7 +252,10 @@ pub(super) fn calculate(
 
 // Header 14 numbers then 2*N planar coordinates, with N in header slot 13.
 fn calculate_polygon(args: &[f64], cancelled: impl FnMut() -> bool) -> Result<String, String> {
-    if args.len() < 20 || args.iter().any(|v| !v.is_finite()) {
+    if args.len() < 20 {
+        return Err("InvalidNumberCount".into());
+    }
+    if args.iter().any(|v| !v.is_finite()) {
         return Err("InvalidNumbers".into());
     }
     let count = args[13];
