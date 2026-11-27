@@ -32,12 +32,13 @@ function loadCore(d){
 demoButton.onclick=()=>{try{loadCore(JSON.parse(document.getElementById('rust-demo-data').textContent));}catch(e){toast(e.message);}};
 picker.onchange=async()=>{const file=picker.files[0];if(!file)return;try{if(file.size>12000000)throw Error('Datei zu groß (maximal 12 MB).');const d=JSON.parse(await file.text());loadCore(d);}catch(e){toast('Bahn nicht geladen: '+e.message);}picker.value='';};
 function dims(d){return d.stock.max.map((v,i)=>v-d.stock.min[i]).join(' × ');}
+globalThis.FertigungsstudioToolpath={get:()=>coreData,clear:()=>{if(coreData)returnButton.click();}};
 returnButton.onclick=()=>{coreData=null;coreBadge.textContent='';returnButton.hidden=true;$('editOperation').disabled=false;selectOperation(selected);document.querySelector('.panel h2').textContent='Demoteil · Trägerplatte';sidebar.querySelector('p').textContent=originalStockText;sidebar.querySelectorAll('.tree,.tools,.setup').forEach(e=>e.hidden=false);summary.hidden=true;document.querySelector('.legend').firstElementChild.lastChild.textContent='Beispielbahn';$('connectionLabel').textContent='Bedienentwurf · illustrative Bahnen';resize();};
 // Operation selection returns explicitly to the old illustrative part.
 document.querySelectorAll('[data-operation],.op').forEach(b=>b.addEventListener('click',()=>{if(coreData)returnButton.click();}));
 const originalMakePath=makePath;makePath=function(){if(!coreData)originalMakePath();};
 draw=function(){
-  if(!coreData){originalDraw();return;}
+  if(!coreData){originalDraw();const studioProgress=document.getElementById('studioProgress');if(studioProgress)studioProgress.value=Math.round(progress*1000);return;}
   const d=coreData,w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);
   const center=d.stock.min.map((v,i)=>(v+d.stock.max[i])/2);
   const scale=100/Math.max(...d.stock.max.map((v,i)=>v-d.stock.min[i]),d.clearance_z-d.stock.min[2],1);
@@ -49,5 +50,6 @@ draw=function(){
   const i=Math.min(moves.length-1,Math.floor(end));const a=i?moves[i-1].to:d.start,b=moves[i].to,t=Math.min(1,end-i);const tip=map(a.map((v,j)=>v+(b[j]-v)*t));
   const toolMode=studio?.toolVisibility()||'full';if(toolMode!=='off'){const tool=studio?.selectedTool()||null;const total=Math.min(140,Math.max(d.tool_diameter,Number(tool?.totalLength)||35)*scale),cut=Math.min(total,Math.max(d.tool_diameter,Number(tool?.cutLength)||d.tool_diameter)*scale);const diameter=Math.max(2,d.tool_diameter*scale);line(tip,point(tip.x,tip.y,tip.z+cut),'#68dcb6',diameter);if(toolMode==='full'){line(point(tip.x,tip.y,tip.z+cut),point(tip.x,tip.y,tip.z+total),'#c4d5e1',diameter);if(!studio||studio.showHolder()){const holderWidth=diameter*1.7;line(point(tip.x,tip.y,tip.z+total),point(tip.x,tip.y,tip.z+total+Math.max(10,12*scale)),'#6f8b9a',holderWidth);}}}
   $('progressText').textContent=Math.round(progress*100)+' % · Rust-Bahn';
+  const studioProgress=document.getElementById('studioProgress');if(studioProgress)studioProgress.value=Math.round(progress*1000);
   coreBadge.textContent=moves.length>5000?moves.length+' Bewegungen · Anzeige: erste 5000':moves.length+' Bewegungen';
 };

@@ -118,6 +118,9 @@ function persist(fields){
  if(!op||op.kind!=='facing')throw Error('Planfräsen ist nicht mehr ausgewählt.');
  // Validate stock, geometry and depth even while the user has not entered feeds.
  model.prepare(p,t,{...fields,cuttingFeed:1,plungeFeed:1});
+ for(const [label,value] of [['Schnittvorschub',fields.cuttingFeed],['Eintauchvorschub',fields.plungeFeed]]){
+  if(value!==''&&(!Number.isFinite(Number(value))||Number(value)<=0))throw Error(label+' muss positiv sein oder leer bleiben.');
+ }
  op.facing={
   toolId:t.id,
   depth:Number(fields.depth),stepdown:Number(fields.stepdown),
@@ -160,6 +163,7 @@ async function calculate(){
   if(typeof loadCore!=='function')throw Error('Rust-Werkzeugbahnansicht nicht geladen.');
   loadCore(result);
   studio.enterSimulation();
+  activeController=null; // Successful response must not trigger cancellation on dialog close.
   studio.closeDialog();
   studio.status('Planfräsen berechnet: '+result.moves.length+' Bewegungen, '+
    result.depth_passes+' Tiefenlagen, '+result.rows_per_pass+

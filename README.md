@@ -24,6 +24,8 @@ Im **Datei-Menü** lassen sich Demo-Projekte als JSON exportieren/importieren un
 
 Die **Werkzeugliste** verwaltet Fräs- und Drehwerkzeugformen, Geometriedaten, frei benannte Halter und Materialprofile mit Schnittgeschwindigkeit, Vorschub und Zustellung. Die Drehzahl- und Vorschubberechnung ist informativ, nicht als Bearbeitungsempfehlung geprüft. Eine ausgewählte STEP/STL/IGES-Halter- oder Bauteildatei wird bisher **nur dem Namen nach vorgemerkt**; ein echter 3D-CAD-Import fehlt. Die Werkzeug-/Materialbibliothek wird – wenn Browser-Speicherung erlaubt ist – im Browser lokal gehalten und gehört auch zu exportierten Demo-Projekten.
 
+**Erstes funktionsfähiges Planfräsen:** Im lokalen Rust-Livebetrieb können jetzt Rohteil und ein geeignetes Werkzeug aus der neuen Oberfläche ausgewählt, Abtragstiefe, Zustellungen, freie Sicherheitshöhe und Vorschübe eingegeben sowie eine echte neutrale Planfräs-Werkzeugbahn berechnet werden. Ergebnis: Tiefenlagen, Bahnanzahl und Bewegungen in der Simulation, zusätzlich als **Bahn-JSON** exportierbar (kein NC-Code). Auch eine gespeicherte freie Nullpunkt-/Achsausrichtung wird noch nicht auf die Bahn transformiert. [Bedienung und Grenzen](docs/facing-workflow.md).
+
 **Sim** schaltet bei Rust-Bahndaten Schnitt-, Eilgang- und Z-An-/Abfahrbewegungen sowie Werkzeug-/Halterdarstellung ein und aus. Geometrie und Halter sind dabei nur schematisch; es gibt keinen geprüften Materialabtrag oder Kollisionsnachweis. Die ältere Bedienoberfläche bleibt intern als Fallback vorhanden.
 
 Für eine reale Rust-Berechnung der vier unterstützten rechteckigen Verfahren die lokale Vorschau starten und oben **Fräsen → Planfräsen / Außenkontur / Taschenfräsen / Bohren** wählen. Beim Öffnen der HTML-Datei allein bleiben die Bahnen illustrativ.

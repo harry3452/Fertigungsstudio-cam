@@ -422,12 +422,13 @@ function loadCore(d){
 demoButton.onclick=()=>{try{loadCore(JSON.parse(document.getElementById('rust-demo-data').textContent));}catch(e){toast(e.message);}};
 picker.onchange=async()=>{const file=picker.files[0];if(!file)return;try{if(file.size>12000000)throw Error('Datei zu groß (maximal 12 MB).');const d=JSON.parse(await file.text());loadCore(d);}catch(e){toast('Bahn nicht geladen: '+e.message);}picker.value='';};
 function dims(d){return d.stock.max.map((v,i)=>v-d.stock.min[i]).join(' × ');}
+globalThis.FertigungsstudioToolpath={get:()=>coreData,clear:()=>{if(coreData)returnButton.click();}};
 returnButton.onclick=()=>{coreData=null;coreBadge.textContent='';returnButton.hidden=true;$('editOperation').disabled=false;selectOperation(selected);document.querySelector('.panel h2').textContent='Demoteil · Trägerplatte';sidebar.querySelector('p').textContent=originalStockText;sidebar.querySelectorAll('.tree,.tools,.setup').forEach(e=>e.hidden=false);summary.hidden=true;document.querySelector('.legend').firstElementChild.lastChild.textContent='Beispielbahn';$('connectionLabel').textContent='Bedienentwurf · illustrative Bahnen';resize();};
 // Operation selection returns explicitly to the old illustrative part.
 document.querySelectorAll('[data-operation],.op').forEach(b=>b.addEventListener('click',()=>{if(coreData)returnButton.click();}));
 const originalMakePath=makePath;makePath=function(){if(!coreData)originalMakePath();};
 draw=function(){
-  if(!coreData){originalDraw();return;}
+  if(!coreData){originalDraw();const studioProgress=document.getElementById('studioProgress');if(studioProgress)studioProgress.value=Math.round(progress*1000);return;}
   const d=coreData,w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);
   const center=d.stock.min.map((v,i)=>(v+d.stock.max[i])/2);
   const scale=100/Math.max(...d.stock.max.map((v,i)=>v-d.stock.min[i]),d.clearance_z-d.stock.min[2],1);
@@ -439,6 +440,7 @@ draw=function(){
   const i=Math.min(moves.length-1,Math.floor(end));const a=i?moves[i-1].to:d.start,b=moves[i].to,t=Math.min(1,end-i);const tip=map(a.map((v,j)=>v+(b[j]-v)*t));
   const toolMode=studio?.toolVisibility()||'full';if(toolMode!=='off'){const tool=studio?.selectedTool()||null;const total=Math.min(140,Math.max(d.tool_diameter,Number(tool?.totalLength)||35)*scale),cut=Math.min(total,Math.max(d.tool_diameter,Number(tool?.cutLength)||d.tool_diameter)*scale);const diameter=Math.max(2,d.tool_diameter*scale);line(tip,point(tip.x,tip.y,tip.z+cut),'#68dcb6',diameter);if(toolMode==='full'){line(point(tip.x,tip.y,tip.z+cut),point(tip.x,tip.y,tip.z+total),'#c4d5e1',diameter);if(!studio||studio.showHolder()){const holderWidth=diameter*1.7;line(point(tip.x,tip.y,tip.z+total),point(tip.x,tip.y,tip.z+total+Math.max(10,12*scale)),'#6f8b9a',holderWidth);}}}
   $('progressText').textContent=Math.round(progress*100)+' % · Rust-Bahn';
+  const studioProgress=document.getElementById('studioProgress');if(studioProgress)studioProgress.value=Math.round(progress*1000);
   coreBadge.textContent=moves.length>5000?moves.length+' Bewegungen · Anzeige: erste 5000':moves.length+' Bewegungen';
 };
 </script><script>// Always-visible operation launcher shared by the offline prototype and
@@ -507,7 +509,7 @@ if(globalThis.FertigungsstudioStudio)return;
 const host=document.createElement('div');
 host.className='studio-shell';
 host.id='studioShell';
-host.innerHTML='<div class="studio-ribbon"><nav class="studio-menus" id="studioMenus" aria-label="Fertigungsfunktionen"></nav><div class="studio-theme"><small>DESIGN</small><div><button type="button" data-theme="light" aria-pressed="false" aria-label="Hell">☀</button><button type="button" data-theme="dark" aria-pressed="true" aria-label="Dunkel">☾</button></div></div></div><div class="studio-main"><aside class="studio-tree" aria-label="Bearbeitungsbaum"><h2>BEARBEITUNGSBAUM</h2><div class="studio-project" id="studioProject"></div><h3>Bearbeitungen</h3><div id="studioOperations"></div></aside><div class="studio-scene" id="studioScene"><div id="studioSim" class="studio-sim-controls" hidden><button id="studioPlay" type="button">▶ Start</button><input id="studioProgress" type="range" min="0" max="1000" value="0" aria-label="Simulationsposition"><label><input id="studioCut" type="checkbox" checked> <span style="color:#65e2b4">●</span> Schnitt</label><label><input id="studioRapid" type="checkbox" checked> <span style="color:#ee9191">●</span> Eilgang</label><label><input id="studioLead" type="checkbox" checked> <span style="color:#e9bf6f">●</span> An-/Abfahrt (Z)</label><label>Werkzeug <select id="studioToolMode"><option value="full">Komplett</option><option value="cut">Nur Schneide</option><option value="off">Ausblenden</option></select></label><label><input id="studioHolder" type="checkbox" checked> Halter</label><button id="studioShowAll" type="button">Alle Bahnen</button><button id="studioHideAll" type="button">Keine Bahnen</button></div></div></div><div class="studio-info" id="studioInfo" role="status">Bedienentwurf: keine NC-Ausgabe, keine Kollisionsprüfung.</div>';
+host.innerHTML='<div class="studio-ribbon"><nav class="studio-menus" id="studioMenus" aria-label="Fertigungsfunktionen"></nav><div class="studio-theme"><small>DESIGN</small><div><button type="button" data-theme="light" aria-pressed="false" aria-label="Hell">☀</button><button type="button" data-theme="dark" aria-pressed="true" aria-label="Dunkel">☾</button></div></div></div><div class="studio-main"><aside class="studio-tree" aria-label="Bearbeitungsbaum"><h2>BEARBEITUNGSBAUM</h2><div class="studio-project" id="studioProject"></div><h3>Bearbeitungen</h3><div id="studioOperations"></div></aside><div class="studio-scene" id="studioScene"><div id="studioSim" class="studio-sim-controls" hidden><button id="studioPlay" type="button">▶ Start</button><input id="studioProgress" type="range" min="0" max="1000" value="0" aria-label="Simulationsposition"><label><input id="studioCut" type="checkbox" checked> <span style="color:#65e2b4">●</span> Schnitt</label><label><input id="studioRapid" type="checkbox" checked> <span style="color:#ee9191">●</span> Eilgang</label><label><input id="studioLead" type="checkbox" checked> <span style="color:#e9bf6f">●</span> An-/Abfahrt (Z)</label><label>Werkzeug <select id="studioToolMode"><option value="full">Komplett</option><option value="cut">Nur Schneide</option><option value="off">Ausblenden</option></select></label><label><input id="studioHolder" type="checkbox" checked> Halter</label><button id="studioShowAll" type="button">Alle Bahnen</button><button id="studioHideAll" type="button">Keine Bahnen</button><button id="studioExportPath" type="button" title="Nur neutrale Bewegungsdaten, kein G-Code">Bahn-JSON</button></div></div></div><div class="studio-info" id="studioInfo" role="status">Bedienentwurf: keine NC-Ausgabe, keine Kollisionsprüfung.</div>';
 document.body.insertBefore(host,document.body.firstChild);
 const scene=document.querySelector('.layout .view');
 if(!scene)throw Error('Legacy CAM scene missing');
@@ -644,6 +646,9 @@ function launch(kind){
 }
 function selectOp(id,open=false){
  const op=project.operations.find(x=>x.id===id);if(!op)return;
+ // The renderer currently holds exactly one neutral path. Do not show the
+ // previous operation's path under a newly selected operation.
+ if(id!==current)globalThis.FertigungsstudioToolpath?.clear();
  current=id;op.visible=true;changed();render();
  if(open)launch(op.kind);
  else status(op.name+' ausgewählt. Berechnung über Menü oder Live-Bearbeitung.');
@@ -942,6 +947,12 @@ $('studioPlay').onclick=()=>$('play').click();
 $('studioProgress').oninput=e=>{$('progress').value=e.target.value;$('progress').dispatchEvent(new Event('input',{bubbles:true}))};
 $('studioShowAll').onclick=()=>{project.operations.forEach(o=>o.visible=true);changed();render()};
 $('studioHideAll').onclick=()=>{project.operations.forEach(o=>o.visible=false);changed();render()};
+$('studioExportPath').onclick=()=>{
+ const path=globalThis.FertigungsstudioToolpath?.get();
+ if(!path){status('Noch keine berechnete Bahn vorhanden. Zuerst Planfräsen berechnen.');return;}
+ download('fertigungsstudio-werkzeugbahn-neutral.json',path);
+ status('Neutrale Werkzeugbahn als JSON exportiert. Kein NC-/G-Code.');
+};
 document.addEventListener('pointerdown',e=>{
  if(!pop.hidden&&!pop.contains(e.target)&&!e.target.closest('.studio-menu-tile'))closeMenu();
 });
@@ -1163,6 +1174,9 @@ function persist(fields){
  if(!op||op.kind!=='facing')throw Error('Planfräsen ist nicht mehr ausgewählt.');
  // Validate stock, geometry and depth even while the user has not entered feeds.
  model.prepare(p,t,{...fields,cuttingFeed:1,plungeFeed:1});
+ for(const [label,value] of [['Schnittvorschub',fields.cuttingFeed],['Eintauchvorschub',fields.plungeFeed]]){
+  if(value!==''&&(!Number.isFinite(Number(value))||Number(value)<=0))throw Error(label+' muss positiv sein oder leer bleiben.');
+ }
  op.facing={
   toolId:t.id,
   depth:Number(fields.depth),stepdown:Number(fields.stepdown),
@@ -1205,6 +1219,7 @@ async function calculate(){
   if(typeof loadCore!=='function')throw Error('Rust-Werkzeugbahnansicht nicht geladen.');
   loadCore(result);
   studio.enterSimulation();
+  activeController=null; // Successful response must not trigger cancellation on dialog close.
   studio.closeDialog();
   studio.status('Planfräsen berechnet: '+result.moves.length+' Bewegungen, '+
    result.depth_passes+' Tiefenlagen, '+result.rows_per_pass+
