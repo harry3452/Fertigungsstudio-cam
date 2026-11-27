@@ -1,0 +1,10 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),vm=require('node:vm');
+const read=n=>fs.readFileSync(require('node:path').join(__dirname,n),'utf8');
+const script=read('studio-shell.js'),html=read('fertigungsstudio-kacheln.html');
+new vm.Script(script);
+for(const word of ['Datei','Setup','Werkzeugliste','Fräsen','3D Fräsen','Drehen','Laser','Sim','Post','Materialverwaltung','Programm beenden','origin-x','origin-y','origin-z','origin-reverse','save-stock','save-origin','tool-holder','tool-vc','tool-feed','studioRapid','studioCut','studioLead'])assert.ok(script.includes(word),'Feature missing '+word);
+for(const word of ['studio-ready','studio-shell','studio-menu-tile','studio-tree','studio-scene'])assert.ok(read('studio-shell.css').includes(word),'Style missing '+word);
+assert.ok(html.includes("host.id='studioShell'"));
+assert.ok(html.includes('FertigungsstudioStudio'));
+assert.ok(html.includes('studio-origin-edge'));
+console.log('Studio shell integration checks passed.');

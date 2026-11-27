@@ -45,9 +45,9 @@ draw=function(){
   const lo=map(d.stock.min),hi=map(d.stock.max);
   box(lo.x,lo.y,lo.z,hi.x,hi.y,hi.z,['#b2c5cf','#6d8797','#839eae']);
   const moves=d.moves,shown=Math.min(moves.length,5000),end=progress*moves.length;
-  if($('paths').checked){for(let i=0;i<shown;i++){const m=moves[i];line(map(i?moves[i-1].to:d.start),map(m.to),m.motion==='rapid'?'#e7b76399':i<end?'#a5ffcf':'#50d7b3',1.7,m.motion==='rapid'?[4,5]:[]);}}
+  const studio=globalThis.FertigungsstudioStudio;if($('paths').checked&&(!studio||studio.activeVisible())){for(let i=0;i<shown;i++){const m=moves[i],previous=i?moves[i-1].to:d.start,category=m.motion==='rapid'?'rapid':m.to[2]!==previous[2]?'lead':'cut';if(studio&&!studio.allowMove(category))continue;const color=category==='rapid'?'#f08b8b':category==='lead'?'#e9bf6f':i<end?'#a5ffcf':'#50d7b3';line(map(previous),map(m.to),color,category==='cut'?2.2:1.7,category==='rapid'?[4,5]:[]);}}
   const i=Math.min(moves.length-1,Math.floor(end));const a=i?moves[i-1].to:d.start,b=moves[i].to,t=Math.min(1,end-i);const tip=map(a.map((v,j)=>v+(b[j]-v)*t));
-  line(tip,point(tip.x,tip.y,tip.z+24),'#c4d5e1',Math.max(2,Math.min(14,d.tool_diameter*scale)));
+  const toolMode=studio?.toolVisibility()||'full';if(toolMode!=='off'){const tool=studio?.selectedTool()||null;const total=Math.min(140,Math.max(d.tool_diameter,Number(tool?.totalLength)||35)*scale),cut=Math.min(total,Math.max(d.tool_diameter,Number(tool?.cutLength)||d.tool_diameter)*scale);const diameter=Math.max(2,d.tool_diameter*scale);line(tip,point(tip.x,tip.y,tip.z+cut),'#68dcb6',diameter);if(toolMode==='full'){line(point(tip.x,tip.y,tip.z+cut),point(tip.x,tip.y,tip.z+total),'#c4d5e1',diameter);if(!studio||studio.showHolder()){const holderWidth=diameter*1.7;line(point(tip.x,tip.y,tip.z+total),point(tip.x,tip.y,tip.z+total+Math.max(10,12*scale)),'#6f8b9a',holderWidth);}}}
   $('progressText').textContent=Math.round(progress*100)+' % · Rust-Bahn';
   coreBadge.textContent=moves.length>5000?moves.length+' Bewegungen · Anzeige: erste 5000':moves.length+' Bewegungen';
 };
