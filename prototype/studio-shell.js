@@ -56,6 +56,7 @@ const defaults=()=>({
 });
 const libraryKey='fertigungsstudio-studio-library-v1';
 let project=defaults(),current=1,dirty=false,simulation=false,toolEdit=null,matEdit=null,matProfile=1,selectedTool=1;
+let facingLauncher=null;
 try{
  const lib=JSON.parse(localStorage.getItem(libraryKey)||'null');
  if(lib&&Array.isArray(lib.materials)&&Array.isArray(lib.tools)&&lib.materials.length&&lib.tools.length){project.materials=lib.materials;project.tools=lib.tools;project.stock.materialId=project.materials[0].id;}
@@ -119,6 +120,7 @@ for(const name of ['Datei','Setup','Werkzeugliste','Fräsen','3D Fräsen','Drehe
  };
 }
 function launch(kind){
+ if(kind==='facing'&&typeof facingLauncher==='function'){facingLauncher();return;}
  const index={facing:0,pocket:1,contour:2,drilling:3}[kind];
  if(index==null)return;
  const card=document.querySelector('[data-cam-operation="'+kind+'"]');
@@ -446,11 +448,19 @@ document.addEventListener('pointerdown',e=>{
 document.addEventListener('keydown',e=>{if(e.key==='Escape')closeMenu()});
 $('studioMenus').onscroll=closeMenu;
 globalThis.FertigungsstudioStudio={
+ setFacingLauncher(fn){if(typeof fn!=='function')throw Error('Ungültiger Planfräs-Dialog');facingLauncher=fn;},
+ currentOperation:selectedOp,
+ selectedTool:()=>project.tools.find(t=>t.id===selectedTool)||null,
+ selectTool(id){if(project.tools.some(t=>t.id===id)){selectedTool=id;render();}},
+ enterSimulation(){simulation=true;render();},
+ showDialog,
+ closeDialog,
+ status,
+ touch:changed,
  allowMove:(kind)=>!!$('studio'+({cut:'Cut',rapid:'Rapid',lead:'Lead'}[kind]||'Cut')).checked,
  activeVisible:()=>!!selectedOp()?.visible,
  toolVisibility:()=>simulation?$('studioToolMode').value:'full',
  showHolder:()=>!simulation||$('studioHolder').checked,
- selectedTool:()=>project.tools.find(t=>t.id===selectedTool)||null,
  project:()=>project,
  render,
 };

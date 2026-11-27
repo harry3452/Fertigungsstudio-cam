@@ -55,13 +55,15 @@ const coreValidator=fs.readFileSync(path.join(__dirname,'core-path-data.cjs'),'u
 const corePreview=fs.readFileSync(path.join(__dirname,'core-preview.js'),'utf8');
 const camWorkbenchJs=fs.readFileSync(path.join(__dirname,'workbench.js'),'utf8');
 const studioJs=fs.readFileSync(path.join(__dirname,'studio-shell.js'),'utf8');
+const facingModel=fs.readFileSync(path.join(__dirname,'studio-facing-model.cjs'),'utf8');
+const facingUi=fs.readFileSync(path.join(__dirname,'studio-facing.js'),'utf8');
 const demoJson=fs.readFileSync(path.join(__dirname,'rust-facing-demo.json'),'utf8').replace(/^\uFEFF/,'');
 JSON.parse(demoJson);
 html=html.replace('</html>',dialogs+extra+'<script id="rust-demo-data" type="application/json">'+demoJson+'</script><script>'+coreValidator+'</script><script>'+corePreview+'</script><script>'+camWorkbenchJs+'</script></html>');
-html=html.replace('</html>','<script>'+studioJs+'</script></html>');
+html=html.replace('</html>','<script>'+studioJs+'</script><script>'+facingModel+'</script><script>'+facingUi+'</script></html>');
 fs.writeFileSync(path.join(__dirname,'fertigungsstudio-kacheln.html'),html,'utf8');
 for(const match of html.matchAll(/<script>([\s\S]*?)<\/script>/g)) new (require('vm').Script)(match[1]);
-const legacyHtml=html.replace('<script>'+studioJs+'</script>','');
+const legacyHtml=html.replace('<script>'+studioJs+'</script>','').replace('<script>'+facingModel+'</script>','').replace('<script>'+facingUi+'</script>','');
 const ids=[...legacyHtml.matchAll(/\bid="([^"]+)"/g)].map(m=>m[1]);
 if(new Set(ids).size!==ids.length)throw Error('Duplicate IDs');
 for(const match of legacyHtml.matchAll(/\$\('([^']+)'\)/g))if(!ids.includes(match[1]))throw Error('Missing element '+match[1]);

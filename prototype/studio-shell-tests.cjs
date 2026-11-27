@@ -8,4 +8,7 @@ assert.ok(html.includes("host.id='studioShell'"));
 assert.ok(html.includes('FertigungsstudioStudio'));
 assert.ok(html.includes('studio-origin-edge'));
 assert.ok(script.includes('studio-tool-illustration'));assert.ok(script.includes('tool-threadpitch'));assert.ok(script.includes('closeStudio'));assert.ok(script.includes('restoring previous preview'));
+assert.ok(script.includes('setFacingLauncher'));
+assert.ok(html.includes('FertigungsstudioFacingModel'));
+assert.ok(html.includes('Planfräsen · echte Rust-Berechnung'));
 console.log('Studio shell integration checks passed.');
