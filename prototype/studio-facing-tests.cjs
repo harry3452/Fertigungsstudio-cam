@@ -37,7 +37,7 @@ for(const angle of [0,90,180,270])for(const flipped of [false,true]){
  const p=[11,44,25],work=m.toWork(p,f);
  assert.deepEqual(m.fromWork(work,f),p);
  const X=[f.c,f.s,0],Y=[-f.s*(flipped?-1:1),f.c*(flipped?-1:1),0],Z=[0,0,flipped?-1:1];
- const cross=[X[1]*Y[2]-X[2]*Y[1],X[2]*Y[0]-X[0]*Y[2],X[0]*Y[1]-X[1]*Y[0]];
+ const cross=[X[1]*Y[2]-X[2]*Y[1],X[2]*Y[0]-X[0]*Y[2],X[0]*Y[1]-X[1]*Y[0]].map(v=>v===0?0:v);
  assert.deepEqual(cross,Z); // right-handed even for reversed Z
 }
 const frame=m.workFrame(frameProject);
