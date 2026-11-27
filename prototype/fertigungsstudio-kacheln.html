@@ -382,6 +382,32 @@ function startSimulation(){playing=true;progress=0;$('play').textContent='Ⅱ Pa
       prev=m.to;
     }
     if (prev[2]!==d.clearance_z) throw Error('Rückzug am Bahnende fehlt.');
+
+    // WCS metadata is optional but, when present, must mathematically match
+    // the validated local Rust path (including directions and all motions).
+    if(d.work_coordinates!==undefined){
+      const w=d.work_coordinates;
+      if(!w||!['G54','G55','G56','G57','G58','G59'].includes(w.system)
+        ||!point(w.origin_local)||![0,90,180,270].includes(w.rotation_degrees)
+        ||typeof w.reverse_z!=='boolean'||!point(w.start)
+        ||!Array.isArray(w.moves)||w.moves.length!==d.moves.length)
+        throw Error('Ungültige Werkstückkoordinaten.');
+      if(w.origin_local.some((v,i)=>v<d.stock.min[i]||v>d.stock.max[i]))
+        throw Error('Werkstücknullpunkt außerhalb des Rohteils.');
+      const basis={0:[1,0],90:[0,1],180:[-1,0],270:[0,-1]}[w.rotation_degrees],sign=w.reverse_z?-1:1;
+      const transform=p=>{
+        const x=p[0]-w.origin_local[0],y=p[1]-w.origin_local[1],z=p[2]-w.origin_local[2];
+        return [basis[0]*x+basis[1]*y,sign*(-basis[1]*x+basis[0]*y),sign*z];
+      };
+      const close=(a,b)=>a.every((v,j)=>Math.abs(v-b[j])<1e-7);
+      if(!close(w.start,transform(d.start)))throw Error('Werkstückstartpunkt stimmt nicht.');
+      for(let i=0;i<d.moves.length;i++){
+        const m=w.moves[i];
+        if(!m||!point(m.to)||m.motion!==d.moves[i].motion||!close(m.to,transform(d.moves[i].to)))
+          throw Error('Werkstückbewegung stimmt nicht.');
+      }
+    }
+
     // Return only the understood fields; file values are never inserted as markup.
     return d;
   }
@@ -428,7 +454,7 @@ returnButton.onclick=()=>{coreData=null;coreBadge.textContent='';returnButton.hi
 document.querySelectorAll('[data-operation],.op').forEach(b=>b.addEventListener('click',()=>{if(coreData)returnButton.click();}));
 const originalMakePath=makePath;makePath=function(){if(!coreData)originalMakePath();};
 draw=function(){
-  if(!coreData){originalDraw();const studioProgress=document.getElementById('studioProgress');if(studioProgress)studioProgress.value=Math.round(progress*1000);return;}
+  if(!coreData){const wcsReadout=document.getElementById('studioWcsReadout');if(wcsReadout)wcsReadout.textContent='WCS: Noch keine berechnete Bahn';originalDraw();const studioProgress=document.getElementById('studioProgress');if(studioProgress)studioProgress.value=Math.round(progress*1000);return;}
   const d=coreData,w=canvas.clientWidth,h=canvas.clientHeight;ctx.clearRect(0,0,w,h);
   const center=d.stock.min.map((v,i)=>(v+d.stock.max[i])/2);
   const scale=100/Math.max(...d.stock.max.map((v,i)=>v-d.stock.min[i]),d.clearance_z-d.stock.min[2],1);
@@ -438,6 +464,17 @@ draw=function(){
   const moves=d.moves,shown=Math.min(moves.length,5000),end=progress*moves.length;
   const studio=globalThis.FertigungsstudioStudio;if($('paths').checked&&(!studio||studio.activeVisible())){for(let i=0;i<shown;i++){const m=moves[i],previous=i?moves[i-1].to:d.start,category=m.motion==='rapid'?'rapid':m.to[2]!==previous[2]?'lead':'cut';if(studio&&!studio.allowMove(category))continue;const color=category==='rapid'?'#f08b8b':category==='lead'?'#e9bf6f':i<end?'#a5ffcf':'#50d7b3';line(map(previous),map(m.to),color,category==='cut'?2.2:1.7,category==='rapid'?[4,5]:[]);}}
   const i=Math.min(moves.length-1,Math.floor(end));const a=i?moves[i-1].to:d.start,b=moves[i].to,t=Math.min(1,end-i);const tip=map(a.map((v,j)=>v+(b[j]-v)*t));
+
+  const wcsReadout=document.getElementById('studioWcsReadout');
+  if(wcsReadout){
+   const w=d.work_coordinates;
+   if(w&&Array.isArray(w.moves)&&w.moves.length===moves.length){
+    const v0=i?w.moves[i-1].to:w.start,v1=w.moves[i].to;
+    const xyz=v0.map((v,j)=>v+(v1[j]-v)*t);
+    wcsReadout.textContent=w.system+' · X '+xyz[0].toFixed(3)+'  Y '+xyz[1].toFixed(3)+'  Z '+xyz[2].toFixed(3)+' mm';
+   }else wcsReadout.textContent='WCS: Nur rohe Bahnkoordinaten';
+  }
+
   const toolMode=studio?.toolVisibility()||'full';if(toolMode!=='off'){const tool=studio?.selectedTool()||null;const total=Math.min(140,Math.max(d.tool_diameter,Number(tool?.totalLength)||35)*scale),cut=Math.min(total,Math.max(d.tool_diameter,Number(tool?.cutLength)||d.tool_diameter)*scale);const diameter=Math.max(2,d.tool_diameter*scale);line(tip,point(tip.x,tip.y,tip.z+cut),'#68dcb6',diameter);if(toolMode==='full'){line(point(tip.x,tip.y,tip.z+cut),point(tip.x,tip.y,tip.z+total),'#c4d5e1',diameter);if(!studio||studio.showHolder()){const holderWidth=diameter*1.7;line(point(tip.x,tip.y,tip.z+total),point(tip.x,tip.y,tip.z+total+Math.max(10,12*scale)),'#6f8b9a',holderWidth);}}}
   $('progressText').textContent=Math.round(progress*100)+' % · Rust-Bahn';
   const studioProgress=document.getElementById('studioProgress');if(studioProgress)studioProgress.value=Math.round(progress*1000);
@@ -509,7 +546,7 @@ if(globalThis.FertigungsstudioStudio)return;
 const host=document.createElement('div');
 host.className='studio-shell';
 host.id='studioShell';
-host.innerHTML='<div class="studio-ribbon"><nav class="studio-menus" id="studioMenus" aria-label="Fertigungsfunktionen"></nav><div class="studio-theme"><small>DESIGN</small><div><button type="button" data-theme="light" aria-pressed="false" aria-label="Hell">☀</button><button type="button" data-theme="dark" aria-pressed="true" aria-label="Dunkel">☾</button></div></div></div><div class="studio-main"><aside class="studio-tree" aria-label="Bearbeitungsbaum"><h2>BEARBEITUNGSBAUM</h2><div class="studio-project" id="studioProject"></div><h3>Bearbeitungen</h3><div id="studioOperations"></div></aside><div class="studio-scene" id="studioScene"><div id="studioSim" class="studio-sim-controls" hidden><button id="studioPlay" type="button">▶ Start</button><input id="studioProgress" type="range" min="0" max="1000" value="0" aria-label="Simulationsposition"><label><input id="studioCut" type="checkbox" checked> <span style="color:#65e2b4">●</span> Schnitt</label><label><input id="studioRapid" type="checkbox" checked> <span style="color:#ee9191">●</span> Eilgang</label><label><input id="studioLead" type="checkbox" checked> <span style="color:#e9bf6f">●</span> An-/Abfahrt (Z)</label><label>Werkzeug <select id="studioToolMode"><option value="full">Komplett</option><option value="cut">Nur Schneide</option><option value="off">Ausblenden</option></select></label><label><input id="studioHolder" type="checkbox" checked> Halter</label><button id="studioShowAll" type="button">Alle Bahnen</button><button id="studioHideAll" type="button">Keine Bahnen</button><button id="studioExportPath" type="button" title="Nur neutrale Bewegungsdaten, kein G-Code">Bahn-JSON</button></div></div></div><div class="studio-info" id="studioInfo" role="status">Bedienentwurf: keine NC-Ausgabe, keine Kollisionsprüfung.</div>';
+host.innerHTML='<div class="studio-ribbon"><nav class="studio-menus" id="studioMenus" aria-label="Fertigungsfunktionen"></nav><div class="studio-theme"><small>DESIGN</small><div><button type="button" data-theme="light" aria-pressed="false" aria-label="Hell">☀</button><button type="button" data-theme="dark" aria-pressed="true" aria-label="Dunkel">☾</button></div></div></div><div class="studio-main"><aside class="studio-tree" aria-label="Bearbeitungsbaum"><h2>BEARBEITUNGSBAUM</h2><div class="studio-project" id="studioProject"></div><h3>Bearbeitungen</h3><div id="studioOperations"></div></aside><div class="studio-scene" id="studioScene"><div id="studioSim" class="studio-sim-controls" hidden><button id="studioPlay" type="button">▶ Start</button><input id="studioProgress" type="range" min="0" max="1000" value="0" aria-label="Simulationsposition"><label><input id="studioCut" type="checkbox" checked> <span style="color:#65e2b4">●</span> Schnitt</label><label><input id="studioRapid" type="checkbox" checked> <span style="color:#ee9191">●</span> Eilgang</label><label><input id="studioLead" type="checkbox" checked> <span style="color:#e9bf6f">●</span> An-/Abfahrt (Z)</label><label>Werkzeug <select id="studioToolMode"><option value="full">Komplett</option><option value="cut">Nur Schneide</option><option value="off">Ausblenden</option></select></label><label><input id="studioHolder" type="checkbox" checked> Halter</label><button id="studioShowAll" type="button">Alle Bahnen</button><button id="studioHideAll" type="button">Keine Bahnen</button><button id="studioExportPath" type="button" title="Nur neutrale Bewegungsdaten, kein G-Code">Bahn-JSON</button><span id="studioWcsReadout" class="studio-pill" aria-live="off">WCS: Noch keine berechnete Bahn</span></div></div></div><div class="studio-info" id="studioInfo" role="status">Bedienentwurf: keine NC-Ausgabe, keine Kollisionsprüfung.</div>';
 document.body.insertBefore(host,document.body.firstChild);
 const scene=document.querySelector('.layout .view');
 if(!scene)throw Error('Legacy CAM scene missing');
@@ -1050,7 +1087,48 @@ function prepare(project,tool,form){
    settings:{toolId:numberTool,depth,stepdown,stepover,clearance,cuttingFeed,plungeFeed},
  };
 }
-const api={eligible,recommendedFeed,prepare};
+
+/** Workpiece coordinates of raw-stock-local points. This is numerical only. */
+function workFrame(project){
+ if(!project||!project.stock)throw Error('Kein Rohteil für Koordinatentransformation.');
+ const stock=project.stock;
+ const dimensions=[positive(stock.x,'Rohteil X'),positive(stock.y,'Rohteil Y'),positive(stock.z,'Rohteil Z')];
+ const origin=project.origin||{x:0,y:0,z:dimensions[2],rotation:0,reverseZ:false};
+ const position=[number(origin.x,'Nullpunkt X'),number(origin.y,'Nullpunkt Y'),number(origin.z,'Nullpunkt Z')];
+ if(position.some((v,i)=>v<0||v>dimensions[i]))throw Error('Nullpunkt liegt außerhalb des Rohteils.');
+ const rotation=number(origin.rotation??0,'Achsdrehung');
+ if(![0,90,180,270].includes(rotation))throw Error('Nur XY-Achsdrehungen 0°, 90°, 180° und 270° sind unterstützt.');
+ if(typeof(origin.reverseZ??false)!=='boolean')throw Error('Ungültige Z-Richtung.');
+ const system=project.wcs||'G54';
+ if(!['G54','G55','G56','G57','G58','G59'].includes(system))throw Error('Ungültiges Werkstücknullpunktsystem.');
+ const [c,s]={0:[1,0],90:[0,1],180:[-1,0],270:[0,-1]}[rotation];
+ return {system,origin_local:position,rotation_degrees:rotation,reverse_z:!!origin.reverseZ,c,s};
+}
+function toWork(point,frame){
+ if(!Array.isArray(point)||point.length!==3||point.some(v=>typeof v!=='number'||!Number.isFinite(v)))throw Error('Ungültige Rohteilkoordinate.');
+ const [ox,oy,oz]=frame.origin_local,dx=point[0]-ox,dy=point[1]-oy,dz=point[2]-oz;
+ const sign=frame.reverse_z?-1:1;
+ const p=[frame.c*dx+frame.s*dy,sign*(-frame.s*dx+frame.c*dy),sign*dz].map(v=>v===0?0:v);
+ if(p.some(v=>!Number.isFinite(v)||Math.abs(v)>1_000_000))throw Error('Transformierte Koordinate außerhalb des zulässigen Bereichs.');
+ return p;
+}
+function fromWork(point,frame){
+ if(!Array.isArray(point)||point.length!==3||point.some(v=>typeof v!=='number'||!Number.isFinite(v)))throw Error('Ungültige Werkstückkoordinate.');
+ const [ox,oy,oz]=frame.origin_local,sign=frame.reverse_z?-1:1;
+ const dx=frame.c*point[0]-frame.s*sign*point[1],dy=frame.s*point[0]+frame.c*sign*point[1];
+ return [dx+ox,dy+oy,sign*point[2]+oz].map(v=>v===0?0:v);
+}
+function attachWorkCoordinates(path,project){
+ if(!path||!path.stock||!Array.isArray(path.moves)||!Array.isArray(path.start))throw Error('Keine numerische Werkzeugbahn vorhanden.');
+ const d=project.stock,measures=[d.x,d.y,d.z];
+ if(path.stock.min.some(v=>v!==0)||path.stock.max.some((v,i)=>Math.abs(v-measures[i])>1e-7))
+   throw Error('Werkzeugbahn gehört nicht zum eingestellten Rohteil.');
+ const f=workFrame(project);
+ return {...path,work_coordinates:{system:f.system,origin_local:f.origin_local,rotation_degrees:f.rotation_degrees,reverse_z:f.reverse_z,
+   start:toWork(path.start,f),moves:path.moves.map(m=>({to:toWork(m.to,f),motion:m.motion}))}};
+}
+
+const api={eligible,recommendedFeed,prepare,workFrame,toWork,fromWork,attachWorkCoordinates};
 root.FertigungsstudioFacingModel=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);
@@ -1113,6 +1191,8 @@ function countPreview(){
   $('face-count').textContent='Voraussichtlich '+planned.depthPasses+' Tiefenlagen × '+planned.rows+
    ' Querbahnen = '+(planned.depthPasses*planned.rows*4)+' Bewegungen. Start: X'+fmt(planned.start.x)+
    ' / Y0 / Z'+fmt(planned.start.z)+' mm (rohteilbezogen).';
+  const wcs=model.toWork([planned.start.x,0,planned.start.z],model.workFrame(p));
+  $('face-count').textContent+=' Start in '+(p.wcs||'G54')+': X'+fmt(wcs[0])+' / Y'+fmt(wcs[1])+' / Z'+fmt(wcs[2])+' mm.';
  }catch(e){
   $('face-count').textContent=e.message;
  }
@@ -1134,12 +1214,18 @@ function open(){
  const f=(label,id,value,opts='')=>'<label>'+label+'<input id="'+id+'" type="number" step="any" min="0.001" value="'+esc(value)+'" '+opts+'></label>';
  const chooser='<label>Fräswerkzeug aus der Bibliothek<select id="face-tool">'+tools.map(t=>
    '<option value="'+esc(t.id)+'" '+(t.id===chosen?.id?'selected':'')+'>T'+t.id+' · '+esc(t.name)+' · Ø'+fmt(t.diameter)+'</option>').join('')+'</select></label>';
- const warning=(p.origin?.rotation||p.origin?.reverseZ||p.origin?.x||p.origin?.y||p.origin?.z!==stock.z)
-  ?'<p class="studio-error">Achtung: Der im Setup gespeicherte Nullpunkt / die Achsausrichtung wird noch NICHT auf die berechnete Werkzeugbahn transformiert.</p>':'';
+ let wcsText='';
+ try{
+  const frame=model.workFrame(p);
+  wcsText='<p><strong>Werkstücknullpunkt:</strong> '+frame.system+' · X '+fmt(frame.origin_local[0])+
+   ' / Y '+fmt(frame.origin_local[1])+' / Z '+fmt(frame.origin_local[2])+
+   ' mm · XY-Drehung '+frame.rotation_degrees+'° · Z+ '+(frame.reverse_z?'nach unten':'nach oben')+'.</p>';
+ }catch(error){wcsText='<p class="studio-error">Nullpunktfehler: '+esc(error.message)+'</p>';}
+
  studio.showDialog('Planfräsen · echte Rust-Berechnung',
   '<p><strong>Rohteil aus Setup:</strong> '+fmt(stock.x)+' × '+fmt(stock.y)+' × '+fmt(stock.z)+
   ' mm · Material: '+esc(mat?.name||'nicht gefunden')+'. Bearbeitungsrichtung entlang X.</p>'+
-  warning+
+  wcsText+
   '<div class="studio-modal-grid">'+chooser+'</div>'+
   '<p id="face-toolinfo"></p>'+
   '<div class="studio-modal-grid">'+
@@ -1215,15 +1301,16 @@ async function calculate(){
   }
   const result=await response.json();
   if(controller.signal.aborted||sequence!==mine)return;
+  const framed=model.attachWorkCoordinates(result,p);
   // Use the existing strict neutral-toolpath validator; never draw unchecked data.
   if(typeof loadCore!=='function')throw Error('Rust-Werkzeugbahnansicht nicht geladen.');
-  loadCore(result);
+  loadCore(framed);
   studio.enterSimulation();
   activeController=null; // Successful response must not trigger cancellation on dialog close.
   studio.closeDialog();
   studio.status('Planfräsen berechnet: '+result.moves.length+' Bewegungen, '+
    result.depth_passes+' Tiefenlagen, '+result.rows_per_pass+
-   ' Bahnen je Lage. Nur Simulation – keine Maschine/NC-Ausgabe.');
+   ' Bahnen je Lage · '+(p.wcs||'G54')+'-Koordinaten vorhanden. Nur Simulation – keine Maschine/NC-Ausgabe.');
  }catch(e){
   if(controller.signal.aborted){return}
   message(e.name==='AbortError'?'Berechnung abgebrochen.':e.message,true);

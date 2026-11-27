@@ -13,4 +13,8 @@ assert.ok(script.includes('studioExportPath'));
 assert.ok(html.includes('FertigungsstudioToolpath'));
 assert.ok(html.includes('FertigungsstudioFacingModel'));
 assert.ok(html.includes('Planfräsen · echte Rust-Berechnung'));
+assert.ok(html.includes('studioWcsReadout'));
+assert.ok(html.includes('attachWorkCoordinates'));
+assert.ok(html.includes('Ungültige Werkstückkoordinaten'));
+
 console.log('Studio shell integration checks passed.');

@@ -61,7 +61,48 @@ function prepare(project,tool,form){
    settings:{toolId:numberTool,depth,stepdown,stepover,clearance,cuttingFeed,plungeFeed},
  };
 }
-const api={eligible,recommendedFeed,prepare};
+
+/** Workpiece coordinates of raw-stock-local points. This is numerical only. */
+function workFrame(project){
+ if(!project||!project.stock)throw Error('Kein Rohteil für Koordinatentransformation.');
+ const stock=project.stock;
+ const dimensions=[positive(stock.x,'Rohteil X'),positive(stock.y,'Rohteil Y'),positive(stock.z,'Rohteil Z')];
+ const origin=project.origin||{x:0,y:0,z:dimensions[2],rotation:0,reverseZ:false};
+ const position=[number(origin.x,'Nullpunkt X'),number(origin.y,'Nullpunkt Y'),number(origin.z,'Nullpunkt Z')];
+ if(position.some((v,i)=>v<0||v>dimensions[i]))throw Error('Nullpunkt liegt außerhalb des Rohteils.');
+ const rotation=number(origin.rotation??0,'Achsdrehung');
+ if(![0,90,180,270].includes(rotation))throw Error('Nur XY-Achsdrehungen 0°, 90°, 180° und 270° sind unterstützt.');
+ if(typeof(origin.reverseZ??false)!=='boolean')throw Error('Ungültige Z-Richtung.');
+ const system=project.wcs||'G54';
+ if(!['G54','G55','G56','G57','G58','G59'].includes(system))throw Error('Ungültiges Werkstücknullpunktsystem.');
+ const [c,s]={0:[1,0],90:[0,1],180:[-1,0],270:[0,-1]}[rotation];
+ return {system,origin_local:position,rotation_degrees:rotation,reverse_z:!!origin.reverseZ,c,s};
+}
+function toWork(point,frame){
+ if(!Array.isArray(point)||point.length!==3||point.some(v=>typeof v!=='number'||!Number.isFinite(v)))throw Error('Ungültige Rohteilkoordinate.');
+ const [ox,oy,oz]=frame.origin_local,dx=point[0]-ox,dy=point[1]-oy,dz=point[2]-oz;
+ const sign=frame.reverse_z?-1:1;
+ const p=[frame.c*dx+frame.s*dy,sign*(-frame.s*dx+frame.c*dy),sign*dz].map(v=>v===0?0:v);
+ if(p.some(v=>!Number.isFinite(v)||Math.abs(v)>1_000_000))throw Error('Transformierte Koordinate außerhalb des zulässigen Bereichs.');
+ return p;
+}
+function fromWork(point,frame){
+ if(!Array.isArray(point)||point.length!==3||point.some(v=>typeof v!=='number'||!Number.isFinite(v)))throw Error('Ungültige Werkstückkoordinate.');
+ const [ox,oy,oz]=frame.origin_local,sign=frame.reverse_z?-1:1;
+ const dx=frame.c*point[0]-frame.s*sign*point[1],dy=frame.s*point[0]+frame.c*sign*point[1];
+ return [dx+ox,dy+oy,sign*point[2]+oz].map(v=>v===0?0:v);
+}
+function attachWorkCoordinates(path,project){
+ if(!path||!path.stock||!Array.isArray(path.moves)||!Array.isArray(path.start))throw Error('Keine numerische Werkzeugbahn vorhanden.');
+ const d=project.stock,measures=[d.x,d.y,d.z];
+ if(path.stock.min.some(v=>v!==0)||path.stock.max.some((v,i)=>Math.abs(v-measures[i])>1e-7))
+   throw Error('Werkzeugbahn gehört nicht zum eingestellten Rohteil.');
+ const f=workFrame(project);
+ return {...path,work_coordinates:{system:f.system,origin_local:f.origin_local,rotation_degrees:f.rotation_degrees,reverse_z:f.reverse_z,
+   start:toWork(path.start,f),moves:path.moves.map(m=>({to:toWork(m.to,f),motion:m.motion}))}};
+}
+
+const api={eligible,recommendedFeed,prepare,workFrame,toWork,fromWork,attachWorkCoordinates};
 root.FertigungsstudioFacingModel=api;
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 })(globalThis);

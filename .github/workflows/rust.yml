@@ -47,6 +47,7 @@ jobs:
           node prototype/workbench-tests.cjs
           node prototype/studio-shell-tests.cjs
           node prototype/studio-facing-tests.cjs
+          node prototype/studio-wcs-tests.cjs
           node --check prototype/studio-facing.js
           node --check prototype/studio-shell.js
           node --check prototype/workbench.js
@@ -55,7 +56,34 @@ jobs:
           git diff --exit-code -- prototype/fertigungsstudio-kacheln.html
           node --check prototype/live-preview.js
           node --check prototype/live-server-tests.cjs
+      - name: Verify Windows test launcher syntax
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $errors = $null
+          $null = [System.Management.Automation.Language.Parser]::ParseFile((Join-Path (Get-Location) 'windows-test/Start-Fertigungsstudio-Test.ps1'), [ref]$null, [ref]$errors)
+          if ($errors) { throw ($errors | Out-String) }
       - name: Build and test local Rust preview connection
         run: |
           cargo +1.99.1 build --locked --offline --example preview_server
           node prototype/test-live.cjs
+
+      - name: Package Windows test executable
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $dist = 'dist/fertigungsstudio-cam-windows'
+          New-Item -ItemType Directory -Force -Path $dist | Out-Null
+          Copy-Item 'target/debug/examples/preview_server.exe' "$dist/preview_server.exe"
+          Copy-Item 'windows-test/Start-Fertigungsstudio-Test.cmd' "$dist/Start-Fertigungsstudio-Test.cmd"
+          Copy-Item 'windows-test/Start-Fertigungsstudio-Test.ps1' "$dist/Start-Fertigungsstudio-Test.ps1"
+          Copy-Item 'windows-test/README.txt' "$dist/README.txt"
+          if (!(Test-Path "$dist/preview_server.exe")) { throw 'Windows-EXE fehlt' }
+      - name: Publish Windows test package
+        if: runner.os == 'Windows'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Fertigungsstudio-CAM-Windows-Test
+          path: dist/fertigungsstudio-cam-windows/
+          if-no-files-found: error
+          retention-days: 30
