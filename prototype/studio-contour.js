@@ -18,13 +18,15 @@ const errors={
  CoordinateLimit:'Koordinatengrenze überschritten.',Cancelled:'Berechnung abgebrochen.'
 };
 let controller=null,revision=0,activeDialog=false;
+let selectedContour=null,selectedOperationId=null;
 const connected=()=>$('camRuntimeStatus')?.dataset.live==='true';
 const eligible=()=>studio.project().tools.filter(model.eligible);
 const current=()=>studio.currentOperation();
 const round=n=>Math.round(n*1000)/1000;
 function fields(){
  const v=id=>$(id)?.value??'';
- return {toolId:Number(v('contour-tool')),side:v('contour-side'),direction:v('contour-direction'),
+ return {source:v('contour-source'),points:v('contour-source')==='model'?selectedContour?.points:null,
+  toolId:Number(v('contour-tool')),side:v('contour-side'),direction:v('contour-direction'),
   spindle:v('contour-spindle'),depth:v('contour-depth'),stepdown:v('contour-stepdown'),
   clearance:v('contour-clearance'),cuttingFeed:v('contour-feed'),plungeFeed:v('contour-plunge'),
   marginX:v('contour-margin-x'),marginY:v('contour-margin-y')};
@@ -44,12 +46,18 @@ function setToolInfo(reset=false){
  if(reset){$('contour-feed').value=rates?round(rates.feed):'';$('contour-plunge').value='';}
 }
 function refreshSide(){
+ const modelSource=$('contour-source').value==='model';
  const inside=$('contour-side').value==='inside';
- $('contour-margins').hidden=!inside;
+ $('contour-side').disabled=modelSource;
+ $('contour-margins').hidden=!inside||modelSource;
+ $('contour-picked').textContent=modelSource?(selectedContour?
+   'Ausgewählte STL-Kontur: '+selectedContour.points.length+' Punkte · '+(selectedContour.side==='inside'?'Innenkontur':'Außenkontur'):
+   'Noch keine STL-Kontur gewählt. „Kontur im 3D-Modell anklicken“ verwenden.'):'Manuelles Rechteck aus Rohteil-/Randabständen.';
+ 
  $('contour-warning').textContent=inside
   ?'Innenkontur: Der Fräser taucht derzeit am Startpunkt senkrecht ein. Freigeschnittener Startbereich oder geeignete Vorbohrung ist vorausgesetzt, aber nicht geprüft. Keine Freigabe zum realen Fräsen.'
   :'Außenkontur: Werkzeugmittelpunkt um den halben Durchmesser nach außen versetzt; der Start liegt außerhalb des Rohblocks. Spannmittel und freier Raum sind ungeprüft.';
- if(!inside){$('contour-margin-x').value='0';$('contour-margin-y').value='0';}
+ if(!inside&&!modelSource){$('contour-margin-x').value='0';$('contour-margin-y').value='0';}
  countPreview();
 }
 function countPreview(){
@@ -58,19 +66,24 @@ function countPreview(){
   const planned=model.prepare(p,t,{...fields(),cuttingFeed:1,plungeFeed:1});
   const mode=planned.settings.clockwise?'im Uhrzeigersinn':'gegen Uhrzeigersinn';
   const f=facing.workFrame(p);
-  const wp=facing.toWork([planned.start.x,planned.start.y,planned.start.z],f);
+  const wp=planned.start?facing.toWork([planned.start.x,planned.start.y,planned.start.z],f):null;
   $('contour-count').textContent=planned.depthPasses+' Tiefenlagen · '+planned.estimatedMoves+
-   ' Bewegungen · '+mode+' · Versatz Ø/2 · Start rohteilbezogen X'+fmt(planned.start.x)+
-   ' Y'+fmt(planned.start.y)+' Z'+fmt(planned.start.z)+' mm · '+f.system+
-   ' X'+fmt(wp[0])+' Y'+fmt(wp[1])+' Z'+fmt(wp[2])+' mm.';
+   ' Bewegungen · '+mode+' · Versatz Ø/2 · '+
+   (planned.source==='model'?'Werkzeugstart aus Polygonoffset wird von Rust bestimmt.':
+    'Start rohteilbezogen X'+fmt(planned.start.x)+' Y'+fmt(planned.start.y)+
+    ' Z'+fmt(planned.start.z)+' mm · '+f.system+
+    ' X'+fmt(wp[0])+' Y'+fmt(wp[1])+' Z'+fmt(wp[2])+' mm.');
  }catch(e){$('contour-count').textContent=e.message;}
 }
 function open(){
  if(controller)return;
  const p=studio.project(),op=current(),tools=eligible();
  if(!op||op.kind!=='contour'){studio.status('Bitte Konturfräsen auswählen.');return}
+ if(selectedOperationId!==op.id){selectedOperationId=op.id;selectedContour=null;}
+ const picker=globalThis.FertigungsstudioSTLPicker;
  const saved=op.contour||{},t=tools.find(x=>x.id===saved.toolId)||tools.find(x=>x.id===studio.selectedTool()?.id)||tools[0];
- const side=saved.side??(op.name==='Innenkontur'?'inside':'outside');
+ const source=picker?.hasModel()?(selectedContour?'model':saved.source==='model'?'model':'model'):'manual';
+ const side=selectedContour?.side??saved.side??(op.name==='Innenkontur'?'inside':'outside');
  const direction=saved.direction??'climb',spindle=saved.spindle??'M3';
  const depth=saved.depth??Math.min(1,Number(p.stock.z));
  const stepdown=saved.stepdown??depth;
@@ -84,7 +97,12 @@ function open(){
  const input=(label,id,v)=>'<label>'+label+'<input id="'+id+'" type="number" min="0" step="any" value="'+esc(v)+'"></label>';
  studio.showDialog('2D-Konturfräsen · echte Rust-Berechnung',
   '<p><strong>Rohteil:</strong> '+fmt(p.stock.x)+' × '+fmt(p.stock.y)+' × '+fmt(p.stock.z)+
-  ' mm · rechteckige Kontur, nicht aus CAD importiert.</p>'+
+  ' mm. Aktuell sind STL-Konturen auf der oberen waagerechten Modellfläche auswählbar; STEP/IGES noch nicht.</p>'+
+  '<div class="studio-modal-grid"><label>Konturquelle<select id="contour-source">'+
+  opt('contour-source','model','STL-Kontur am 3D-Modell',source)+
+  opt('contour-source','manual','Rechteck aus Maßen',source)+'</select></label>'+
+  '<button type="button" id="contour-pick-model">Kontur im 3D-Modell anklicken</button></div>'+
+  '<p id="contour-picked"></p>'+
   '<div class="studio-modal-grid"><label>Kontur<select id="contour-side">'+
   opt('contour-side','outside','Außenkontur · Rohteilrand',side)+
   opt('contour-side','inside','Innenkontur · Rechteck',side)+'</select></label>'+
@@ -107,7 +125,7 @@ function open(){
   input('Randabstand Y für Innenkontur (mm)','contour-margin-y',my)+'</div>'+
   '<p id="contour-material-info"></p><p id="contour-count" class="studio-pill"></p>'+
   '<p id="contour-warning" class="studio-error"></p>'+
-  '<p>Werkzeugradiusversatz nur für die vier geraden Rechteckseiten. Gleichlauf/Gegenlauf beruht auf M3/M4 und der ausgewählten Innen-/Außenseite. Kein beliebiger CAD-Umriss, kein seitlicher Einfahrbogen, keine Kollisions-, Spannmittel- oder Materialabtragsprüfung. Nur Simulation, kein G-Code.</p>'+
+  '<p>Die STL-Modellkontur besteht aus geraden Meshkanten; Kreisbögen werden dabei nur näherungsweise als Linien berechnet. Gleichlauf/Gegenlauf anhand M3/M4 und Innen-/Außenseite. Die Innenkontur setzt eine vorgefräste Eintrittsstelle voraus: Kein sicherer Eintauchweg, kein Maschinen-/Spannmittel-/Materialabtragsmodell, keine Kollisionsprüfung, kein G-Code. STL-Geometrie wird nicht in die Projektdatei eingebettet.</p>'+
   '<p id="contour-message" role="status" aria-live="polite"></p>'+
   '<div class="studio-modal-actions"><button id="contour-save" type="button">Parameter speichern</button>'+
   '<button id="contour-run" type="button" class="primary" '+(!connected()||!tools.length?'disabled':'')+
@@ -116,6 +134,23 @@ function open(){
  activeDialog=true;
  if(!tools.length){message('Kein geeigneter Schaftfräser in der Werkzeugliste. Bitte zuerst Werkzeug anlegen.',true);return}
  $('contour-tool').onchange=()=>{setToolInfo(true);countPreview()};
+ $('contour-source').onchange=refreshSide;
+ $('contour-pick-model').onclick=()=>{
+  const picker=globalThis.FertigungsstudioSTLPicker;
+  if(!picker?.hasModel()){
+   message('Zuerst Datei → Bauteil laden mit einer STL-Datei verwenden.',true);
+   return;
+  }
+  try{
+   studio.closeDialog();
+   picker.begin(detail=>{
+    selectedContour=detail;
+    const op=current();
+    if(op){selectedOperationId=op.id;op.contour={...(op.contour||{}),source:'model',side:detail.side};}
+    open();
+   });
+  }catch(e){message(e.message,true);if(!$('studioDialog').open)open()}
+ };
  $('contour-side').onchange=()=>{
   if($('contour-side').value==='inside'&&Number($('contour-margin-x').value)===0){
    $('contour-margin-x').value=round(p.stock.x/8);
@@ -141,7 +176,8 @@ function persist(values){
   if(values[key]!==''&&(!Number.isFinite(Number(values[key]))||Number(values[key])<=0))
    throw Error('Schnitt- und Eintauchvorschub müssen positiv oder leer sein.');
  }
- op.contour={toolId:t.id,side:values.side,direction:values.direction,spindle:values.spindle,
+ op.contour={toolId:t.id,source:values.source,vertexCount:values.source==='model'?values.points?.length||0:0,
+  side:values.side,direction:values.direction,spindle:values.spindle,
   depth:Number(values.depth),stepdown:Number(values.stepdown),clearance:Number(values.clearance),
   marginX:Number(values.marginX),marginY:Number(values.marginY),
   cuttingFeed:values.cuttingFeed===''?'':Number(values.cuttingFeed),
@@ -165,12 +201,12 @@ async function calculate(){
  $('contour-run').disabled=true;$('contour-save').disabled=true;
  message('Rust berechnet rechteckige '+(values.side==='inside'?'Innen-':'Außen-')+'kontur …');
  try{
-  const response=await fetch('/api/contour',{method:'POST',headers:{'Content-Type':'application/x-fertigungsstudio'},
+  const response=await fetch(prepared.source==='model'?'/api/poly-contour':'/api/contour',{method:'POST',headers:{'Content-Type':'application/x-fertigungsstudio'},
    body:prepared.numbers.join(' '),signal:active.signal});
   if(!response.ok){const code=(await response.text()).trim();throw Error(errors[code]||('Rust-Fehler: '+code.slice(0,120)))}
   const raw=await response.json();
   if(active.signal.aborted||mine!==revision)return;
-  if(raw.contour_side!==values.side||
+  if((prepared.source==='model'&&raw.geometry_source!=='stl-top-face')||raw.contour_side!==values.side||
      raw.contour_direction!==(prepared.settings.clockwise?'cw':'ccw'))
    throw Error('Berechnete Kontur entspricht nicht den gewählten Parametern.');
   const transformed=facing.attachWorkCoordinates(raw,p);
@@ -179,7 +215,7 @@ async function calculate(){
   studio.enterSimulation();
   controller=null;
   studio.closeDialog();
-  studio.status((values.side==='inside'?'Innenkontur':'Außenkontur')+' berechnet: '+
+  studio.status((values.side==='inside'?'Innenkontur':'Außenkontur')+(prepared.source==='model'?' am STL-Modell':' als Rechteck')+' berechnet: '+
    raw.moves.length+' Bewegungen · '+prepared.depthPasses+' Tiefenlagen · '+
    (values.direction==='climb'?'Gleichlauf':'Gegenlauf')+' · '+values.spindle+
    '. Nur Simulation, keine CNC-Freigabe.');
