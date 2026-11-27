@@ -24,7 +24,7 @@ assert.equal(mesh.loops[1].points.length,4);
 const moved=geo.locate(mesh,{x:40,y:40,z:10});
 assert.equal(moved.loops.length,2);
 assert.ok(moved.loops[0].points.every(v=>v[0]>=10&&v[0]<=30));
-assert.throws(()=>geo.locate(mesh,{x:12,y:40,z:10}),/passt nicht/);
+assert.throws(()=>geo.locate(mesh,{x:12,y:40,z:10}),/außerhalb/);
 const ascii='solid part\n'+triangles.map(t=>'facet normal 0 0 1\n outer loop\n'+t.map(p=>'vertex '+p.join(' ')).join('\n')+'\n endloop\nendfacet').join('\n')+'\nendsolid part';
 const asciiBuffer=new TextEncoder().encode(ascii).buffer;
 const asciiMesh=geo.parse(asciiBuffer);
@@ -39,6 +39,18 @@ assert.equal(fittedGeo.partTopZ,1);
 const placed=geo.locate(mesh,{x:35,y:40,z:12},{x:2,y:9,z:5});
 assert.deepEqual(placed.loops[0].points[0].map(v=>Math.round(v)),[2,9]);
 assert.equal(placed.partTopZ,5);
+const nonFlat=geo.parse(binary([
+ [[0,0,0],[22,0,0],[0,14,9]],
+ [[22,0,0],[22,14,9],[0,14,9]]
+]));
+assert.deepEqual(nonFlat.size,[22,14,9]);
+assert.deepEqual(geo.fitStock(nonFlat),{
+ stock:{x:22,y:14,z:9},position:{x:0,y:0,z:0}
+});
+const expanded=geo.locate(nonFlat,{x:32,y:24,z:15},{x:5,y:5,z:6});
+assert.deepEqual(expanded.position,[5,5,6]);
+assert.equal(expanded.partTopZ,15);
+assert.throws(()=>geo.validatePlacement(nonFlat.size,{x:32,y:24,z:15},{x:11,y:5,z:6}),/außerhalb/);
 assert.throws(()=>geo.locate(mesh,{x:25,y:20,z:12},{x:6,y:0,z:1}),/außerhalb/);
 assert.throws(()=>geo.locate(mesh,{x:35,y:40,z:12},{x:-1,y:0,z:1}),/außerhalb/);
 assert.throws(()=>geo.locate(mesh,{x:35,y:40,z:12},{x:0,y:0,z:NaN}),/außerhalb/);

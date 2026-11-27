@@ -20,6 +20,16 @@ assert.ok(html.includes('FertigungsstudioMeshGeometry'));
 assert.ok(html.includes('FertigungsstudioSTLPicker'));
 assert.ok(html.includes('Kontur im 3D-Modell anklicken'));
 assert.ok(html.includes('poly-contour'));
+for(const name of ['st-pos-x','st-pos-y','st-pos-z','st-fit','st-center','st-preview','st-stock-info']){
+ assert.ok(script.includes(name),'Missing editable stock/placement control '+name);
+ assert.ok(html.includes(name),'Missing bundled stock/placement control '+name);
+}
+assert.ok(script.includes('picker.fitStock()'));
+assert.ok(script.includes('Rohteil automatisch auf Modellgröße eingestellt'));
+assert.ok(script.includes('Gespeicherte Rohteillage wiederhergestellt'));
+assert.ok(html.includes('drawStock(map'));
+assert.ok(read('studio-model-pick.js').includes('renderStockPreview'));
+assert.ok(read('studio-mesh-geometry.cjs').includes('validatePlacement'));
 assert.ok(script.includes('studioExportPath'));
 assert.ok(html.includes('FertigungsstudioToolpath'));
 assert.ok(html.includes('FertigungsstudioFacingModel'));
