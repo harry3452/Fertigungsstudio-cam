@@ -28,8 +28,9 @@ Rohblock. Keine NC-Ausgabe, keine Kollisions- oder Spannmittelprüfung.
    Bei vollflächigem Eingriff ist die Bezeichnung nicht überall physikalisch
    eindeutig; eine CAM-Kollisionsprüfung existiert nicht.
 5. **Werkzeugbahn berechnen**. Die Bahndaten kommen vom lokalen Rust-Kern,
-   werden validiert und sofort als **Bahnen · Draufsicht** in kräftigem Grün (Schnitt),
-   gestricheltem Rot (Eilgang) und Gelb (Eintauchen) angezeigt.
+   werden validiert und standardmäßig in der **isometrischen 3D-Werkstückansicht** angezeigt.
+   Mit **Bahnen · Draufsicht** wird die echte XY-Bahn in kräftigem Grün (Schnitt),
+   gestricheltem Rot (Eilgang) und Gelb (Eintauchen) sichtbar.
    Zwischen **Bahnen · Draufsicht** und **3D-Werkstück** wechseln;
    einzelne Tiefenlagen sind im Auswahlfeld getrennt sichtbar. **Sim** enthält die
    ein-/ausblendbaren Bewegungsarten, Werkzeug und Halter.
@@ -101,3 +102,8 @@ Fehlt die Umschaltung komplett, wurde keine gültige Rust-Werkzeugbahn geladen.
 Bitte in diesem Fall die Fehlermeldung im Planfräsdialog bzw. unten im Fenster
 kontrollieren und die **aktuelle Windows-Testversion** verwenden. Die reine HTML-
 Demo zeigt lediglich illustrative Bahnen.
+
+**Vorgabe für Sim:** Beim Öffnen der Simulation, über **Sim** oder nach
+einer Werkzeugbahnberechnung, startet die 3D-Kamera isometrisch. Über
+**Bahnen · Draufsicht** lässt sich auf die 2D-Ansicht umschalten.
+Ein erneutes Öffnen von **Sim** setzt die Kamera wieder isometrisch.

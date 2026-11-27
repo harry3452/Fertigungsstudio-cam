@@ -97,6 +97,13 @@ function render(){
  $('studioProgress').value=$('progress').value;
  $('studioHolder').disabled=$('studioToolMode').value!=='full';
 }
+function enterIsometricSimulation(){
+ simulation=true;
+ render();
+ globalThis.FertigungsstudioPathView?.view3D();
+ $('iso').click();
+}
+
 for(const name of ['Datei','Setup','Werkzeugliste','Fräsen','3D Fräsen','Drehen','Laser','Sim','Post']){
  const wrap=document.createElement('div');wrap.className='studio-menu-wrap';
  const btn=document.createElement('button');btn.type='button';btn.className='studio-menu-tile';btn.dataset.studioMenu=name;btn.setAttribute('aria-expanded','false');
@@ -322,7 +329,7 @@ function route(action,name=''){
  if(action==='origin'){originDialog();return}
  if(action==='materials'){materialsDialog();return}
  if(action==='Werkzeugliste'||action==='tools'){toolsDialog();return}
- if(action==='Sim'){simulation=true;render();status('Simulation: Pfadfilter und Werkzeugdarstellung. Keine Kollisions- oder Materialabtragsprüfung.');return}
+ if(action==='Sim'){enterIsometricSimulation();status('Simulation: isometrische 3D-Ansicht. Keine Kollisions- oder Materialabtragsprüfung.');return}
  if(action==='Post'){showDialog('Postprozessor','<p>NC-Ausgabe ist noch nicht freigegeben. Experimentelle Rust-Bahnen besitzen keine Kollisions- und Maschinenprüfung.</p>');return}
  if(action==='new'){showDialog('Neues Projekt','<p>Aktuelle, nicht exportierte Projektdaten können verloren gehen.</p><div class="studio-modal-actions">'+button('Neues Projekt erstellen','do-new')+button('Abbrechen','close')+'</div>');return}
  if(action==='open'){projectPicker.click();return}
@@ -461,7 +468,7 @@ globalThis.FertigungsstudioStudio={
  currentOperation:selectedOp,
  selectedTool:()=>project.tools.find(t=>t.id===selectedTool)||null,
  selectTool(id){if(project.tools.some(t=>t.id===id)){selectedTool=id;render();}},
- enterSimulation(){simulation=true;render();},
+ enterSimulation:enterIsometricSimulation,
  showDialog,
  closeDialog,
  status,

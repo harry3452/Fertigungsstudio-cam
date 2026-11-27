@@ -21,7 +21,7 @@ panel.hidden=true;
 panel.innerHTML='<canvas id="studioPathCanvas" aria-label="Exakte XY-Bahnen aus dem Rust-Werkzeugweg"></canvas><div class="studio-path-axis-note">Rohteil-Koordinaten XY in mm · kein G-Code</div><div id="studioPathCursor" class="studio-path-cursor">Schnitt: grün · Eilgang: rot gestrichelt · Eintauchen: gelb</div>';
 target.insertBefore(panel,$('studioSim'));
 const canvas=$('studioPathCanvas'),ctx=canvas.getContext('2d');
-let data=null,mode='2d';
+let data=null,mode='3d';
 function label(value){return Number(value).toLocaleString('de-DE',{maximumFractionDigits:3})}
 function redraw(){
  if(panel.hidden||!data)return;
@@ -91,7 +91,8 @@ function onPathLoaded(path){
  levels.forEach((z,i)=>options.add(new Option('Lage '+(i+1)+' · Z '+label(z)+' mm',String(z))));
  options.value='all';
  $('studioPathCursor').textContent='Schnitt: grün · Eilgang: rot gestrichelt · Eintauchen: gelb';
- switchMode('2d'); // Show the real path immediately after a successful calculation.
+ switchMode('3d'); // The default for a freshly calculated Rust path is 3D.
+ $('iso').click(); // Reset the 3D camera to exact isometric projection.
 }
 function onPathCleared(){
  data=null;bar.hidden=true;panel.hidden=true;originalView.hidden=false;mode='3d';
