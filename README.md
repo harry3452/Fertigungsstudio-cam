@@ -28,6 +28,8 @@ Die **Werkzeugliste** verwaltet Fräs- und Drehwerkzeugformen, Geometriedaten, f
 
 **Erstes funktionsfähiges Planfräsen:** Im lokalen Rust-Livebetrieb können jetzt Rohteil und ein geeignetes Werkzeug aus der neuen Oberfläche ausgewählt, Abtragstiefe, Zustellungen, freie Sicherheitshöhe und Vorschübe eingegeben sowie eine echte neutrale Planfräs-Werkzeugbahn berechnet werden. Ergebnis: Tiefenlagen, Bahnanzahl und Bewegungen in der Simulation, zusätzlich als **Bahn-JSON** exportierbar (kein NC-Code). Der gespeicherte freie Nullpunkt, G54–G59, XY-Achsdrehungen um 90° und eine umgekehrte Z-Richtung werden jetzt numerisch in der Bahn-JSON und Simulation berücksichtigt. Die ursprüngliche Rohteilgeometrie bleibt für die Darstellung unverändert; Maschinen-/Kollisionsprüfung fehlt. [Bedienung und Grenzen](docs/facing-workflow.md).
 
+**Deutliche berechnete Bahnansicht:** Nach dem Planfräsen öffnet sich automatisch die echte XY-Werkzeugbahn als Draufsicht. Alle Tiefenlagen oder einzelne Z-Lagen auswählbar, dazu ein Schalter zur 3D-Werkstückansicht. Grün = Vorschub/Schnitt, Rot gestrichelt = Eilgang, Gelb = Z-Eintauchen. [Anleitung](docs/facing-workflow.md).
+
 **Sim** schaltet bei Rust-Bahndaten Schnitt-, Eilgang- und Z-An-/Abfahrbewegungen sowie Werkzeug-/Halterdarstellung ein und aus. Geometrie und Halter sind dabei nur schematisch; es gibt keinen geprüften Materialabtrag oder Kollisionsnachweis. Die ältere Bedienoberfläche bleibt intern als Fallback vorhanden.
 
 Für eine reale Rust-Berechnung der vier unterstützten rechteckigen Verfahren die lokale Vorschau starten und oben **Fräsen → Planfräsen / Außenkontur / Taschenfräsen / Bohren** wählen. Beim Öffnen der HTML-Datei allein bleiben die Bahnen illustrativ.

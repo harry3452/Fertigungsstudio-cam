@@ -19,7 +19,10 @@ Rohblock. Keine NC-Ausgabe, keine Kollisions- oder Spannmittelprüfung.
    **Sicherheitshöhe über Rohteil**, **Schnittvorschub** und
    **Eintauchvorschub** eintragen.
 5. **Werkzeugbahn berechnen**. Die Bahndaten kommen vom lokalen Rust-Kern,
-   werden validiert und in der 3D-Ansicht angezeigt. **Sim** enthält die
+   werden validiert und sofort als **Bahnen · Draufsicht** in kräftigem Grün (Schnitt),
+   gestricheltem Rot (Eilgang) und Gelb (Eintauchen) angezeigt.
+   Zwischen **Bahnen · Draufsicht** und **3D-Werkstück** wechseln;
+   einzelne Tiefenlagen sind im Auswahlfeld getrennt sichtbar. **Sim** enthält die
    ein-/ausblendbaren Bewegungsarten, Werkzeug und Halter.
 6. Unter **Sim → Bahn-JSON** können die neutralen numerischen
    Bewegungen als Datei gespeichert werden. Es handelt sich **nicht** um
@@ -62,3 +65,19 @@ verwendet werden. Es gibt noch keine Maschinenkinematik, Werkzeugaufnahme-
 Kollisionsprüfung, Materialabtragssimulation, Freifahrwegprüfung,
 Anfahrsimulation aus tatsächlicher Maschinenposition oder geprüften
 Mach4-Postprozessor.
+
+## Wenn du die Bahn nicht erkennst
+
+Nach **Werkzeugbahn berechnen** muss über der Ansicht **RUST-WERKZEUGBAHN**
+und die Umschaltung **Bahnen · Draufsicht / 3D-Werkstück** erscheinen.
+Die Draufsicht zeigt exakt die vom Rust-Kern gelieferten XY-Bewegungen.
+**Alle Lagen** zeigt alle Tiefen gleichzeitig. Unter **Tiefenlage** kannst
+ du einzelne Z-Höhen auswählen. In der 3D-Ansicht erscheint die Bahn
+als kräftige Linie über dem Rohblock. Zum Vergleich stehen unten die
+numerischen G54–G59-Koordinaten; ein Mauszeiger in der Draufsicht zeigt
+rohteilbezogene X-/Y-Werte.
+
+Fehlt die Umschaltung komplett, wurde keine gültige Rust-Werkzeugbahn geladen.
+Bitte in diesem Fall die Fehlermeldung im Planfräsdialog bzw. unten im Fenster
+kontrollieren und die **aktuelle Windows-Testversion** verwenden. Die reine HTML-
+Demo zeigt lediglich illustrative Bahnen.

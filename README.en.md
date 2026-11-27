@@ -42,6 +42,8 @@ a 3-axis facing request and reuses the existing bounded facing planner and tool
 library. Turning, laser and 5-axis operations remain **data contracts only**.
 See the [architecture document](docs/ARCHITECTURE.md).
 
+**Visible real toolpaths:** Calculated Rust facing paths now open in a dedicated high-contrast XY plan view with individual depth layers and a toggle back to the 3D stock. Green marks feed cuts, dashed red rapid traverses, yellow entries. The 2D view uses the actual numeric Rust moves, not schematic mock paths.
+
 **Initial end-to-end facing workflow:** With the local Rust preview server, choose rectangular stock and a flat milling tool from the new studio setup, set depth/stepdown/stepover/clearance and manual or material-derived feeds, then calculate and inspect a **neutral facing path**. Export the path as JSON for numerical inspection, not as NC/G-code. Custom work origins and rotations are still not applied to the path. [Workflow (German)](docs/facing-workflow.md).
 
 There is no CAD import, general machining toolpath calculation, stock-removal or
