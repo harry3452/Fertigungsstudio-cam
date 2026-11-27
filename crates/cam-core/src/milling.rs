@@ -444,6 +444,27 @@ pub fn polygon_contour_with_cancel(
         }
         offset.push(hit);
     }
+    // Interior offsets must stay strictly within the selected hole/profile.
+    // Prevent a cutter larger than a cavity from reflecting the polygon
+    // onto an apparently valid, but physically inverted, path.
+    if side == ContourSide::Inside {
+        let inside = |p: DrillPoint| {
+            let mut hit = false;
+            for i in 0..n {
+                let a = vertices[i];
+                let b = vertices[(i + 1) % n];
+                if (a.y > p.y) != (b.y > p.y)
+                    && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x
+                {
+                    hit = !hit;
+                }
+            }
+            hit
+        };
+        if offset.iter().any(|point| !inside(*point)) {
+            return Err(Error::InvalidBounds);
+        }
+    }
     let offset_area2: f64 = (0..n).map(|i| cross(offset[i], offset[(i + 1) % n])).sum();
     if !offset_area2.is_finite() || offset_area2 * area2 <= 0.0 {
         return Err(Error::InvalidBounds);
