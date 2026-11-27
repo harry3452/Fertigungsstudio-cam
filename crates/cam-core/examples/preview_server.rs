@@ -1,6 +1,8 @@
 //! Local-only prototype bridge. Run with cargo run --example preview_server.
 //! No filesystem writes, remote binding, arbitrary file serving or machine output.
-use fertigungsstudio_cam_core::{Error, Facing, FacingTurn, FlatTool, Motion, Point3, Setup, StockBox};
+use fertigungsstudio_cam_core::{
+    Error, Facing, FacingTurn, FlatTool, Motion, Point3, Setup, StockBox,
+};
 use std::{
     io::{Read, Write},
     net::{TcpListener, TcpStream},

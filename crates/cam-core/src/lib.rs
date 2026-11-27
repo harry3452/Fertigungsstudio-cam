@@ -189,9 +189,7 @@ pub fn face_with_turn(
         if half_angle <= 0.0 {
             return Err(Error::TooManyMoves);
         }
-        (std::f64::consts::PI / (2.0 * half_angle))
-            .ceil()
-            .max(16.0)
+        (std::f64::consts::PI / (2.0 * half_angle)).ceil().max(16.0)
     } else {
         0.0
     };
@@ -333,8 +331,7 @@ pub fn face_with_turn(
                         let (x, yy) = if segment == arc_segments {
                             (endpoint_x, y_next)
                         } else {
-                            let angle = std::f64::consts::PI * segment as f64
-                                / arc_segments as f64;
+                            let angle = std::f64::consts::PI * segment as f64 / arc_segments as f64;
                             (
                                 endpoint_x + sign * radius * angle.sin(),
                                 y + radius * (1.0 - angle.cos()),
