@@ -46,6 +46,8 @@ jobs:
           node prototype/tool-storage-tests.cjs
           node prototype/workbench-tests.cjs
           node prototype/studio-shell-tests.cjs
+          node prototype/studio-facing-tests.cjs
+          node --check prototype/studio-facing.js
           node --check prototype/studio-shell.js
           node --check prototype/workbench.js
           node --check prototype/tool-library-ui.js
