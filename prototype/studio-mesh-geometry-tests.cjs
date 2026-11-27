@@ -33,6 +33,7 @@ assert.throws(()=>geo.parse(new ArrayBuffer(12)),/keine|Keine/);
 const fitted=geo.fitStock(mesh);
 assert.deepEqual(fitted.stock,{x:20,y:20,z:1});
 assert.deepEqual(fitted.position,{x:0,y:0,z:1});
+assert.deepEqual(geo.validatePlacement(mesh.size,fitted.stock,fitted.position).shifts,[0,0,1]);
 const fittedGeo=geo.locate(mesh,fitted.stock,fitted.position);
 assert.equal(fittedGeo.partTopZ,1);
 const placed=geo.locate(mesh,{x:35,y:40,z:12},{x:2,y:9,z:5});

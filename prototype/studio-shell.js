@@ -212,9 +212,7 @@ function stockDialog(){
   const stock={x:v[0],y:v[1],z:v[2]};
   const pos={x:q[0],y:q[1],z:q[2]};
   try{
-   globalThis.FertigungsstudioMeshGeometry.locate(
-    {size},stock,pos
-   );
+   globalThis.FertigungsstudioMeshGeometry.validatePlacement(size,stock,pos);
    picker.renderStockPreview($('st-preview'),stock,pos);
    const margins=[q[0],v[0]-q[0]-size[0],q[1],v[1]-q[1]-size[1],
     q[2],v[2]-q[2]-size[2]];
@@ -489,7 +487,7 @@ dlg.addEventListener('click',e=>{
   if(picker?.hasModel()){
    place={x:Number(val('st-pos-x')),y:Number(val('st-pos-y')),z:Number(val('st-pos-z'))};
    try{
-    globalThis.FertigungsstudioMeshGeometry.locate({size:picker.modelSize()},{x,y,z},place);
+    globalThis.FertigungsstudioMeshGeometry.validatePlacement(picker.modelSize(),{x,y,z},place);
    }catch(error){status('Rohteil nicht übernommen: '+error.message);return;}
   }
   const old=project.stock;
@@ -541,8 +539,7 @@ partPicker.addEventListener('change',async e=>{
   let preserved=false;
   if(same&&project.partPlacement){
    try{
-    globalThis.FertigungsstudioMeshGeometry.locate(
-     {size:imported.size},project.stock,project.partPlacement);
+    globalThis.FertigungsstudioMeshGeometry.validatePlacement(imported.size,project.stock,project.partPlacement);
     preserved=true;
    }catch{}
   }

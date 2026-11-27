@@ -38,6 +38,10 @@ function prepare(project,tool,form){
  if(!['climb','conventional'].includes(direction))throw Error('Ungültige Fräsrichtung.');
  if(!['M3','M4'].includes(spindle))throw Error('Ungültige Spindelrichtung.');
  if(form.source==='model'){
+  const size=project.stlInfo?.size;
+  if(Array.isArray(size)&&project.partPlacement&&
+     Math.abs(project.partPlacement.z+size[2]-height)>0.00001)
+   throw Error('Für 2D-Modellkonturen muss die Modelloberkante mit der Rohteiloberseite bündig sein. Im Rohteil-Setup Z-Lage anpassen.');
   const points=form.points;
   if(!Array.isArray(points)||points.length<3||points.length>2048)
    throw Error('Bitte eine geschlossene STL-Kontur im 3D-Modell auswählen.');
