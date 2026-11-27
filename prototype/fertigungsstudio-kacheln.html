@@ -1133,7 +1133,7 @@ function open(){
  const plungeFeed=saved.plungeFeed??'';
  const f=(label,id,value,opts='')=>'<label>'+label+'<input id="'+id+'" type="number" step="any" min="0.001" value="'+esc(value)+'" '+opts+'></label>';
  const chooser='<label>Fräswerkzeug aus der Bibliothek<select id="face-tool">'+tools.map(t=>
-   '<option value="'+t.id+'" '+(t.id===chosen?.id?'selected':'')+'>T'+t.id+' · '+esc(t.name)+' · Ø'+fmt(t.diameter)+'</option>').join('')+'</select></label>';
+   '<option value="'+esc(t.id)+'" '+(t.id===chosen?.id?'selected':'')+'>T'+t.id+' · '+esc(t.name)+' · Ø'+fmt(t.diameter)+'</option>').join('')+'</select></label>';
  const warning=(p.origin?.rotation||p.origin?.reverseZ||p.origin?.x||p.origin?.y||p.origin?.z!==stock.z)
   ?'<p class="studio-error">Achtung: Der im Setup gespeicherte Nullpunkt / die Achsausrichtung wird noch NICHT auf die berechnete Werkzeugbahn transformiert.</p>':'';
  studio.showDialog('Planfräsen · echte Rust-Berechnung',

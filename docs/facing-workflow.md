@@ -5,7 +5,7 @@ Rohblock. Keine NC-Ausgabe, keine Kollisions- oder Spannmittelprüfung.
 
 ## Start unter Windows
 
-1. Projekt mit Rust installiert öffnen, \`Start-Fertigungsstudio.cmd\` starten
+1. Projekt mit Rust installiert öffnen, `Start-Fertigungsstudio.cmd` starten
    und die angezeigte lokale Browseradresse öffnen. Die reine HTML-Datei
    kann Parameter speichern, aber **keine** Werkzeugbahn berechnen.
 2. Über **Setup → Rohteil und Material** Länge X, Breite Y und Höhe Z in mm eintragen.
@@ -29,8 +29,8 @@ ist separat als Bahn-JSON exportierbar.
 ## Berechnungsannahmen
 
 - Rechteckiger Rohblock von (0,0,0) bis (X,Y,Z), Z nach oben.
-- Bahnzeilen parallel zur X-Achse von X = \`-Werkzeugdurchmesser\` bis
-  \`Rohteil-Länge + Werkzeugdurchmesser\`, also mit deutlichem seitlichen
+- Bahnzeilen parallel zur X-Achse von X = `-Werkzeugdurchmesser` bis
+  `Rohteil-Länge + Werkzeugdurchmesser`, also mit deutlichem seitlichen
   Überlauf. Außerhalb der Rohteilgrenzen ist freier Raum angenommen.
 - Pro Querbahn auf sichere Z-Höhe fahren, mit Vorschub eintauchen,
   entlang X bearbeiten, am Ende auf Z-Sicherheitshöhe zurückziehen.
@@ -39,7 +39,7 @@ ist separat als Bahn-JSON exportierbar.
 - Seitliche Zustellung maximal halber Werkzeugdurchmesser; die vollständige
   Breite wird durch gleichmäßig verteilte Querbahnen abgedeckt.
 - Abtragstiefe maximal Rohteilhöhe und Schneidenlänge. Anzahl der
-  Tiefenlagen durch \`ceil(Abtragstiefe/Tiefenzustellung)\`, wobei die
+  Tiefenlagen durch `ceil(Abtragstiefe/Tiefenzustellung)`, wobei die
   letzte Lage exakt die Endhöhe erreicht.
 - Ausgangsposition und berechnete Koordinaten sind rohteilbezogen.
   **Ein im Setup gewählter Nullpunkt, gedrehte Achsen oder Z-Umkehr
