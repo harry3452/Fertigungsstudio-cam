@@ -65,7 +65,7 @@ static class SetupApp {
             if (fs.Read(footer,0,16)!=16 || Encoding.ASCII.GetString(footer,8,8)!=Magic)
                 throw new InvalidDataException("Setup-Datei enthält kein Installationspaket.");
             long len = BitConverter.ToInt64(footer,0);
-            if (len < 1000 || len > 800000000 || len > fs.Length - 16)
+            if (len < 64 || len > 800000000 || len > fs.Length - 16)
                 throw new InvalidDataException("Ungültige Archivgröße.");
             long offset = fs.Length - 16 - len;
             fs.Seek(offset,SeekOrigin.Begin);
