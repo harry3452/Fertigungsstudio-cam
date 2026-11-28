@@ -96,7 +96,11 @@ fn read_request(stream: &mut TcpStream) -> std::io::Result<Request> {
     let length = length.unwrap_or(0);
     // Polygon contours use more coordinates than the original 1 KiB request cap.
     // Limit their input separately while leaving all other operations unchanged.
-    let max_body = if req.path == "/api/poly-contour" { 65536 } else { 1024 };
+    let max_body = if req.path == "/api/poly-contour" {
+        65536
+    } else {
+        1024
+    };
     if length > max_body {
         return Err(bad());
     }
