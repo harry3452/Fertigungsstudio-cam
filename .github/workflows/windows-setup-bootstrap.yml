@@ -16,7 +16,7 @@ jobs:
         run: |
           $csc='C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
           if (!(Test-Path $csc)) { throw 'C# Windows compiler not found' }
-          & $csc /nologo /target:winexe /platform:x64 /optimize+ /out:SetupBootstrap.exe /r:System.Windows.Forms.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll windows-setup\SetupBootstrap.cs
+          & $csc /nologo /target:exe /platform:x64 /optimize+ /out:SetupBootstrap.exe /r:System.Windows.Forms.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll windows-setup\SetupBootstrap.cs
           if ($LASTEXITCODE -ne 0) { throw 'Bootstrap compilation failed' }
       - name: Smoke test offline overlay, install and uninstall
         shell: pwsh
@@ -39,7 +39,7 @@ jobs:
           } finally { $out.Close() }
           $dest=Join-Path (Get-Location) 'smoke/install'
           & ./smoke/test-setup.exe --quiet --target $dest
-          if ($LASTEXITCODE -ne 0) {if (Test-Path "$env:TEMP/fst-setup-error.txt") {Get-Content "$env:TEMP/fst-setup-error.txt"}; throw 'Installer smoke test failed'}
+          if ($LASTEXITCODE -ne 0) {Get-ChildItem "$env:LOCALAPPDATA/Temp/fst-setup-error.txt" -ErrorAction SilentlyContinue | Get-Content; throw 'Installer smoke test failed'}
           if (!(Test-Path "$dest/tools/step/fst-step-import.exe")) {throw 'STEP runtime path missing'}
           & "$dest/Fertigungsstudio-CAM-Deinstallieren.exe" --quiet --uninstall --target $dest
           if ($LASTEXITCODE -ne 0) {throw 'Uninstall smoke test failed'}
