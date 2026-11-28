@@ -1,0 +1,51 @@
+name: Fertigungsstudio Windows offline setup bootstrap
+on:
+  push:
+    branches: [feat/windows-setup-bootstrap]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile Windows .NET Framework installer
+        shell: pwsh
+        run: |
+          $csc='C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
+          if (!(Test-Path $csc)) { throw 'C# Windows compiler not found' }
+          & $csc /nologo /target:winexe /platform:x64 /optimize+ /out:SetupBootstrap.exe /r:System.Windows.Forms.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll windows-setup/SetupBootstrap.cs
+          if ($LASTEXITCODE -ne 0) { throw 'Bootstrap compilation failed' }
+      - name: Smoke test offline overlay, install and uninstall
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path smoke/payload/tools/step | Out-Null
+          [IO.File]::WriteAllText('smoke/payload/Start-Fertigungsstudio-Test.cmd','@echo off')
+          [IO.File]::WriteAllText('smoke/payload/preview_server.exe','demo')
+          [IO.File]::WriteAllText('smoke/payload/tools/step/fst-step-import.exe','demo')
+          Compress-Archive -Path smoke/payload/* -DestinationPath smoke/payload.zip
+          $stub=[IO.File]::ReadAllBytes('SetupBootstrap.exe')
+          $zip=[IO.File]::ReadAllBytes('smoke/payload.zip')
+          $foot=[BitConverter]::GetBytes([Int64]$zip.Length)
+          $magic=[Text.Encoding]::ASCII.GetBytes('FSCAMZ01')
+          $out=[IO.File]::Create('smoke/test-setup.exe')
+          try {
+            $out.Write($stub,0,$stub.Length)
+            $out.Write($zip,0,$zip.Length)
+            $out.Write($foot,0,$foot.Length)
+            $out.Write($magic,0,$magic.Length)
+          } finally { $out.Close() }
+          $dest=Join-Path (Get-Location) 'smoke/install'
+          & ./smoke/test-setup.exe --quiet --target $dest
+          if ($LASTEXITCODE -ne 0) {throw 'Installer smoke test failed'}
+          if (!(Test-Path "$dest/tools/step/fst-step-import.exe")) {throw 'STEP runtime path missing'}
+          & "$dest/Fertigungsstudio-CAM-Deinstallieren.exe" --quiet --uninstall --target $dest
+          if ($LASTEXITCODE -ne 0) {throw 'Uninstall smoke test failed'}
+          if (Test-Path "$dest/Start-Fertigungsstudio-Test.cmd") {throw 'Uninstall left installed file'}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Fertigungsstudio-Windows-Setup-Bootstrap
+          path: SetupBootstrap.exe
+          if-no-files-found: error
