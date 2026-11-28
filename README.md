@@ -6,8 +6,10 @@ Ein gemeinschaftlich zu entwickelndes CAM mit zwei geplanten Zugängen: als
 eigenständiges Programm und optional direkt in SolidCraft. Die Oberfläche soll
 übersichtlich, mehrsprachig und auf den Arbeitsablauf in der Werkstatt ausgelegt sein.
 
-**Status: Oberflächenprototyp und erster experimenteller Rust-Kern. Noch kein nutzbares CAM.**
+**Status (28.11.2026): Lokaler Windows-CAM-Prototyp mit STEP/STL-Import, grundlegenden Fräsbahnen und experimenteller Simulation. Nicht für reale CNC-Bearbeitung freigegeben.**
 Fertigungsstudio ist ein Arbeitsname und kein offizielles SolidCraft-Projekt.
+
+**Aktueller Quellcode:** [`prototype/fertigungsstudio-kacheln.html`](prototype/fertigungsstudio-kacheln.html) und die 21 zugehörigen Quellcode-Module unter [`prototype/modules/`](prototype/modules/). Der vollständige [Entwicklungsstand vom 28.11.2026](docs/entwicklungsstand-2026-11-28.md) beschreibt STEP-Kantenerkennung, Konturfräsen, Z-Höhen-Korrekturen, Simulationssteuerung, Materialdarstellung und offene Prüfungen. **Die weiter unten stehenden früheren Einschränkungen dokumentieren ältere Zwischenstände und sind nicht durchgehend auf den aktuellen Windows-Prototyp übertragbar.**
 
 ![Fertigungsstudio CAM: deutsche Symbolkacheln, Bearbeitungsbaum und schematische Werkstückvorschau](docs/images/fertigungsstudio-preview.jpg)
 
