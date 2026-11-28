@@ -44,7 +44,7 @@ static class SetupApp {
             }
             return 0;
         } catch (Exception ex) {
-            if (quiet) Console.Error.WriteLine(ex);
+            if (quiet) { try { File.WriteAllText(Path.Combine(Path.GetTempPath(),"fst-setup-error.txt"),ex.ToString()); } catch {} }
             else MessageBox.Show(ex.Message, Display + " – Fehler", MessageBoxButtons.OK, MessageBoxIcon.Error);
             return 1;
         }
