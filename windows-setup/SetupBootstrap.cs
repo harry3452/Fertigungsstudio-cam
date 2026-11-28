@@ -28,7 +28,7 @@ static class SetupApp {
         for (int i = 0; i + 1 < args.Length; i++)
             if (args[i] == "--target") { dir = Path.GetFullPath(args[++i]); custom = true; }
         try {
-            if (uninstall) { Uninstall(dir, !custom); return 0; }
+            if (uninstall) { Uninstall(dir, !custom, quiet); return 0; }
             if (!quiet && MessageBox.Show(
                 Display + " " + Version + "\n\nInstallieren oder vorhandene Version aktualisieren?\n" +
                 "STL, DXF, STEP werden offline mitgeliefert.\n\nZiel: " + dir,
@@ -168,7 +168,7 @@ static class SetupApp {
         p.UseShellExecute=true;
         Process.Start(p);
     }
-    static void Uninstall(string dir,bool register) {
+    static void Uninstall(string dir,bool register,bool quiet) {
         if (!Directory.Exists(dir)) return;
         string manifest=Path.Combine(dir,Manifest);
         if (!File.Exists(manifest))
@@ -196,7 +196,7 @@ static class SetupApp {
         psi.WindowStyle=ProcessWindowStyle.Hidden;
         psi.CreateNoWindow=true; psi.UseShellExecute=false;
         Process.Start(psi);
-        MessageBox.Show("Fertigungsstudio CAM deinstalliert.\n" +
+        if (!quiet) MessageBox.Show("Fertigungsstudio CAM deinstalliert.\n" +
                         "Eigene Projektdateien wurden nicht gelöscht.",Display);
     }
 }
