@@ -1,0 +1,51 @@
+name: Fertigungsstudio bundled STEP runtime (Windows x64)
+on:
+  push:
+    branches: [feat/bundled-step-runtime]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  build-step:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          architecture: x64
+      - name: Install reproducible runtime build dependencies
+        shell: pwsh
+        run: |
+          py -3.11 -m pip install --only-binary=:all: pyinstaller==6.22.3 cadquery-ocp==7.9.3.1.1
+      - name: Create isolated STEP converter with bundled Python and OCCT
+        shell: pwsh
+        run: |
+          py -3.11 -m PyInstaller --noconfirm --clean --onedir --console --name fst-step-import --paths windows-setup --collect-all OCP --hidden-import step_topology windows-setup/step_import.py
+      - name: Verify STEP import and analytic topology without system Python
+        shell: pwsh
+        run: |
+          py -3.11 -c "from OCP.BRepPrimAPI import BRepPrimAPI_MakeBox; from OCP.STEPControl import STEPControl_Writer,STEPControl_AsIs; s=BRepPrimAPI_MakeBox(50,30,10).Shape(); w=STEPControl_Writer(); w.Transfer(s,STEPControl_AsIs); w.Write('model.step')"
+          & .\dist\fst-step-import\fst-step-import.exe model.step result.stl topology.json
+          if ($LASTEXITCODE -ne 0) {throw "Runtime STEP converter failed"}
+          $top = Get-Content topology.json -Raw -Encoding UTF8 | ConvertFrom-Json
+          if ($top.format -ne 'fertigungsstudio-step-topology-v1' -or $top.faces.Count -lt 6 -or $top.wires.Count -lt 6) {throw "STEP topology invalid"}
+          if (!(Test-Path result.stl)) {throw "STL preview missing"}
+      - name: Bundle license notices and exact versions
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/fst-step-import/THIRD_PARTY | Out-Null
+          Invoke-WebRequest https://raw.githubusercontent.com/CadQuery/OCP/master/LICENSE -OutFile dist/fst-step-import/THIRD_PARTY/OCP-LICENSE.txt
+          Invoke-WebRequest https://raw.githubusercontent.com/Open-Cascade-SAS/OCCT/master/LICENSE_LGPL_21.txt -OutFile dist/fst-step-import/THIRD_PARTY/OCCT-LGPL-2.1.txt
+          Invoke-WebRequest https://raw.githubusercontent.com/Open-Cascade-SAS/OCCT/master/OCCT_LGPL_EXCEPTION.txt -OutFile dist/fst-step-import/THIRD_PARTY/OCCT-EXCEPTION.txt
+          py -3.11 -m pip freeze | Out-File -Encoding UTF8 dist/fst-step-import/THIRD_PARTY/PYTHON-DEPENDENCIES.txt
+          $pythonHome=py -3.11 -c "import sys;print(sys.base_prefix)"
+          Copy-Item (Join-Path $pythonHome 'LICENSE.txt') dist/fst-step-import/THIRD_PARTY/PYTHON-LICENSE.txt -ErrorAction Stop
+          if ((Get-ChildItem dist/fst-step-import/THIRD_PARTY).Count -lt 5) {throw "License bundle incomplete"}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: STEP-Runtime-Windows-x64
+          path: dist/fst-step-import/
+          if-no-files-found: error
+          retention-days: 30
