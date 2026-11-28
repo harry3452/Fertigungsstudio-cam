@@ -39,7 +39,7 @@ jobs:
           } finally { $out.Close() }
           $dest=Join-Path (Get-Location) 'smoke/install'
           & ./smoke/test-setup.exe --quiet --target $dest
-          if ($LASTEXITCODE -ne 0) {throw 'Installer smoke test failed'}
+          if ($LASTEXITCODE -ne 0) {if (Test-Path "$env:TEMP/fst-setup-error.txt") {Get-Content "$env:TEMP/fst-setup-error.txt"}; throw 'Installer smoke test failed'}
           if (!(Test-Path "$dest/tools/step/fst-step-import.exe")) {throw 'STEP runtime path missing'}
           & "$dest/Fertigungsstudio-CAM-Deinstallieren.exe" --quiet --uninstall --target $dest
           if ($LASTEXITCODE -ne 0) {throw 'Uninstall smoke test failed'}
