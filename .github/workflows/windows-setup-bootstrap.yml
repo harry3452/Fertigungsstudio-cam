@@ -16,7 +16,7 @@ jobs:
         run: |
           $csc='C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe'
           if (!(Test-Path $csc)) { throw 'C# Windows compiler not found' }
-          & $csc /nologo /target:winexe /platform:x64 /optimize+ /out:SetupBootstrap.exe /r:System.Windows.Forms.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll windows-setup/SetupBootstrap.cs
+          & $csc /nologo /target:winexe /platform:x64 /optimize+ /out:SetupBootstrap.exe /r:System.Windows.Forms.dll /r:System.IO.Compression.dll /r:System.IO.Compression.FileSystem.dll windows-setup\SetupBootstrap.cs
           if ($LASTEXITCODE -ne 0) { throw 'Bootstrap compilation failed' }
       - name: Smoke test offline overlay, install and uninstall
         shell: pwsh
