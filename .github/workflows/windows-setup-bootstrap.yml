@@ -41,9 +41,14 @@ jobs:
           & ./smoke/test-setup.exe --quiet --target $dest
           if ($LASTEXITCODE -ne 0) {Get-ChildItem "$env:LOCALAPPDATA/Temp/fst-setup-error.txt" -ErrorAction SilentlyContinue | Get-Content; throw 'Installer smoke test failed'}
           if (!(Test-Path "$dest/tools/step/fst-step-import.exe")) {throw 'STEP runtime path missing'}
+          [IO.File]::WriteAllText("$dest/my-project.fscam",'user project must survive update')
+          & ./smoke/test-setup.exe --quiet --target $dest
+          if ($LASTEXITCODE -ne 0) {throw 'Update smoke test failed'}
+          if (!(Test-Path "$dest/my-project.fscam")) {throw 'User project lost during update'}
           & "$dest/Fertigungsstudio-CAM-Deinstallieren.exe" --quiet --uninstall --target $dest
           if ($LASTEXITCODE -ne 0) {throw 'Uninstall smoke test failed'}
           if (Test-Path "$dest/Start-Fertigungsstudio-Test.cmd") {throw 'Uninstall left installed file'}
+          if (!(Test-Path "$dest/my-project.fscam")) {throw 'User project lost during uninstall'}
       - uses: actions/upload-artifact@v4
         with:
           name: Fertigungsstudio-Windows-Setup-Bootstrap
